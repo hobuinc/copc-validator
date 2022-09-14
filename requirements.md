@@ -86,8 +86,8 @@ This package will be written on MacOS but should be fully compatible with Linux.
   - NodeJS
   - TypeScript
 - Dependencies:
-  - [`yargs`](https://www.npmjs.com/package/yargs)
   - [`copc`](https://www.npmjs.com/package/copc)
+  <!-- - [`yargs`](https://www.npmjs.com/package/yargs) -->
 
 # Features & Requirements
 
