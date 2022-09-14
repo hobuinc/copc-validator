@@ -5,11 +5,10 @@ import { generateChecks } from './checks'
 export default (source: Copc, name?: string): Report => {
   const start = new Date()
   const checks = generateChecks(source)
-  const end = new Date()
   const { header, vlrs, info } = source
   return {
     file: name || 'undefined',
-    scan: { type: 'quick', start, end },
+    scan: { type: 'quick', start, end: new Date() },
     header,
     vlrs,
     info,

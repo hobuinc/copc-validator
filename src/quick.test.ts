@@ -12,7 +12,6 @@ test('quick header pass', async () => {
   expect(quick.vlrs).toEqual(copc.vlrs)
   expect(quick.info).toEqual(copc.info)
   expect(quick.scan.start <= quick.scan.end).toBe(true)
-  // expect(quick.checks).toEqual({})
 })
 
 test('quick header fail', async () => {

@@ -5,6 +5,11 @@ export declare namespace Unions {
   type type = 'quick' | 'full'
 }
 
+export type StatusWithInfo = {
+  status: Unions.status
+  info?: any
+}
+
 export type Check = {
   id: number | string
   name: string
