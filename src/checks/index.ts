@@ -1,12 +1,13 @@
 import type { Copc } from 'copc'
 import { Check } from 'types'
 import header from './header'
+import vlrs from './vlrs'
 import info from './info'
 import { flattenDeep, map } from 'lodash'
 
 const checkFns = {
   header,
-  // vlrs,
+  vlrs,
   info,
 }
 

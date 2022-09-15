@@ -1,8 +1,8 @@
-import { generatorMap, ChecksDictionary } from './common'
+import { generatorMap, BasicChecksDictionary } from './common'
 
-const info: ChecksDictionary = {
+const info: BasicChecksDictionary = {
   gpsTimeRange: {
-    id: 10,
+    id: 100,
     f: (g: [number, number]) => {
       return {
         status: g[0] <= g[1] ? 'pass' : 'fail',

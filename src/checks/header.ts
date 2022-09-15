@@ -1,6 +1,6 @@
-import { generatorMap, ChecksDictionary } from './common'
+import { generatorMap, BasicChecksDictionary } from './common'
 
-const header: ChecksDictionary = {
+const header: BasicChecksDictionary = {
   fileSignature: { id: 0, f: (f: string) => f === 'LASF' },
   majorVersion: { id: 1, f: (v: number) => v === 1 },
   minorVersion: { id: 2, f: (v: number) => v === 4 },
