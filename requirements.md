@@ -24,9 +24,11 @@
 
 _COPC Validator_ (name TBD) is a NPM package that performs extended validation checking against COPC type files
 
+_(See [README.md](./README.md))_
+
 ## Purpose
 
-The purpose of this package is to allow COPC users to verify that a given file is genuinely COPC and the software will provide a detailed report on the integrity of the file, pointing out where and why there may be issues. This will protect the COPC type from malicious implementations and provide a centralized arbiter of what is and is-not proper COPC.
+The purpose of this package is to allow COPC users to verify that a given file is genuinely COPC; the software will provide a detailed report on the integrity of the file, pointing out where and why there may be issues. This will protect the COPC type from malicious implementations and provide a centralized arbiter of what is and is-not proper COPC.
 
 ## Scope
 
@@ -39,9 +41,9 @@ However, the package will also be published as an open source command-line utili
 
 ## Indended Use
 
-The intended use for most users will be the [copc.io](https://copc.io) validator webpage that utilizes this package to scan provided files and report the checks completed, the status (`pass`/`fail` and/or a message) of each check, and other detailed information about the COPC file that can be determined; and then allow the user to download the report as a PDF.
+The intended use for most users will be through the [copc.io](https://copc.io) validator webpage which will utilize this package to scan provided the file(s) and report the checks completed, the status (`pass`/`fail` and/or a message) of each check, and other detailed information about the COPC file that can be determined; and then allow the user to download the report as a PDF.
 
-The other possible use case will be users who install the command-line utility from NPM and use it to validate COPC files with their own machine. The utility should still provide the same information as the website, sans maybe the PDF (if its impossible).
+The other possible use case will be users who install the command-line utility from NPM and use it to validate COPC files with their own machine. The utility should still provide the same information as the website, sans maybe the PDF (if it's not possible).
 
 ## Definitions & Acronyms
 
@@ -87,7 +89,7 @@ This package will be written on MacOS but should be fully compatible with Linux.
   - TypeScript
 - Dependencies:
   - [`copc`](https://www.npmjs.com/package/copc)
-  <!-- - [`yargs`](https://www.npmjs.com/package/yargs) -->
+  <!-- - [`yargs`](https://www.npmjs.com/package/yargs)-->
 
 # Features & Requirements
 
@@ -179,6 +181,43 @@ NPM package with command-line functionality to check local files and generate JS
 
 ## Checks
 
+<!--
+### IDs
+
+- `1` digit check `ID`s corrospond to VLR header/existence checks
+  - Allows the validator to understand 10 specific VLR `userId` & `recordId` combinations
+- `2` digit check `ID`s corrospond to the LAS Public Header Block checks
+- `3` digit check `ID`s corrospond to COPC header checks
+- `4` digit check `ID`s corrospond to Full Scan exclusive checks (full file contents)
+
+### Functions
+-->
+
+Check functions maintain the following properties:
+
+- Parameters: `(c: Copc)`
+- Output: `boolean | {status: 'pass' | 'fail' | 'warn', info?: any }`
+- Pure function
+
+TypeScript:
+
+```TypeScript
+type Status = {
+  status: 'pass' | 'fail' | 'warn'
+  info?: any
+}
+type checkFunction = (c: Copc) => boolean | Status
+```
+
+All checks are located in `src/checks`
+
+<!-- The following information has been relocated to ./README.md:
+## All Checks
+
+| ID  | Name | Description | Result |
+| :-: | :--- | ----------- | ------ |
+
+
 |  ID   | Name            | Description                         | Logic                                 | Result                    |
 | :---: | :-------------- | ----------------------------------- | ------------------------------------- | ------------------------- |
 | **1** | File signature  | Matches LAS file signature ('LASF') | `byte[0-3]` = `'LASF'`                | `pass` / `fail`           |
@@ -189,158 +228,79 @@ NPM package with command-line functionality to check local files and generate JS
 | **6** | PDR length      | LAZ Point Data Record length        | `byte[105-106]`                       | `report`                  |
 | **?** | Unutilized RGB  | PDRF includes RGB fields, unused    | `PDRF` = `7 \| 8`, `RGB` = `0`        | `pass` / `warn`           |
 
-_`byte[x]` means byte(s) at offset `x`_  
-_`mask[y]` `byte[x]` means ignore `y` high bits of the following byte_  
+
+ _`byte[x]` means byte(s) at offset `x`_
+_`mask[y]` `byte[x]` means ignore `y` high bits of the following byte_
 _`byte[x]` `mask[y]` means ignore `y` low bits of the preceeding byte_
 
-_`pass` means file definitely matches COPC specificiations_  
-_`fail` means file does not match any COPC specifications_  
-_`warn` means file may not match current COPC specifications (out-dated), or may cause issues (extra-bytes?)_  
+_`pass` means file definitely matches COPC specificiations_
+_`fail` means file does not match any COPC specifications_
+_`warn` means file may not match current COPC specifications (out-dated), or may cause issues (extra-bytes?)_
 _`report` means validator will include information about check in report, but the bytes have no bearing on COPC validation_
 
 ## Report schema
 
 ```TypeScript
 {
-  file: string,
+  file: string | "undefined"
   scan: {
-    type: "quick" | "full",
-    start: Date,
+    type: "quick" | "full"
+    start: Date
     end: Date
   },
-  las: {
-    'file-signature': string,
-    'file-source-id': number,
-    'global-encoding': {
-      'gps-time-type': "week" | "adj-std",
-      'synthetic-return-numbers': boolean
-      wkt: boolean                               // true
-    }
-    version: [string, string]                    // ['1', '4']
-    systemId: string,
-    'generating-software': string,
-    'created-day': number,
-    'created-year': number,
-    'header-size': number,                       // 375
-    'pdr-offset': number,
-    'vlr-count': number,
-    'pdr-format': string,                        // "6" | "7" | "8"
-    'pdr-length': number,
-    'legacy-set': boolean,
-    scale: {
-      x: number,
-      y: number,
-      z: number
-    },
-    offset: {
-      x: number,
-      y: number,
-      z: number
-    },
-    max: {
-      x: number,
-      y: number,
-      z: number
-    },
-    min: {
-      x: number,
-      y: number,
-      z: number
-    },
-    'evlr-start': number,
-    'evlr-count': number,
-    'point-record-count': number,
-    'point-by-return-count': number[15]
-  }
-  vlrs: {
-    'las-crs': {
-      userId: "LASF_Spec"
-      //...
-    },
-    'las-classification': {
-      userId: "LASF_Spec",
-      recordId: 0,
-      classification?: [
-        {
-          ClassNumber: string,
-          Description: string
-        }
-      ]
-    },
-    'las-textarea': {
-      userId: "LASF_Spec",
-      recordId: 3,
-      content?: string
-    },
-    'las-extra-bytes': {
-      userId: "LASF_Spec",
-      recordId: 4,
-      content: {
-        'data_type': number,
-        name: string,
-        'no_data'?: any,
-        min?: any,
-        max?: any,
-        scale?: number,
-        offset?: number
-      }
-    }
-    'copc-info': {
-      userId: "copc",
-      recordId: 1
-      length: number,
-      description?: string
-      info: {
-        center: {
-          x: number,
-          y: number,
-          z: number
-        },
-        halfsize: number,
-        spacing: number,
-        'root_hier_offset': number,
-        'root_hier_size': number,
-        gpstime: {
-          min: number,
-          max: number
-        }
-      }
-    },
-    'copc-hierarchy': {
-      userId: "copc",
-      recordId: 1000,
-      length: number,
-      description?: string
-      pages: [
-        {
-
-        },
-        //...
-      ]
-    }
-  }
-  "checks": [
+  header: {
+    fileSignature: string //'LASF'
+    fileSourceId: number
+    globalEncoding: number
+    projectId: string
+    majorVersion: number //1
+    minorVersion: number //4
+    systemIdentifier: string
+    generatingSoftware: string
+    fileCreationDayOfYear: number
+    fileCreationYear: number
+    headerLength: number //375
+    pointDataOffset: number
+    vlrCount: number
+    pointDataRecordFormat: number //6 | 7 | 8
+    pointDataRecordLength: number
+    pointCount: number
+    pointCountByReturn: number[15]
+    scale: [number, number, number]
+    offset: [number, number, number]
+    min: [number, number, number]
+    max: [number, number, number]
+    waveformDataOffset: number
+    evlrOffset: number
+    evlrCount: number
+  },
+  vlrs: [
     {
-      "id": 1,
-      "name": "File signature",
-      "status": "pass",
-      "info": {
-        0: "L",
-        1: "A",
-        2: "S",
-        3: "F"
-      }
+      userId: string
+      recordId: number
+      contentOffset: number
+      contentLength: number
+      description: string
+      isExtended: boolean
+    }
+  ],
+  info: {
+    cube: number[6]
+    spacing: number
+    rootHierarchyPage: {
+      pageOffset: number
+      pageLength: number
     },
+    gpsTimeRange: [ number, number ]
+  },
+  checks: [
     {
-      "id": 2,
-      "name": "LAS version",
-      "status": "fail",
-      "info": {
-        24: 1,
-        25: 3
-      }
-    },
-    //...
+      id: number
+      name: string
+      status: 'pass' | 'fail' | 'warn'
+      info?: any
+    }
   ]
 }
 ```
+-->
