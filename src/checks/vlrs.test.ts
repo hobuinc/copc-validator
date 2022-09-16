@@ -1,15 +1,13 @@
 import { ellipsoidFilename } from 'test'
 import { Copc } from 'copc'
 import vlrs from './vlrs'
-import { omit } from 'lodash'
+import { mapChecks } from './common'
 
 const filename = ellipsoidFilename
 
 test('vlrs all-pass', async () => {
   const copc = await Copc.create(filename)
-  const checks = vlrs.generate(copc, vlrs, 'vlrs')
-
-  expect(checks.length).toEqual(Object.keys(omit(vlrs, 'generate')).length)
+  const checks = mapChecks(copc, vlrs)
 
   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
 })
@@ -24,10 +22,16 @@ test('vlrs missing-required', async () => {
     },
     vlrs: copc.vlrs.filter((v) => v.userId !== 'copc'),
   }
-  const checks = vlrs.generate(badCopc, vlrs, 'vlrs')
+  const checks = mapChecks(badCopc, vlrs)
 
-  expect(checks.find((c) => c.id === 10)).toHaveProperty('status', 'fail')
-  expect(checks.find((c) => c.id === 11)).toHaveProperty('status', 'fail')
+  expect(checks.find((c) => c.id.includes('copc-info'))).toHaveProperty(
+    'status',
+    'fail',
+  )
+  expect(checks.find((c) => c.id.includes('copc-hierarchy'))).toHaveProperty(
+    'status',
+    'fail',
+  )
 })
 
 test('vlrs missing-recommended', async () => {
@@ -40,7 +44,10 @@ test('vlrs missing-recommended', async () => {
     },
     vlrs: copc.vlrs.filter((v) => v.userId !== 'laszip encoded'),
   }
-  const checks = vlrs.generate(badCopc, vlrs, 'vlrs')
+  const checks = mapChecks(badCopc, vlrs)
 
-  expect(checks.find((c) => c.id === 12)).toHaveProperty('status', 'warn')
+  expect(checks.find((c) => c.id.includes('laszip-encoded'))).toHaveProperty(
+    'status',
+    'warn',
+  )
 })

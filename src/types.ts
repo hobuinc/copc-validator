@@ -1,31 +1,42 @@
 import { Copc, Las, Info } from 'copc'
 
-export declare namespace Unions {
+export declare namespace Check {
   type status = 'pass' | 'fail' | 'warn'
-  type type = 'quick' | 'full'
-}
+  type StatusObj = {
+    status: status
+    info?: string
+  }
 
-export type StatusWithInfo = {
-  status: Unions.status
-  info?: any
-}
+  export type Function =
+    | ((c: Copc) => boolean)
+    | ((c: Copc) => StatusObj)
+    | ((c: Copc) => boolean | StatusObj)
 
-export type Check = {
-  id: number | string
-  name: string
-  status: Unions.status
-  info?: any
+  export type Group = {
+    [id: string]: Function
+  }
+  export type Groups = {
+    [name: string]: Group
+  }
+
+  export type Check = {
+    id: string
+    // name: string
+    status: status
+    info?: any
+  }
 }
+export type Check = Check.Check
 
 export type Report = {
   file: string
   scan: {
-    type: Unions.type
+    type: 'quick' | 'full'
     start: Date
     end: Date
   }
   header: Las.Header
   vlrs: Las.Vlr[]
   info: Info
-  checks: Check[]
+  checks: Check.Check[]
 }

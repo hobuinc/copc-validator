@@ -1,16 +1,7 @@
-import { generatorMap, BasicChecksDictionary } from './common'
+import { Check } from 'types'
 
-const info: BasicChecksDictionary = {
-  gpsTimeRange: {
-    id: 100,
-    f: (g: [number, number]) => {
-      return {
-        status: g[0] <= g[1] ? 'pass' : 'fail',
-        info: 'GPSTime lower <= GPSTime upper',
-      } as unknown as boolean
-    },
-  },
-  generate: generatorMap(),
+const info: Check.Group = {
+  'info.gpsTimeRange': (c) => c.info.gpsTimeRange[0] <= c.info.gpsTimeRange[1],
 }
 
 export default info

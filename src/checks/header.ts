@@ -1,11 +1,11 @@
-import { generatorMap, BasicChecksDictionary } from './common'
+import { Check } from 'types'
 
-const header: BasicChecksDictionary = {
-  fileSignature: { id: 0, f: (f: string) => f === 'LASF' },
-  majorVersion: { id: 1, f: (v: number) => v === 1 },
-  minorVersion: { id: 2, f: (v: number) => v === 4 },
-  pointDataRecordFormat: { id: 3, f: (p: number) => [6, 7, 8].includes(p) },
-  generate: generatorMap((n) => `${n} match`),
+export const header: Check.Group = {
+  'header.fileSignature': (c) => c.header.fileSignature === 'LASF',
+  'header.majorVersion': (c) => c.header.majorVersion === 1,
+  'header.minorVersion': (c) => c.header.minorVersion === 4,
+  'header.pointDataRecordFormat': (c) =>
+    [6, 7, 8].includes(c.header.pointDataRecordFormat),
 }
 
 export default header

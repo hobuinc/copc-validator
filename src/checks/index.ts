@@ -4,15 +4,12 @@ import header from './header'
 import vlrs from './vlrs'
 import info from './info'
 import { flattenDeep, map } from 'lodash'
+import { mapChecks } from './common'
 
-const checkFns = {
+export const AllChecks: Check.Groups = {
   header,
   vlrs,
   info,
 }
-
-export const generateChecks = (c: Copc): Check[] => {
-  return flattenDeep(
-    map(checkFns, (checks, section) => checks.generate(c, checks, section)),
-  )
-}
+export const generateChecks = (c: Copc, g: Check.Groups): Check[] =>
+  flattenDeep(map(g, (checks) => mapChecks(c, checks)))

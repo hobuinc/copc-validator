@@ -1,7 +1,27 @@
-import { Vlr } from 'copc/lib/las'
+import { Messages as CommonMsgs } from './common'
 import { Check } from 'types'
-import { checkFn, checkGenerator, Messages as CommonMsgs } from './common'
-import { find, map, omit } from 'lodash'
+import { find } from 'lodash'
+import type { Copc } from 'copc'
+
+const vlrs: Check.Group = {
+  'vlrs.copc-info': (c) => {
+    const v = findVlr(c, 'copc', 1)
+    if (!v) return { status: 'fail', info: Messages.requiredVlrNotFound }
+    return !v.isExtended && v.contentLength === 160
+  },
+  'vlrs.copc-hierarchy': (c) => {
+    const v = findVlr(c, 'copc', 1000)
+    if (!v) return { status: 'fail', info: Messages.requiredVlrNotFound }
+    return { status: 'pass', info: Messages.moreInfoOnFullScan }
+  },
+  'vlrs.laszip-encoded': (c) => {
+    const v = findVlr(c, 'laszip encoded', 22204)
+    if (!v) return { status: 'warn', info: Messages.recommendedVlrNotFound }
+    return !v.isExtended && v.description === 'lazperf variant'
+  },
+}
+
+export default vlrs
 
 const Messages = {
   ...CommonMsgs,
@@ -9,57 +29,5 @@ const Messages = {
   recommendedVlrNotFound: 'Failed to find VLR (Not required, but recommended)',
 }
 
-type vlrCheck = checkFn<Vlr | undefined> & {
-  userId: string
-  recordId: number
-}
-type VlrChecksDictionary = {
-  generate: checkGenerator
-  [x: string]: vlrCheck | checkGenerator
-}
-
-const vlrs: VlrChecksDictionary = {
-  'copc-info': {
-    id: 10,
-    userId: 'copc',
-    recordId: 1,
-    f: (v) => {
-      if (!v) return { status: 'fail', info: Messages.requiredVlrNotFound }
-      return !v.isExtended && v.contentLength === 160
-    },
-  },
-  'copc-hierarchy': {
-    id: 11,
-    userId: 'copc',
-    recordId: 1000,
-    f: (v) => {
-      if (!v) return { status: 'fail', info: Messages.requiredVlrNotFound }
-      return {
-        status: 'pass',
-        info: Messages.moreInfoOnFullScan,
-      }
-    },
-  },
-  'laszip encoded': {
-    id: 12,
-    userId: 'laszip encoded',
-    recordId: 22204,
-    f: (v) => {
-      if (!v) return { status: 'warn', info: Messages.recommendedVlrNotFound }
-      return !v.isExtended
-    },
-  },
-  generate: (c, checks, section) =>
-    map(omit(checks, 'generate'), (details, vlrName) => {
-      const { f, id, userId, recordId } = details as vlrCheck
-      const vlr = find(c.vlrs, { userId, recordId })
-      const result = f(vlr)
-      const name = `${section}.${vlrName} check`
-      if (typeof result === 'boolean')
-        return { id, name, status: result ? 'pass' : 'fail' }
-      const { status, info } = result
-      return { id, name, status, info }
-    }),
-}
-
-export default vlrs
+const findVlr = (c: Copc, userId: string, recordId: number) =>
+  find(c.vlrs, { userId, recordId })

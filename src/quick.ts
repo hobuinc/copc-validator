@@ -1,10 +1,13 @@
 import { Copc } from 'copc'
-import { Report } from './types'
-import { generateChecks } from './checks'
+import { Check, Report } from './types'
+import { generateChecks, AllChecks } from './checks'
+import { omit } from 'lodash'
+
+const QuickChecks: Check.Groups = AllChecks
 
 export default (source: Copc, name?: string): Report => {
   const start = new Date()
-  const checks = generateChecks(source)
+  const checks = generateChecks(source, QuickChecks)
   const { header, vlrs, info } = source
   return {
     file: name || 'undefined',
