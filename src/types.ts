@@ -19,11 +19,8 @@ export declare namespace Check {
     [name: string]: Group
   }
 
-  export type Check = {
+  export type Check = StatusObj & {
     id: string
-    // name: string
-    status: status
-    info?: any
   }
 }
 export type Check = Check.Check
