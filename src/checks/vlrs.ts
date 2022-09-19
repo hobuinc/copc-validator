@@ -4,6 +4,10 @@ import { find } from 'lodash'
 import type { Copc } from 'copc'
 
 const vlrs: Check.Group = {
+  'vlrCount match': (c) =>
+    c.vlrs.filter((v) => !v.isExtended).length === c.header.vlrCount,
+  'evlrCount match': (c) =>
+    c.vlrs.filter((v) => v.isExtended).length === c.header.evlrCount,
   'vlrs.copc-info': (c) => {
     const v = findVlr(c, 'copc', 1)
     if (!v) return { status: 'fail', info: Messages.requiredVlrNotFound }
