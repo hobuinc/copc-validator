@@ -29,7 +29,7 @@ export declare namespace Check {
 export type Check = Check.Check
 
 export type Report = {
-  file: string
+  name: string
   scan: {
     type: 'quick' | 'full'
     start: Date

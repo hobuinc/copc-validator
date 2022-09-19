@@ -95,7 +95,7 @@ _`warn` means file may not match current COPC specifications (out-dated), or may
 
 ```TypeScript
 {
-  file: string | "undefined"
+  name: string
   scan: {
     type: "quick" | "full"
     start: Date
