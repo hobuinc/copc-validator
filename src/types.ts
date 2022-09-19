@@ -25,15 +25,40 @@ export declare namespace Check {
 }
 export type Check = Check.Check
 
-export type Report = {
-  name: string
-  scan: {
-    type: 'quick' | 'full'
-    start: Date
-    end: Date
+export const isCopc = (r: Report): r is Report.SuccessCopc =>
+  r.scan.result === 'COPC'
+export const isFail = (r: Report): r is Report.Failed =>
+  r.scan.result === 'Unknown'
+
+export declare namespace Report {
+  namespace Scans {
+    type types = 'quick' | 'full' | 'custom'
+    type results = 'COPC' | 'Unknown' //Not yet implemented: | 'LAZ' | 'LAS'
+    type scan = {
+      type: types
+      start: Date
+      end: Date
+    }
+    type SuccessCopc = scan & { result: 'COPC' }
+    type Failed = scan & { result: 'Unknown' }
   }
-  header: Las.Header
-  vlrs: Las.Vlr[]
-  info: Info
-  checks: Check.Check[]
+  type Base = {
+    name: string
+    checks: Check[]
+  }
+  type SuccessCopc = Base & {
+    scan: Scans.SuccessCopc
+    copc: {
+      header: Las.Header
+      vlrs: Las.Vlr[]
+      info: Info
+    }
+  }
+  type Failed = Base & {
+    scan: Scans.Failed
+    error: Error
+  }
+  export type Report = SuccessCopc | Failed
 }
+export type Report = Report.Report
+export const Report = { isCopc, isFail }

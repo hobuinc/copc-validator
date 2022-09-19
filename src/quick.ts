@@ -7,15 +7,27 @@ const QuickChecks: Check.Groups = AllChecks
 
 export default async (source: string, name?: string): Promise<Report> => {
   const start = new Date()
-  const copc = await Copc.create(source)
-  const checks = generateChecks(copc, QuickChecks)
-  const { header, vlrs, info } = copc
-  return {
-    name: name || source,
-    scan: { type: 'quick', start, end: new Date() },
-    header,
-    vlrs,
-    info,
-    checks,
+  const reportName = name || source
+  try {
+    const copc = await Copc.create(source)
+    const checks = generateChecks(copc, QuickChecks)
+    const { header, vlrs, info } = copc
+    return {
+      name: reportName,
+      scan: { type: 'quick', result: 'COPC', start, end: new Date() },
+      checks,
+      copc: {
+        header,
+        vlrs,
+        info,
+      },
+    }
+  } catch (e) {
+    return {
+      name: reportName,
+      scan: { type: 'quick', result: 'Unknown', start, end: new Date() },
+      checks: [],
+      error: e as Error,
+    }
   }
 }
