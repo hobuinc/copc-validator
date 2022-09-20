@@ -1,9 +1,9 @@
-import { ellipsoidFilename } from 'test'
+import { ellipsoidFiles } from 'test'
 import { Copc } from 'copc'
 import QuickScan from './quick'
 import { Report } from 'types'
 
-const filename = ellipsoidFilename
+const filename = ellipsoidFiles.copc
 
 test('quick ferry-copc-data', async () => {
   const copc = await Copc.create(filename)
@@ -24,8 +24,13 @@ test('quick ferry-copc-data', async () => {
   expect(quickWithName.name).toEqual(reportName)
 })
 
+test('quick las-file', async () => {
+  const quick = (await QuickScan(ellipsoidFiles.laz14)) as Report.SuccessLas
+  expect(Report.isLas(quick)).toBe(true)
+})
+
 // Perform scan on *this* file to ensure failure
-test('quick non-copc-file', async () => {
+test('quick non-las-file', async () => {
   const quick = (await QuickScan(__filename)) as Report.Failed
   expect(Report.isCopc(quick)).toBe(false)
   expect(Report.isFail(quick)).toBe(true)
@@ -35,29 +40,3 @@ test('quick non-copc-file', async () => {
   expect(quick.scan.result).toEqual('Unknown')
   expect(quick.error.message).toContain('Invalid file signature:')
 })
-
-// TODO: Figure out how to test bad COPC with file input for scan
-// Options
-//   1. Create a bad COPC file
-//   2. Ignore it, handle bad COPC checks in src/checks/*.test.ts
-
-// test('quick header fail', async () => {
-//   const copc = await Copc.create(filename)
-//   const badCopc: Copc = {
-//     ...copc,
-//     header: {
-//       ...copc.header,
-//       minorVersion: 3,
-//     },
-//   }
-//   const quick = QuickScan(badCopc, filename)
-//   const majorVersionStatus = quick.checks.find(
-//     (c) => c.id === 'header.majorVersion',
-//   )!.status
-//   const minorVersionStatus = quick.checks.find(
-//     (c) => c.id === 'header.minorVersion',
-//   )!.status
-
-//   expect(majorVersionStatus).toBe('pass')
-//   expect(minorVersionStatus).toBe('fail')
-// })

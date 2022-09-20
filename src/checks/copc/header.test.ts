@@ -1,7 +1,7 @@
 import { Copc } from 'copc'
 import { ellipsoidFilename } from 'test'
 import header from './header'
-import { mapChecks } from './common'
+import { mapChecks } from 'checks'
 
 const filename = ellipsoidFilename
 

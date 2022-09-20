@@ -1,15 +1,23 @@
-import type { Copc } from 'copc'
 import { Check } from 'types'
-import header from './header'
-import vlrs from './vlrs'
-import info from './info'
 import { flattenDeep, map } from 'lodash'
-import { mapChecks } from './common'
 
-export const AllChecks: Check.Groups = {
-  header,
-  vlrs,
-  info,
+export * from './copc'
+export * from './las'
+
+export const performCheck = <T>(
+  s: T,
+  f: Check.Function<T>,
+  id: string,
+): Check => {
+  const result = f(s)
+  if (typeof result === 'boolean')
+    return { id, status: result ? 'pass' : 'fail' }
+  const { status, info } = result
+  return { id, status, info }
 }
-export const generateChecks = (c: Copc, g: Check.Groups): Check[] =>
-  flattenDeep(map(g, (checks) => mapChecks(c, checks)))
+
+export const mapChecks = <T>(s: T, g: Check.Group<T>): Check[] =>
+  map(g, (check, id) => performCheck(s, check, id))
+
+export const generateChecks = <T>(s: T, g: Check.Groups<T>): Check[] =>
+  flattenDeep(map(g, (checks) => mapChecks(s, checks)))
