@@ -1,6 +1,6 @@
 import { Check } from 'types'
 
-const info: Check.Group = {
+const info: Check.SyncGroup = {
   'info.gpsTimeRange': (c) => c.info.gpsTimeRange[0] <= c.info.gpsTimeRange[1],
 }
 

@@ -6,19 +6,19 @@ export const generateReport = async (
   source: string,
   copcChecks: Check.Groups<Copc>,
   lasChecks: Check.Groups<Binary>,
-  options?: Partial<Report.Options>,
+  options: Report.Options,
 ): Promise<Report> => {
   const start = new Date()
-  const name = options?.name || source
+  const name = options.name
   try {
     // Attempt COPC parse
     const copc = await Copc.create(source)
     const checks = generateChecks(copc, copcChecks)
-    const { header, vlrs, info } = copc
+    const { header, vlrs, info, wkt } = copc
     return {
       name,
       scan: {
-        type: options?.type || 'quick',
+        type: options.type,
         result: 'COPC',
         start,
         end: new Date(),
@@ -28,6 +28,7 @@ export const generateReport = async (
         header,
         vlrs,
         info,
+        wkt,
       },
     }
   } catch (error) {
@@ -43,7 +44,7 @@ export const generateReport = async (
       return {
         name,
         scan: {
-          type: options?.type || 'quick',
+          type: options.type,
           result: 'LAS',
           start,
           end: new Date(),
@@ -60,7 +61,7 @@ export const generateReport = async (
         // Unable to determine file information
         name,
         scan: {
-          type: options?.type || 'quick',
+          type: options.type,
           result: 'Unknown',
           start,
           end: new Date(),

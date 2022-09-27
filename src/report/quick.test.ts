@@ -5,7 +5,7 @@ import { Report } from 'types'
 
 const filename = ellipsoidFiles.copc
 
-test('quick ferry-copc-data', async () => {
+test('quick COPC', async () => {
   const copc = await Copc.create(filename)
   const quick = (await QuickScan(filename)) as Report.SuccessCopc
   expect(Report.isCopc(quick)).toBe(true)
@@ -31,7 +31,7 @@ test('quick las-file', async () => {
 
 // Perform scan on *this* file to ensure failure
 test('quick non-las-file', async () => {
-  const quick = (await QuickScan(__filename)) as Report.Failed
+  const quick = (await QuickScan(__filename)) as Report.Failure
   expect(Report.isCopc(quick)).toBe(false)
   expect(Report.isFail(quick)).toBe(true)
 

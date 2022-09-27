@@ -1,6 +1,5 @@
 import { Copc } from 'copc'
 import { ellipsoidFilename } from 'test'
-// import { mapChecks } from './common'
 import { mapChecks } from 'checks'
 import info from './info'
 

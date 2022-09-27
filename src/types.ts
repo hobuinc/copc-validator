@@ -1,4 +1,4 @@
-import { Copc, Las, Info } from 'copc'
+import { Copc, Las, Info, Getter } from 'copc'
 
 export declare namespace Check {
   type status = 'pass' | 'fail' | 'warn'
@@ -7,16 +7,32 @@ export declare namespace Check {
     info?: any //string
   }
 
-  export type Function<T = Copc> =
+  export type SyncFunction<T> =
     | ((c: T) => boolean)
     | ((c: T) => StatusObj)
     | ((c: T) => boolean | StatusObj)
-
-  export type Group<T = Copc> = {
-    [id: string]: Function<T>
+  export type SyncGroup<T = Copc> = {
+    [id: string]: SyncFunction<T>
   }
+
   export type Groups<T = Copc> = {
-    [name: string]: Group<T>
+    [name: string]: SyncGroup<T>
+  }
+
+  export type AsyncFunction<T> =
+    | ((c: T) => Promise<boolean>)
+    | ((c: T) => Promise<Check.StatusObj>)
+    | ((c: T) => Promise<boolean | Check.StatusObj>)
+  export type AsyncGroup<T> = {
+    [id: string]: AsyncFunction<T>
+  }
+
+  export type MixedFunction<T> = SyncFunction<T> | AsyncFunction<T>
+
+  export type MixedGroup<S, A> = SyncGroup<S> | AsyncGroup<A>
+
+  export type MixedGroups<S, A> = {
+    [name: string]: MixedGroup<S, A>
   }
 
   export type Check = StatusObj & {
@@ -25,10 +41,18 @@ export declare namespace Check {
 }
 export type Check = Check.Check
 
+// const isAsyncFunction = <T>(
+//   f: Check.MixedFunction<T>,
+// ): f is Check.AsyncFunction<T> => f.constructor.name === 'AsyncFunction'
+// export const isAsyncGroup = <T>(
+//   g: Check.MixedGroup<any, T>,
+// ): g is Check.AsyncGroup<T> => isAsyncFunction<T>(Object.values(g)[0])
+
+// export const Check = { isAsyncGroup }
+
 export declare namespace Report {
   namespace Scans {
     type types = 'quick' | 'full' | 'custom'
-    type results = 'COPC' | 'LAS' | 'Unknown' //Not yet implemented: | 'LAZ'
     type scan = {
       type: types
       start: Date
@@ -52,6 +76,7 @@ export declare namespace Report {
       header: Las.Header
       vlrs: Las.Vlr[]
       info: Info
+      wkt?: string
     }
   }
   type SuccessLas = Base & {
@@ -61,11 +86,12 @@ export declare namespace Report {
       vlrs: Las.Vlr[]
     }
   }
-  type Failed = Base & {
+  type Success = SuccessCopc | SuccessLas
+  type Failure = Base & {
     scan: Scans.Failed
     error: Error
   }
-  export type Report = SuccessCopc | SuccessLas | Failed
+  export type Report = Success | Failure
 }
 export type Report = Report.Report
 
@@ -73,6 +99,6 @@ export const isCopc = (r: Report): r is Report.SuccessCopc =>
   r.scan.result === 'COPC'
 export const isLas = (r: Report): r is Report.SuccessLas =>
   r.scan.result === 'LAS'
-export const isFail = (r: Report): r is Report.Failed =>
+export const isFail = (r: Report): r is Report.Failure =>
   r.scan.result === 'Unknown'
 export const Report = { isCopc, isLas, isFail }

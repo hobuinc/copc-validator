@@ -1,13 +1,13 @@
-import { Las, Getter, Binary } from 'copc'
+import { Las, Binary } from 'copc'
 import { Check } from 'types'
 
-export const header: Check.Group<Binary> = {
+export const header: Check.SyncGroup<Binary> = {
   header: (s) => {
     try {
-      const header = Las.Header.parse(s)
-      return { status: 'pass', info: header }
+      Las.Header.parse(s)
+      return true //{ status: 'pass', info: header }
     } catch (e) {
-      return { status: 'fail', info: e }
+      return { status: 'fail', info: e as Error }
     }
   },
 }

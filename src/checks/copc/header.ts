@@ -1,6 +1,6 @@
 import { Check } from 'types'
 
-export const header: Check.Group = {
+export const header: Check.SyncGroup = {
   'header.fileSignature': (c) => c.header.fileSignature === 'LASF',
   'header.majorVersion': (c) => c.header.majorVersion === 1,
   'header.minorVersion': (c) => c.header.minorVersion === 4,
