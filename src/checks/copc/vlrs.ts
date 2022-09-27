@@ -1,26 +1,30 @@
 import { Messages as CommonMsgs } from './common'
 import { Check } from 'types'
-import { Las } from 'copc'
+import { Copc, Las } from 'copc'
+import { basicCheck } from '../../checks'
 
-const vlrs: Check.SyncGroup = {
-  'vlrCount match': (c) =>
-    c.vlrs.filter((v) => !v.isExtended).length === c.header.vlrCount,
-  'evlrCount match': (c) =>
-    c.vlrs.filter((v) => v.isExtended).length === c.header.evlrCount,
+const vlrs: Check.Suite<Copc> = {
+  vlrCount: (c) =>
+    basicCheck(c.vlrs.filter((v) => !v.isExtended).length, c.header.vlrCount),
+  evlrCount: (c) =>
+    basicCheck(c.vlrs.filter((v) => v.isExtended).length, c.header.evlrCount),
   'vlrs.copc-info': (c) => {
-    const v = Las.Vlr.find(c.vlrs, 'copc', 1)
-    if (!v) return { status: 'fail', info: Messages.requiredVlrNotFound }
-    return !v.isExtended && v.contentLength === 160
+    const vlr = Las.Vlr.find(c.vlrs, 'copc', 1)
+    if (!vlr) return Messages.requiredVlrNotFound
+    return basicCheck(vlr, (v) => !v.isExtended && v.contentLength === 160)
   },
   'vlrs.copc-hierarchy': (c) => {
-    const v = Las.Vlr.find(c.vlrs, 'copc', 1000)
-    if (!v) return { status: 'fail', info: Messages.requiredVlrNotFound }
-    return { status: 'pass', info: Messages.moreInfoOnFullScan }
+    const vlr = Las.Vlr.find(c.vlrs, 'copc', 1000)
+    if (!vlr) return Messages.requiredVlrNotFound
+    return { status: 'pass' }
   },
   'vlrs.laszip-encoded': (c) => {
-    const v = Las.Vlr.find(c.vlrs, 'laszip encoded', 22204)
-    if (!v) return { status: 'warn', info: Messages.recommendedVlrNotFound }
-    return !v.isExtended && v.description === 'lazperf variant'
+    const vlr = Las.Vlr.find(c.vlrs, 'laszip encoded', 22204)
+    if (!vlr) return Messages.recommendedVlrNotFound
+    return basicCheck(
+      vlr,
+      (v) => !v.isExtended && v.description === 'lazperf variant',
+    )
   },
 }
 
@@ -28,6 +32,12 @@ export default vlrs
 
 const Messages = {
   ...CommonMsgs,
-  requiredVlrNotFound: 'Failed to find VLR',
-  recommendedVlrNotFound: 'Failed to find VLR (Not required, but recommended)',
+  requiredVlrNotFound: {
+    status: 'fail',
+    info: 'Failed to find VLR',
+  } as Check.Status,
+  recommendedVlrNotFound: {
+    status: 'warn',
+    info: 'Failed to find VLR (Not required, but recommended)',
+  } as Check.Status,
 }

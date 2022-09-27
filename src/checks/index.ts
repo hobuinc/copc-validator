@@ -4,37 +4,37 @@ import { flattenDeep, map } from 'lodash'
 export * from './copc'
 export * from './las'
 
-export const performCheckSync = <T>(
-  s: T,
-  f: Check.SyncFunction<T>,
-  id: string,
-): Check => {
-  const result = f(s)
-  if (typeof result === 'boolean')
-    return { id, status: result ? 'pass' : 'fail' }
-  const { status, info } = result
-  return { id, status, info }
+/**
+ * Utility function to convert simple boolean logic and basic functions
+ * into `Check.Status` objects for `Check.Function` output.
+ *
+ * @param source The variable to check
+ * @param checker The function to check against. If provided with a constant or
+ * array of constants, `basicCheck` will use `===` or `Array.includes()` as the
+ * checker function
+ * @param info Optional info to include with the output
+ * @returns {Check.Status} `Check.Status` object: `{status: 'pass'|'fail'|'warn', info?: any}`
+ */
+export const basicCheck = <T>(
+  source: T,
+  checker: T | T[] | ((s: T) => boolean),
+  info?: any,
+): Check.Status => {
+  return { status: booleanFn(checker)(source) ? 'pass' : 'fail', info }
 }
 
-export const mapChecks = <T>(s: T, g: Check.SyncGroup<T>): Check[] =>
-  map(g, (check, id) => performCheckSync(s, check, id))
-
-export const generateChecks = <T>(s: T, g: Check.Groups<T>): Check[] =>
-  flattenDeep(map(g, (checks) => mapChecks(s, checks)))
-
-const performCheckAsync = async <T>(
-  s: T,
-  f: Check.AsyncFunction<T>,
-  id: string,
-): Promise<Check> => {
-  const result = await f(s)
-  if (typeof result === 'boolean')
-    return { id, status: result ? 'pass' : 'fail' }
-  const { status, info } = result
-  return { id, status, info }
+const booleanFn = <T>(check: T | T[] | ((v: T) => boolean)) => {
+  if (Array.isArray(check)) return arrayCheck(check)
+  else if (check instanceof Function) return check
+  return constCheck(check)
 }
 
-export const mapAsyncChecks = <T>(
-  s: T,
-  g: Check.AsyncGroup<T>,
-): Promise<Check>[] => map(g, (check, id) => performCheckAsync(s, check, id))
+const constCheck =
+  <T>(constant: T) =>
+  (variable: T) =>
+    variable === constant
+
+const arrayCheck =
+  <T>(array: T[]) =>
+  (variable: T) =>
+    array.includes(variable)

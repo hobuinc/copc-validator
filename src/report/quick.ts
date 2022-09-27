@@ -1,8 +1,8 @@
-import { CopcChecks, LasChecks } from '../checks'
+import { CopcSuite, CopcGetterSuite } from '../checks'
 import { generateReport } from '../report'
 
 export default async (source: string, name?: string) =>
-  generateReport(source, CopcChecks, LasChecks, {
+  generateReport(source, CopcSuite, CopcGetterSuite, {
     name: name || source,
     type: 'quick',
   })

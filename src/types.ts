@@ -2,53 +2,33 @@ import { Copc, Las, Info, Getter } from 'copc'
 
 export declare namespace Check {
   type status = 'pass' | 'fail' | 'warn'
-  type StatusObj = {
+  type Status = {
     status: status
-    info?: any //string
+    info?: any
   }
 
-  export type SyncFunction<T> =
-    | ((c: T) => boolean)
-    | ((c: T) => StatusObj)
-    | ((c: T) => boolean | StatusObj)
-  export type SyncGroup<T = Copc> = {
-    [id: string]: SyncFunction<T>
-  }
-
-  export type Groups<T = Copc> = {
-    [name: string]: SyncGroup<T>
-  }
-
-  export type AsyncFunction<T> =
-    | ((c: T) => Promise<boolean>)
-    | ((c: T) => Promise<Check.StatusObj>)
-    | ((c: T) => Promise<boolean | Check.StatusObj>)
-  export type AsyncGroup<T> = {
-    [id: string]: AsyncFunction<T>
-  }
-
-  export type MixedFunction<T> = SyncFunction<T> | AsyncFunction<T>
-
-  export type MixedGroup<S, A> = SyncGroup<S> | AsyncGroup<A>
-
-  export type MixedGroups<S, A> = {
-    [name: string]: MixedGroup<S, A>
-  }
-
-  export type Check = StatusObj & {
+  export type Check = Status & {
     id: string
+  }
+
+  namespace Function {
+    type Sync<T> = (s: T) => Status
+    type Async<T> = (s: T) => Promise<Status>
+  }
+  type Function<T> = Function.Sync<T> | Function.Async<T>
+
+  /**
+   * Suite: Group of check functions that run on a shared source.
+   * Prevents unnecessary repeat Getter fetch calls (http).
+   *
+   * Usage: Invoke all functions in Suite, wait for Async check functions
+   *  to return, then combine all results into a Check array
+   */
+  export type Suite<T> = {
+    [id: string]: Function<T>
   }
 }
 export type Check = Check.Check
-
-// const isAsyncFunction = <T>(
-//   f: Check.MixedFunction<T>,
-// ): f is Check.AsyncFunction<T> => f.constructor.name === 'AsyncFunction'
-// export const isAsyncGroup = <T>(
-//   g: Check.MixedGroup<any, T>,
-// ): g is Check.AsyncGroup<T> => isAsyncFunction<T>(Object.values(g)[0])
-
-// export const Check = { isAsyncGroup }
 
 export declare namespace Report {
   namespace Scans {
@@ -77,6 +57,7 @@ export declare namespace Report {
       vlrs: Las.Vlr[]
       info: Info
       wkt?: string
+      eb?: Las.ExtraBytes[]
     }
   }
   type SuccessLas = Base & {

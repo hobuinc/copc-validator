@@ -1,74 +1,77 @@
 import { Binary, Copc, Getter, Las } from 'copc'
+import { map } from 'lodash'
 import { Check, Report } from 'types'
-import { generateChecks } from '../checks'
 
+const checkFromStatus = (s: Check.Status, id: string): Check => {
+  return { id, ...s }
+}
 export const generateReport = async (
   source: string,
-  copcChecks: Check.Groups<Copc>,
-  lasChecks: Check.Groups<Binary>,
+  copcSuite: Check.Suite<Copc>,
+  hierarchySuite: Check.Suite<{ get: Getter; copc: Copc }>,
   options: Report.Options,
 ): Promise<Report> => {
   const start = new Date()
-  const name = options.name
+  const { name, type } = options
   try {
-    // Attempt COPC parse
-    const copc = await Copc.create(source)
-    const checks = generateChecks(copc, copcChecks)
-    const { header, vlrs, info, wkt } = copc
-    return {
-      name,
-      scan: {
-        type: options.type,
-        result: 'COPC',
-        start,
-        end: new Date(),
-      },
-      checks,
-      copc: {
-        header,
-        vlrs,
-        info,
-        wkt,
-      },
-    }
-  } catch (error) {
-    // COPC fail...
+    const get = Getter.create(source)
     try {
-      // Attempt LAS parse
-      const get = Getter.create(source)
-      const header = Las.Header.parse(
-        await get(0, Las.Constants.minHeaderLength),
+      // Attempt Copc.create()
+      const copc = await Copc.create(get)
+      // Copc.create() passed, probably valid COPC
+
+      // need to perform additional checks to confirm
+      const copcChecks: Check[] = await Promise.all(
+        map(copcSuite, async (f, id) => checkFromStatus(await f(copc), id)),
       )
-      const vlrs = await Las.Vlr.walk(get, header)
-      const checks = generateChecks(await get(0, Infinity), lasChecks)
+      const hierarchyChecks: Check[] = await Promise.all(
+        map(hierarchySuite, async (f, id) =>
+          checkFromStatus(await f({ get, copc }), id),
+        ),
+      )
+      // should combine all sync and async check functions into one array and
+      // invoke all tests before awaiting on any checks
+
+      // will combine suites before `await Promise.all()` once multiple suites
+      // are properly implemented, using this for now:
+      const checks = [...copcChecks, ...hierarchyChecks]
       return {
         name,
         scan: {
-          type: options.type,
-          result: 'LAS',
+          type,
+          result: 'COPC',
           start,
           end: new Date(),
         },
         checks,
-        las: {
-          header,
-          vlrs,
-        },
+        copc,
       }
-    } catch (e) {
-      // LAS fail...
+    } catch (failedCopc) {
+      // Copc.create() failed, definitely not COPC...
       return {
-        // Unable to determine file information
         name,
         scan: {
-          type: options.type,
+          type,
           result: 'Unknown',
           start,
           end: new Date(),
         },
         checks: [],
-        error: e as Error,
+        error: failedCopc as Error,
       }
+    }
+  } catch (failedGetter) {
+    // Getter.create() failed, error with source string
+    return {
+      name,
+      scan: {
+        type,
+        result: 'Unknown',
+        start,
+        end: new Date(),
+      },
+      checks: [],
+      error: failedGetter as Error,
     }
   }
 }

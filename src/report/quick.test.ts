@@ -24,10 +24,11 @@ test('quick COPC', async () => {
   expect(quickWithName.name).toEqual(reportName)
 })
 
-test('quick las-file', async () => {
-  const quick = (await QuickScan(ellipsoidFiles.laz14)) as Report.SuccessLas
-  expect(Report.isLas(quick)).toBe(true)
-})
+test.todo('quick las-file')
+// test('quick las-file', async () => {
+//   const quick = (await QuickScan(ellipsoidFiles.laz14)) as Report.SuccessLas
+//   expect(Report.isLas(quick)).toBe(true)
+// })
 
 // Perform scan on *this* file to ensure failure
 test('quick non-las-file', async () => {
