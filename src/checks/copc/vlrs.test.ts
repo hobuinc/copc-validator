@@ -7,13 +7,6 @@ import { invokeAllChecks } from 'checks'
 const filename = ellipsoidFiles.copc
 const get = Getter.create(filename)
 
-// test('vlrs all-pass', async () => {
-//   const copc = await Copc.create(filename)
-//   const checks = mapChecks(copc, vlrs)
-
-//   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
-// })
-
 test('vlrs all-pass', async () => {
   const copc = await Copc.create(get)
   const checks = await invokeAllChecks([{ source: copc, suite: vlrs }])

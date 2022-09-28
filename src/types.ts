@@ -24,9 +24,7 @@ export declare namespace Check {
    * Usage: Invoke all functions in Suite, wait for Async check functions
    *  to return, then combine all results into a Check array
    */
-  export type Suite<T> = {
-    [id: string]: Function<T>
-  }
+  export type Suite<T> = Record<string, Function<T>>
 }
 export type Check = Check.Check
 
@@ -35,12 +33,13 @@ export declare namespace Report {
     type types = 'quick' | 'full' | 'custom'
     type scan = {
       type: types
+      result: 'valid' | 'invalid' | 'NA'
       start: Date
       end: Date
     }
-    type SuccessCopc = scan & { result: 'COPC' }
-    type SuccessLas = scan & { result: 'LAS' }
-    type Failed = scan & { result: 'Unknown' }
+    type SuccessCopc = scan & { filetype: 'COPC' }
+    type SuccessLas = scan & { filetype: 'LAS' }
+    type Failed = scan & { filetype: 'Unknown' }
   }
   export type Options = {
     name: string
@@ -77,9 +76,9 @@ export declare namespace Report {
 export type Report = Report.Report
 
 export const isCopc = (r: Report): r is Report.SuccessCopc =>
-  r.scan.result === 'COPC'
+  r.scan.filetype === 'COPC'
 export const isLas = (r: Report): r is Report.SuccessLas =>
-  r.scan.result === 'LAS'
+  r.scan.filetype === 'LAS'
 export const isFail = (r: Report): r is Report.Failure =>
-  r.scan.result === 'Unknown'
+  r.scan.filetype === 'Unknown'
 export const Report = { isCopc, isLas, isFail }

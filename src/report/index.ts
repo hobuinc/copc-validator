@@ -3,9 +3,6 @@ import { Binary, Copc, Getter, Las } from 'copc'
 import { map } from 'lodash'
 import { Check, Report } from 'types'
 
-const checkFromStatus = (s: Check.Status, id: string): Check => {
-  return { id, ...s }
-}
 export const generateReport = async (
   source: string,
   copcSuite: Check.Suite<Copc>,
@@ -21,41 +18,22 @@ export const generateReport = async (
       const copc = await Copc.create(get)
       // Copc.create() passed, probably valid COPC
       // need to perform additional checks to confirm
-      // const copcChecks: Check[] = await Promise.all(
-      //   map(copcSuite, async (f, id) => checkFromStatus(await f(copc), id)),
-      // )
-      // const hierarchyChecks: Check[] = await Promise.all(
-      //   map(hierarchySuite, async (f, id) =>
-      //     checkFromStatus(await f({ get, copc }), id),
-      //   ),
-      // )
+
       // should combine all sync and async check functions into one array and
       // invoke all tests before awaiting on any checks
 
-      // will combine suites before `await Promise.all()` once multiple suites
-      // are properly implemented, using this for now:
-      // const checks = [...copcChecks, ...hierarchyChecks]
-
-      const oldStart = performance.now()
+      // this should be pretty close to what I'm intending to do, needs further testing
       const checks = await invokeAllChecks([
         { source: copc, suite: copcSuite },
         { source: { get, copc }, suite: hierarchySuite },
       ])
-      const oldEnd = performance.now()
-      //       const newStart = performance.now()
-      //       const newChecks = await invokeAllChecksV2([
-      //         { source: copc, suite: copcSuite },
-      //         { source: { get, copc }, suite: hierarchySuite },
-      //       ])
-      //       const newEnd = performance.now()
-      //       console.log(`Old performance: ${oldEnd - oldStart}ms
-      // New performance: ${newEnd - newStart}ms`)
 
       return {
         name,
         scan: {
           type,
-          result: 'COPC',
+          filetype: 'COPC',
+          result: resultFromChecks(checks),
           start,
           end: new Date(),
         },
@@ -68,7 +46,8 @@ export const generateReport = async (
         name,
         scan: {
           type,
-          result: 'Unknown',
+          filetype: 'Unknown',
+          result: 'NA',
           start,
           end: new Date(),
         },
@@ -82,7 +61,8 @@ export const generateReport = async (
       name,
       scan: {
         type,
-        result: 'Unknown',
+        filetype: 'Unknown',
+        result: 'NA',
         start,
         end: new Date(),
       },
@@ -91,3 +71,6 @@ export const generateReport = async (
     }
   }
 }
+
+const resultFromChecks = (checks: Check[]): 'valid' | 'invalid' =>
+  checks.some((check) => check.status === 'fail') ? 'invalid' : 'valid'

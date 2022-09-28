@@ -13,6 +13,11 @@ export const header: Check.Suite<Copc> = {
     basicCheck(c.header.headerLength, Las.Constants.minHeaderLength),
   'header.pointDataRecordFormat': (c) =>
     basicCheck(c.header.pointDataRecordFormat, [6, 7, 8]),
+  'header.pointCountByReturn': (c) =>
+    basicCheck(
+      c.header.pointCountByReturn.reduce((prev, curr) => prev + curr, 0),
+      c.header.pointCount,
+    ),
 }
 
 export default header
