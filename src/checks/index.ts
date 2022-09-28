@@ -1,8 +1,33 @@
 import { Check } from 'types'
-import { flattenDeep, map } from 'lodash'
+import { map, flatMapDeep } from 'lodash'
 
 export * from './copc'
 export * from './las'
+
+/**
+ * Utility function to invoke multiple test Suites at once and combine them
+ * into one `Check` array. Supply a Suite with it's common source in this
+ * type of object:
+ * ```{
+ * source: T,
+ * suite: Check.Suite<T>
+ * }```
+ * @param {<T>{source: T, suite: Check.Suite<T>}[]} suites - Array of objects
+ * containing a Check Suite and the source to run the checks against
+ * @returns {Promise<Check[]>} A single Promise object containing the array
+ * of all check `id`s and `status`es (`Check` objects)
+ */
+export const invokeAllChecks = (suites: SuiteWithSource[]): Promise<Check[]> =>
+  Promise.all(flatMapDeep(suites, (s) => innerMap(s)))
+const innerMap = ({ source, suite }: SuiteWithSource): Promise<Check>[] =>
+  map(suite, (f, id) => checkPromise(f(source), id))
+
+type SuiteWithSource<T = any> = { source: T; suite: Check.Suite<T> }
+
+const checkPromise = async (
+  s: Check.Status | Promise<Check.Status>,
+  id: string,
+): Promise<Check> => ({ id, ...(await s) })
 
 /**
  * Utility function to convert simple boolean logic and basic functions
