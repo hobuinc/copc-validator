@@ -4,7 +4,7 @@ export declare namespace Check {
   type status = 'pass' | 'fail' | 'warn'
   type Status = {
     status: status
-    info?: any
+    info?: unknown
   }
 
   export type Check = Status & {
@@ -12,8 +12,8 @@ export declare namespace Check {
   }
 
   namespace Function {
-    type Sync<T> = (s: T) => Status
-    type Async<T> = (s: T) => Promise<Status>
+    type Sync<T> = (s: T) => Status //| Check[]
+    type Async<T> = (s: T) => Promise<Status> //| Promise<Check[]>
   }
   type Function<T> = Function.Sync<T> | Function.Async<T>
 

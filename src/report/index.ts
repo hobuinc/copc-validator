@@ -1,12 +1,17 @@
 import { invokeAllChecks } from '../checks'
-import { Binary, Copc, Getter, Las } from 'copc'
-import { map } from 'lodash'
+import { Copc, Getter } from 'copc'
 import { Check, Report } from 'types'
+import {
+  enhancedHierarchyNodes,
+  EnhanchedHierarchyParams,
+  HierarchyCheckParams,
+} from 'checks/copc/common'
 
 export const generateReport = async (
   source: string,
   copcSuite: Check.Suite<Copc>,
-  hierarchySuite: Check.Suite<{ get: Getter; copc: Copc }>,
+  hierarchySuite: Check.Suite<HierarchyCheckParams>,
+  postHierarchySuite: Check.Suite<EnhanchedHierarchyParams>,
   options: Report.Options,
 ): Promise<Report> => {
   const start = new Date()
@@ -23,11 +28,23 @@ export const generateReport = async (
       // invoke all tests before awaiting on any checks
 
       // this should be pretty close to what I'm intending to do, needs further testing
-      const checks = await invokeAllChecks([
+      const preChecks = await invokeAllChecks([
         { source: copc, suite: copcSuite },
         { source: { get, copc }, suite: hierarchySuite },
       ])
 
+      // this part is non-optimal, I should find a better way to pass Check.Suites
+      // into each other (to share a common source, limiting http or fs calls)
+      const pd: enhancedHierarchyNodes = (
+        preChecks.find((c) => c.id === 'enhancedHierarchy')!.info as {
+          enhancedHierarchy: enhancedHierarchyNodes
+        }
+      ).enhancedHierarchy
+      const postChecks = await invokeAllChecks([
+        { source: { copc, pd }, suite: postHierarchySuite },
+      ])
+
+      const checks = preChecks.concat(postChecks)
       return {
         name,
         scan: {

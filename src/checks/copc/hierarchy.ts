@@ -1,15 +1,21 @@
+import { basicCheck } from 'checks'
 import { Copc, Getter, Hierarchy } from 'copc'
-import { map } from 'lodash'
+import { isEqual, map, reduce } from 'lodash'
 import { Check } from 'types'
-import { HierarchyCheckParams } from './common'
+import {
+  HierarchyCheckParams,
+  enhancedHierarchyNodes,
+  NodePoint,
+} from './common'
 
 export const hierarchy: Check.Suite<HierarchyCheckParams> = {
-  'rootHierarchyPage rootPoints': async ({ get, copc }) => {
+  enhancedHierarchy: async ({ get, copc }) => {
+    const {
+      info: { rootHierarchyPage },
+      header: { pointDataRecordFormat },
+    } = copc
     try {
-      const hierarchy = await Copc.loadHierarchyPage(
-        get,
-        copc.info.rootHierarchyPage,
-      )
+      const hierarchy = await Copc.loadHierarchyPage(get, rootHierarchyPage)
       const { nodes, pages } = hierarchy
       const pd: NodePoint[] = await Promise.all(
         map(nodes, async (node, path) => {
@@ -27,30 +33,25 @@ export const hierarchy: Check.Suite<HierarchyCheckParams> = {
           return { path, rootPoint }
         }),
       )
+      const enhancedHierarchy = enhancedHierarchyNodes(nodes, pd)
+
+      if (![6, 7, 8].includes(pointDataRecordFormat))
+        throw new Error(
+          `Invalid Point Data Record Format (PDRF: 6 | 7 | 8): ${pointDataRecordFormat}`,
+        )
+
+      // const rgbCheck = checkRgb(
+      //   enhancedHierarchy,
+      //   pointDataRecordFormat as 6 | 7 | 8,
+      // )
       return {
         status: 'pass',
-        info: enhancedHierarchyNodes(nodes, pd),
+        info: { enhancedHierarchy },
       }
     } catch (e) {
       return { status: 'fail', info: e as Error }
     }
   },
 }
-
-type NodePoint = {
-  path: string
-  rootPoint: Record<string, number>
-}
-const enhancedHierarchyNodes = (
-  nodes: Hierarchy.Node.Map,
-  points: NodePoint[],
-): Record<string, Hierarchy.Node & { root: Record<string, number> }> =>
-  points.reduce(
-    (prev, curr) => ({
-      ...prev,
-      [curr.path]: { ...nodes[curr.path], root: curr.rootPoint },
-    }),
-    {},
-  )
 
 export default hierarchy
