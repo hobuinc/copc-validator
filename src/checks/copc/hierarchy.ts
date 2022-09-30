@@ -1,4 +1,4 @@
-import { basicCheck } from 'checks'
+import { invokeAllChecks } from '../../checks'
 import { Copc, Getter, Hierarchy } from 'copc'
 import { isEqual, map, reduce } from 'lodash'
 import { Check } from 'types'
@@ -7,17 +7,16 @@ import {
   enhancedHierarchyNodes,
   NodePoint,
 } from './common'
+import pointData from './point-data'
 
 export const hierarchy: Check.Suite<HierarchyCheckParams> = {
-  enhancedHierarchy: async ({ get, copc }) => {
-    const {
-      info: { rootHierarchyPage },
-      header: { pointDataRecordFormat },
-    } = copc
+  hierarchyNestedSuite: async ({ get, copc }) => {
     try {
-      const hierarchy = await Copc.loadHierarchyPage(get, rootHierarchyPage)
-      const { nodes, pages } = hierarchy
-      const pd: NodePoint[] = await Promise.all(
+      const { nodes } = await Copc.loadHierarchyPage(
+        get,
+        copc.info.rootHierarchyPage,
+      )
+      const points: NodePoint[] = await Promise.all(
         map(nodes, async (node, path) => {
           const view = await Copc.loadPointDataView(get, copc, node!)
 
@@ -33,23 +32,10 @@ export const hierarchy: Check.Suite<HierarchyCheckParams> = {
           return { path, rootPoint }
         }),
       )
-      const enhancedHierarchy = enhancedHierarchyNodes(nodes, pd)
-
-      if (![6, 7, 8].includes(pointDataRecordFormat))
-        throw new Error(
-          `Invalid Point Data Record Format (PDRF: 6 | 7 | 8): ${pointDataRecordFormat}`,
-        )
-
-      // const rgbCheck = checkRgb(
-      //   enhancedHierarchy,
-      //   pointDataRecordFormat as 6 | 7 | 8,
-      // )
-      return {
-        status: 'pass',
-        info: { enhancedHierarchy },
-      }
-    } catch (e) {
-      return { status: 'fail', info: e as Error }
+      const pd = enhancedHierarchyNodes(nodes, points)
+      return invokeAllChecks([{ source: { copc, pd }, suite: pointData }])
+    } catch (error) {
+      return [{ id: 'hierarchyNestedSuite', status: 'fail', info: error }]
     }
   },
 }

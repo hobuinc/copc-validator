@@ -2,16 +2,17 @@ import { Point } from 'copc'
 import { isEqual, reduce } from 'lodash'
 import { Check } from 'types'
 import {
-  enhancedWithPointData,
+  enhancedWithRootPoint,
   EnhanchedHierarchyParams,
-  Messages,
+  Statuses,
 } from './common'
 
 export const pointData: Check.Suite<EnhanchedHierarchyParams> = {
   rgb: ({ copc, pd }) =>
     checkRgb(pd, copc.header.pointDataRecordFormat as 6 | 7 | 8),
   rgbi: ({ pd }) => checkRgbi(pd),
-  xyz: ({ copc, pd }) => checkXyz(pd, copc.header.min, copc.header.max),
+  xyz: ({ copc, pd }) =>
+    checkXyz(pd, copc.header.min, copc.header.max, copc.info.cube),
   returns: ({ copc, pd }) => {
     const pointData = reduceDimensions(pd, ['ReturnNumber', 'NumberOfReturns'])
     const badPoints = getBadPoints(
@@ -19,14 +20,16 @@ export const pointData: Check.Suite<EnhanchedHierarchyParams> = {
       (d) => d.ReturnNumber! > d.NumberOfReturns!,
     )
     return badPoints.length > 0
-      ? Messages.failureWithInfo(badPoints)
-      : Messages.success
+      ? Statuses.failureWithInfo(badPoints)
+      : Statuses.success
   },
 }
 
+export default pointData
+
 // ===== CHECKS =====
 const checkRgb = <T extends object = any>(
-  points: enhancedWithPointData<T>,
+  points: enhancedWithRootPoint<T>,
   pdrf: 6 | 7 | 8,
 ): Check.Status => {
   const pointData = reduceDimensions(points, ['Red', 'Green', 'Blue'])
@@ -36,7 +39,7 @@ const checkRgb = <T extends object = any>(
       (d) => !isEqual(d, { Red: undefined, Green: undefined, Blue: undefined }),
     )
     return badRootPoints.length > 0
-      ? Messages.failureWithInfo(
+      ? Statuses.failureWithInfo(
           `(PDRF: 6) RGB data found at: ${badRootPoints.toLocaleString()}`,
         )
       : { status: 'pass' }
@@ -57,7 +60,7 @@ const checkRgb = <T extends object = any>(
 }
 
 const checkRgbi = <T extends object = any>(
-  points: enhancedWithPointData<T>,
+  points: enhancedWithRootPoint<T>,
 ): Check.Status => {
   const pointData = reduceDimensions(points, [
     'Red',
@@ -71,10 +74,10 @@ const checkRgbi = <T extends object = any>(
       d.Red! <= 255 && d.Green! <= 255 && d.Blue! <= 255 && d.Intensity! <= 255,
   )
   return badPoints.length === Object.entries(pointData).length
-    ? Messages.warningWithInfo(
+    ? Statuses.warningWithInfo(
         'Points appear to contain 8-bit color. Should be scaled to 16-bit.',
       )
-    : Messages.success
+    : Statuses.success
 }
 
 /**
@@ -82,36 +85,45 @@ const checkRgbi = <T extends object = any>(
  * @param points
  * @param min
  * @param max
+ * @param cube
  */
 const checkXyz = <T extends object = any>(
-  points: enhancedWithPointData<T>,
+  points: enhancedWithRootPoint<T>,
   min: Point,
   max: Point,
+  cube: [number, number, number, number, number, number],
 ): Check.Status => {
   const pointData = reduceDimensions(points, ['X', 'Y', 'Z'])
   const [xMin, yMin, zMin] = min
   const [xMax, yMax, zMax] = max
+  const [xMinCube, yMinCube, zMinCube, xMaxCube, yMaxCube, zMaxCube] = cube
   const badPoints = getBadPoints(
     pointData,
     (d) =>
       d.X! < xMin ||
       d.X! > xMax ||
+      d.X! < xMinCube ||
+      d.X! > xMaxCube ||
       d.Y! < yMin ||
       d.Y! > yMax ||
+      d.Y! < yMinCube ||
+      d.Y! > yMaxCube ||
       d.Z! < zMin ||
-      d.Z! > zMax,
+      d.Z! > zMax ||
+      d.Z! < zMinCube ||
+      d.Z! > zMaxCube,
   )
   return badPoints.length > 0
-    ? Messages.failureWithInfo(
+    ? Statuses.failureWithInfo(
         `X, Y, or Z out of bounds: ${badPoints.toLocaleString()}`,
       )
-    : Messages.success
+    : Statuses.success
 }
 
 // ===== UTILS =====
 type reducedPointData = Record<string, Record<string, number | undefined>>
 const reduceDimensions = <T extends object = any>(
-  points: enhancedWithPointData<T>,
+  points: enhancedWithRootPoint<T>,
   dimensions: readonly string[],
 ): Record<string, Record<typeof dimensions[number], number | undefined>> =>
   reduce(

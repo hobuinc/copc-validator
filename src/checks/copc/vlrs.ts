@@ -1,4 +1,4 @@
-import { Messages as CommonMsgs } from './common'
+import { Statuses as CommonMsgs } from './common'
 import { Check } from 'types'
 import { Copc, Las } from 'copc'
 import { basicCheck } from '../../checks'

@@ -5,7 +5,9 @@ import {
   enhancedHierarchyNodes,
   EnhanchedHierarchyParams,
   HierarchyCheckParams,
-} from 'checks/copc/common'
+  NodePoint,
+} from '../checks/copc/common'
+import { map } from 'lodash'
 
 export const generateReport = async (
   source: string,
@@ -21,6 +23,29 @@ export const generateReport = async (
     try {
       // Attempt Copc.create()
       const copc = await Copc.create(get)
+
+      // const { nodes } = await Copc.loadHierarchyPage(
+      //   get,
+      //   copc.info.rootHierarchyPage,
+      // )
+      // const points: NodePoint[] = await Promise.all(
+      //   map(nodes, async (node, path) => {
+      //     const view = await Copc.loadPointDataView(get, copc, node!)
+
+      //     const dimensions = Object.keys(view.dimensions)
+      //     const getters = dimensions.map(view.getter)
+      //     const getDimensions = (index: number): Record<string, number> =>
+      //       getters.reduce(
+      //         (prev, curr, i) => ({ ...prev, [dimensions[i]]: curr(index) }),
+      //         {},
+      //       )
+
+      //     const rootPoint = getDimensions(0)
+      //     return { path, rootPoint }
+      //   }),
+      // )
+      // const pd = enhancedHierarchyNodes(nodes, points)
+
       // Copc.create() passed, probably valid COPC
       // need to perform additional checks to confirm
 
@@ -28,23 +53,27 @@ export const generateReport = async (
       // invoke all tests before awaiting on any checks
 
       // this should be pretty close to what I'm intending to do, needs further testing
-      const preChecks = await invokeAllChecks([
+      const checks = await invokeAllChecks([
         { source: copc, suite: copcSuite },
         { source: { get, copc }, suite: hierarchySuite },
+        // { source: { copc, pd }, suite: postHierarchySuite },
       ])
+
+      // assuming Copc.create worked, we can safely(?) assume that Copc.loadPointDataView
+      // will work, so I can skip the stupid thing I was doing
 
       // this part is non-optimal, I should find a better way to pass Check.Suites
       // into each other (to share a common source, limiting http or fs calls)
-      const pd: enhancedHierarchyNodes = (
-        preChecks.find((c) => c.id === 'enhancedHierarchy')!.info as {
-          enhancedHierarchy: enhancedHierarchyNodes
-        }
-      ).enhancedHierarchy
-      const postChecks = await invokeAllChecks([
-        { source: { copc, pd }, suite: postHierarchySuite },
-      ])
+      // const pd: enhancedHierarchyNodes = (
+      //   preChecks.find((c) => c.id === 'enhancedHierarchy')!.info as {
+      //     enhancedHierarchy: enhancedHierarchyNodes
+      //   }
+      // ).enhancedHierarchy
+      // const postChecks = await invokeAllChecks([
+      //   { source: { copc, pd }, suite: postHierarchySuite },
+      // ])
 
-      const checks = preChecks.concat(postChecks)
+      // const checks = preChecks.concat(postChecks)
       return {
         name,
         scan: {

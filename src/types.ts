@@ -1,5 +1,15 @@
 import { Copc, Las, Info, Getter } from 'copc'
 
+declare namespace Function {
+  type Sync<T> = (s: T) => Check.Status
+  type Async<T> = (s: T) => Promise<Check.Status>
+  type NestedSuite<T> = (s: T) => Promise<Check[]>
+}
+export type Function<T> =
+  | Function.Sync<T>
+  | Function.Async<T>
+  | Function.NestedSuite<T>
+
 export declare namespace Check {
   type status = 'pass' | 'fail' | 'warn'
   type Status = {
@@ -10,12 +20,6 @@ export declare namespace Check {
   export type Check = Status & {
     id: string
   }
-
-  namespace Function {
-    type Sync<T> = (s: T) => Status //| Check[]
-    type Async<T> = (s: T) => Promise<Status> //| Promise<Check[]>
-  }
-  type Function<T> = Function.Sync<T> | Function.Async<T>
 
   /**
    * Suite: Group of check functions that run on a shared source.
