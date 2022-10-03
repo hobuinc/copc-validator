@@ -13,39 +13,16 @@ export const generateReport = async (
   source: string,
   copcSuite: Check.Suite<Copc>,
   hierarchySuite: Check.Suite<HierarchyCheckParams>,
-  postHierarchySuite: Check.Suite<EnhanchedHierarchyParams>,
   options: Report.Options,
 ): Promise<Report> => {
   const start = new Date()
+  const startTime = performance.now()
   const { name, type } = options
   try {
     const get = Getter.create(source)
     try {
       // Attempt Copc.create()
       const copc = await Copc.create(get)
-
-      // const { nodes } = await Copc.loadHierarchyPage(
-      //   get,
-      //   copc.info.rootHierarchyPage,
-      // )
-      // const points: NodePoint[] = await Promise.all(
-      //   map(nodes, async (node, path) => {
-      //     const view = await Copc.loadPointDataView(get, copc, node!)
-
-      //     const dimensions = Object.keys(view.dimensions)
-      //     const getters = dimensions.map(view.getter)
-      //     const getDimensions = (index: number): Record<string, number> =>
-      //       getters.reduce(
-      //         (prev, curr, i) => ({ ...prev, [dimensions[i]]: curr(index) }),
-      //         {},
-      //       )
-
-      //     const rootPoint = getDimensions(0)
-      //     return { path, rootPoint }
-      //   }),
-      // )
-      // const pd = enhancedHierarchyNodes(nodes, points)
-
       // Copc.create() passed, probably valid COPC
       // need to perform additional checks to confirm
 
@@ -56,24 +33,8 @@ export const generateReport = async (
       const checks = await invokeAllChecks([
         { source: copc, suite: copcSuite },
         { source: { get, copc }, suite: hierarchySuite },
-        // { source: { copc, pd }, suite: postHierarchySuite },
       ])
 
-      // assuming Copc.create worked, we can safely(?) assume that Copc.loadPointDataView
-      // will work, so I can skip the stupid thing I was doing
-
-      // this part is non-optimal, I should find a better way to pass Check.Suites
-      // into each other (to share a common source, limiting http or fs calls)
-      // const pd: enhancedHierarchyNodes = (
-      //   preChecks.find((c) => c.id === 'enhancedHierarchy')!.info as {
-      //     enhancedHierarchy: enhancedHierarchyNodes
-      //   }
-      // ).enhancedHierarchy
-      // const postChecks = await invokeAllChecks([
-      //   { source: { copc, pd }, suite: postHierarchySuite },
-      // ])
-
-      // const checks = preChecks.concat(postChecks)
       return {
         name,
         scan: {
@@ -82,6 +43,7 @@ export const generateReport = async (
           result: resultFromChecks(checks),
           start,
           end: new Date(),
+          time: performance.now() - startTime,
         },
         checks,
         copc,
@@ -96,6 +58,7 @@ export const generateReport = async (
           result: 'NA',
           start,
           end: new Date(),
+          time: performance.now() - startTime,
         },
         checks: [],
         error: failedCopc as Error,
@@ -111,6 +74,7 @@ export const generateReport = async (
         result: 'NA',
         start,
         end: new Date(),
+        time: performance.now() - startTime,
       },
       checks: [],
       error: failedGetter as Error,
@@ -118,5 +82,6 @@ export const generateReport = async (
   }
 }
 
+// .some() should be more optimal than .every() in this case, but could be double-checked
 const resultFromChecks = (checks: Check[]): 'valid' | 'invalid' =>
   checks.some((check) => check.status === 'fail') ? 'invalid' : 'valid'

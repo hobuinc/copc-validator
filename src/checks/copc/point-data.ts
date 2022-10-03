@@ -1,11 +1,8 @@
 import { Point } from 'copc'
 import { isEqual, reduce } from 'lodash'
 import { Check } from 'types'
-import {
-  enhancedWithRootPoint,
-  EnhanchedHierarchyParams,
-  Statuses,
-} from './common'
+import { enhancedWithRootPoint, EnhanchedHierarchyParams } from './common'
+import { Statuses } from '../../checks'
 
 export const pointData: Check.Suite<EnhanchedHierarchyParams> = {
   rgb: ({ copc, pd }) =>
@@ -13,7 +10,7 @@ export const pointData: Check.Suite<EnhanchedHierarchyParams> = {
   rgbi: ({ pd }) => checkRgbi(pd),
   xyz: ({ copc, pd }) =>
     checkXyz(pd, copc.header.min, copc.header.max, copc.info.cube),
-  returns: ({ copc, pd }) => {
+  returns: ({ pd }) => {
     const pointData = reduceDimensions(pd, ['ReturnNumber', 'NumberOfReturns'])
     const badPoints = getBadPoints(
       pointData,
@@ -80,13 +77,7 @@ const checkRgbi = <T extends object = any>(
     : Statuses.success
 }
 
-/**
- *
- * @param points
- * @param min
- * @param max
- * @param cube
- */
+// TODO: XYZ within node cube (based on D-X-Y-Z key)
 const checkXyz = <T extends object = any>(
   points: enhancedWithRootPoint<T>,
   min: Point,
@@ -101,16 +92,16 @@ const checkXyz = <T extends object = any>(
     pointData,
     (d) =>
       d.X! < xMin ||
-      d.X! > xMax ||
       d.X! < xMinCube ||
+      d.X! > xMax ||
       d.X! > xMaxCube ||
       d.Y! < yMin ||
-      d.Y! > yMax ||
       d.Y! < yMinCube ||
+      d.Y! > yMax ||
       d.Y! > yMaxCube ||
       d.Z! < zMin ||
-      d.Z! > zMax ||
       d.Z! < zMinCube ||
+      d.Z! > zMax ||
       d.Z! > zMaxCube,
   )
   return badPoints.length > 0
@@ -122,6 +113,13 @@ const checkXyz = <T extends object = any>(
 
 // ===== UTILS =====
 type reducedPointData = Record<string, Record<string, number | undefined>>
+/**
+ * Utility function to trim dimensions from an enhanced hierarchy page node
+ * @param points Hierarchy.Node.Map (or similar object) enhanced with Root Point data,
+ * meaning it contains the object `root: {[dimension]: number}`
+ * @param dimensions Array of dimension names to keep in the `points` object
+ * @returns copy of `points` where `root` contains only the property names in `dimensions`
+ */
 const reduceDimensions = <T extends object = any>(
   points: enhancedWithRootPoint<T>,
   dimensions: readonly string[],

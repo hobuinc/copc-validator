@@ -1,15 +1,5 @@
 import { Copc, Las, Info, Getter } from 'copc'
 
-declare namespace Function {
-  type Sync<T> = (s: T) => Check.Status
-  type Async<T> = (s: T) => Promise<Check.Status>
-  type NestedSuite<T> = (s: T) => Promise<Check[]>
-}
-export type Function<T> =
-  | Function.Sync<T>
-  | Function.Async<T>
-  | Function.NestedSuite<T>
-
 export declare namespace Check {
   type status = 'pass' | 'fail' | 'warn'
   type Status = {
@@ -17,9 +7,15 @@ export declare namespace Check {
     info?: unknown
   }
 
-  export type Check = Status & {
-    id: string
+  namespace Function {
+    type Sync<T> = (s: T) => Check.Status
+    type Async<T> = (s: T) => Promise<Check.Status>
+    type NestedSuite<T> = (s: T) => Promise<Check[]>
   }
+  export type Function<T> =
+    | Function.Sync<T>
+    | Function.Async<T>
+    | Function.NestedSuite<T>
 
   /**
    * Suite: Group of check functions that run on a shared source.
@@ -29,6 +25,10 @@ export declare namespace Check {
    *  to return, then combine all results into a Check array
    */
   export type Suite<T> = Record<string, Function<T>>
+
+  export type Check = Status & {
+    id: string
+  }
 }
 export type Check = Check.Check
 
@@ -40,6 +40,7 @@ export declare namespace Report {
       result: 'valid' | 'invalid' | 'NA'
       start: Date
       end: Date
+      time: number
     }
     type SuccessCopc = scan & { filetype: 'COPC' }
     type SuccessLas = scan & { filetype: 'LAS' }

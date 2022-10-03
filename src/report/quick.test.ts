@@ -13,7 +13,8 @@ test('quick COPC', async () => {
 
   expect(quick.name).toEqual(filename)
   expect(quick.scan.type).toEqual('quick')
-  expect(quick.scan.result).toEqual('COPC')
+  expect(quick.scan.filetype).toEqual('COPC')
+  expect(quick.scan.result).toEqual('valid')
   expect(quick.copc.header).toEqual(copc.header)
   expect(quick.copc.vlrs).toEqual(copc.vlrs)
   expect(quick.copc.info).toEqual(copc.info)
@@ -38,6 +39,7 @@ test('quick non-las-file', async () => {
 
   expect(quick.name).toEqual(__filename)
   expect(quick.scan.type).toEqual('quick')
-  expect(quick.scan.result).toEqual('Unknown')
+  expect(quick.scan.filetype).toEqual('Unknown')
+  expect(quick.scan.result).toEqual('NA')
   expect(quick.error.message).toContain('Invalid file signature:')
 })
