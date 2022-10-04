@@ -1,11 +1,10 @@
 import { invokeAllChecks } from '../../checks'
 import { Copc } from 'copc'
-import { map } from 'lodash'
 import { Check } from 'types'
 import {
   HierarchyCheckParams,
   enhancedHierarchyNodes,
-  NodePoint,
+  getNodePoint,
 } from './common'
 import pointData from './point-data'
 
@@ -19,22 +18,8 @@ export const hierarchy: Check.Suite<HierarchyCheckParams> = {
         get,
         copc.info.rootHierarchyPage,
       )
-      const points: NodePoint[] = await Promise.all(
-        map(nodes, async (node, path) => {
-          const view = await Copc.loadPointDataView(get, copc, node!)
-
-          const dimensions = Object.keys(view.dimensions)
-          const getters = dimensions.map(view.getter)
-          const getDimensions = (index: number): Record<string, number> =>
-            getters.reduce(
-              (prev, curr, i) => ({ ...prev, [dimensions[i]]: curr(index) }),
-              {},
-            )
-
-          const rootPoint = getDimensions(0)
-          return { path, rootPoint }
-        }),
-      )
+      // TODO: Handle more than one page
+      const points = await getNodePoint(get, copc, nodes)
       const pd = enhancedHierarchyNodes(nodes, points)
       return invokeAllChecks({ source: { copc, pd }, suite: pointData })
     } catch (error) {
@@ -42,5 +27,7 @@ export const hierarchy: Check.Suite<HierarchyCheckParams> = {
     }
   },
 }
+// currently no `hierarchy.test.ts` since it only calls `point-data.ts`, which
+// is covered by `point-data.test.ts` tests
 
 export default hierarchy

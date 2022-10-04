@@ -9,8 +9,18 @@ const get = Getter.create(filename)
 
 test('vlrs all-pass', async () => {
   const copc = await Copc.create(get)
-  const checks = await invokeAllChecks([{ source: copc, suite: vlrs }])
+  const checks = await invokeAllChecks({ source: copc, suite: vlrs })
   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
+})
+
+test('vlrs critical-fail', async () => {
+  const copc = await Copc.create(get)
+  const badCopc: Copc = {
+    ...copc,
+    vlrs: [],
+  }
+  const checks = await invokeAllChecks({ source: badCopc, suite: vlrs })
+  checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
 })
 
 test('vlrs utilities', async () => {
@@ -47,44 +57,4 @@ test('vlrs utilities', async () => {
   expect(Vlrs.checkVlrDuplicates(vlrsPlusDupedCopcInfo, 'copc', 1)).toBe(true)
 })
 
-// test('vlrs missing-required', async () => {
-//   const copc = await Copc.create(filename)
-//   const badCopc = {
-//     ...copc,
-//     header: {
-//       ...copc.header,
-//       vlrCount: 1,
-//     },
-//     vlrs: copc.vlrs.filter((v) => v.userId !== 'copc'),
-//   }
-//   const checks = mapChecks(badCopc, vlrs)
-
-//   expect(checks.find((c) => c.id.includes('copc-info'))).toHaveProperty(
-//     'status',
-//     'fail',
-//   )
-//   expect(checks.find((c) => c.id.includes('copc-hierarchy'))).toHaveProperty(
-//     'status',
-//     'fail',
-//   )
-// })
-
-// test('vlrs missing-recommended', async () => {
-//   const copc = await Copc.create(filename)
-//   const badCopc = {
-//     ...copc,
-//     header: {
-//       ...copc.header,
-//       vlrCount: 2,
-//     },
-//     vlrs: copc.vlrs.filter((v) => v.userId !== 'laszip encoded'),
-//   }
-//   const checks = mapChecks(badCopc, vlrs)
-
-//   expect(checks.find((c) => c.id.includes('laszip-encoded'))).toHaveProperty(
-//     'status',
-//     'warn',
-//   )
-// })
-
-test.todo('vlr negative tests')
+test.todo('other vlrs tests')

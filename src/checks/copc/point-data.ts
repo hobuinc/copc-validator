@@ -7,17 +7,23 @@ import { Statuses } from '../../checks'
 export const pointData: Check.Suite<EnhanchedHierarchyParams> = {
   rgb: ({ copc, pd }) =>
     checkRgb(pd, copc.header.pointDataRecordFormat as 6 | 7 | 8),
-  rgbi: ({ pd }) => checkRgbi(pd),
+  rgbi: ({ copc, pd }) =>
+    checkRgbi(pd, copc.header.pointDataRecordFormat as 6 | 7 | 8),
   xyz: ({ copc, pd }) =>
     checkXyz(pd, copc.header.min, copc.header.max, copc.info.cube),
   returns: ({ pd }) => {
-    const pointData = reduceDimensions(pd, ['ReturnNumber', 'NumberOfReturns'])
+    // const pointData = reduceDimensions(pd, ['ReturnNumber', 'NumberOfReturns'])
     const badPoints = getBadPoints(
-      pointData,
-      (d) => d.ReturnNumber! > d.NumberOfReturns!,
+      pd,
+      (d) =>
+        typeof d.ReturnNumber === 'undefined' ||
+        typeof d.NumberOfReturns === 'undefined' ||
+        d.ReturnNumber > d.NumberOfReturns,
     )
     return badPoints.length > 0
-      ? Statuses.failureWithInfo(badPoints)
+      ? Statuses.failureWithInfo(
+          `Invalid points found at: [ ${badPoints.join(', ')} ]`,
+        )
       : Statuses.success
   },
 }
@@ -31,70 +37,96 @@ const checkRgb = <T extends object = any>(
 ): Check.Status => {
   const pointData = reduceDimensions(points, ['Red', 'Green', 'Blue'])
   if (pdrf === 6) {
-    const badRootPoints = getBadPoints(
+    const badRootPoints = getReducedBadPoints(
       pointData,
       (d) => !isEqual(d, { Red: undefined, Green: undefined, Blue: undefined }),
     )
     return badRootPoints.length > 0
       ? Statuses.failureWithInfo(
-          `(PDRF: 6) RGB data found at: ${badRootPoints.toLocaleString()}`,
+          `(PDRF: 6) RGB data found at: ${badRootPoints.join(', ')}`,
         )
       : { status: 'pass' }
   }
   // else
-  const badRootPoints = getBadPoints(
+  const badRootPoints = getReducedBadPoints(
     pointData,
     (d) =>
       isEqual(d, { Red: undefined, Green: undefined, Blue: undefined }) ||
       isEqual(d, { Red: 0, Green: 0, Blue: 0 }),
   )
   return badRootPoints.length > 0
-    ? {
-        status: 'warn',
-        info: `(PDRF: ${pdrf}) Unutilized RGB data found at: ${badRootPoints.toLocaleString()}`,
-      }
-    : { status: 'pass' }
+    ? Statuses.warningWithInfo(
+        `(PDRF: ${pdrf}) Unutilized RGB data found at: [ ${badRootPoints.join(
+          ', ',
+        )} ]`,
+      )
+    : Statuses.success
 }
 
 const checkRgbi = <T extends object = any>(
-  points: enhancedWithRootPoint<T>,
+  pointData: enhancedWithRootPoint<T>,
+  pdrf: 6 | 7 | 8,
 ): Check.Status => {
-  const pointData = reduceDimensions(points, [
-    'Red',
-    'Green',
-    'Blue',
-    'Intensity',
-  ])
-  const badPoints = getBadPoints(
+  // const pointData = reduceDimensions(points, [
+  //   'Red',
+  //   'Green',
+  //   'Blue',
+  //   'Intensity',
+  // ])
+  const hasRgb = pdrf !== 6
+  if (hasRgb) {
+    const badPoints = getBadPoints(
+      pointData,
+      (d) =>
+        typeof d.Red === 'undefined' ||
+        typeof d.Green === 'undefined' ||
+        typeof d.Blue === 'undefined',
+    )
+    if (badPoints.length > 0)
+      return Statuses.failureWithInfo(
+        `Invalid RGB data at: [ ${badPoints.join(', ')} ]`,
+      )
+  }
+  const warnPoints = getBadPoints(
     pointData,
-    (d) =>
-      d.Red! <= 255 && d.Green! <= 255 && d.Blue! <= 255 && d.Intensity! <= 255,
+    hasRgb
+      ? (d) =>
+          d.Red! <= 255 &&
+          d.Green! <= 255 &&
+          d.Blue! <= 255 &&
+          d.Intensity! <= 255
+      : (d) => d.Intensity! <= 255,
   )
-  return badPoints.length === Object.entries(pointData).length
+  return warnPoints.length === Object.entries(pointData).length
     ? Statuses.warningWithInfo(
-        'Points appear to contain 8-bit color. Should be scaled to 16-bit.',
+        `Points appear to contain 8-bit ${
+          hasRgb ? 'RGBI' : 'Intensity'
+        }. Should be scaled to 16-bit.`,
       )
     : Statuses.success
 }
 
 // TODO: XYZ within node cube (based on D-X-Y-Z key)
 const checkXyz = <T extends object = any>(
-  points: enhancedWithRootPoint<T>,
+  pointData: enhancedWithRootPoint<T>,
   min: Point,
   max: Point,
   cube: [number, number, number, number, number, number],
 ): Check.Status => {
-  const pointData = reduceDimensions(points, ['X', 'Y', 'Z'])
+  // const pointData = reduceDimensions(points, ['X', 'Y', 'Z'])
   const [xMin, yMin, zMin] = min
   const [xMax, yMax, zMax] = max
   const [xMinCube, yMinCube, zMinCube, xMaxCube, yMaxCube, zMaxCube] = cube
   const badPoints = getBadPoints(
     pointData,
     (d) =>
-      d.X! < xMin ||
-      d.X! < xMinCube ||
-      d.X! > xMax ||
-      d.X! > xMaxCube ||
+      typeof d.X === 'undefined' ||
+      typeof d.Y === 'undefined' ||
+      typeof d.Z === 'undefined' ||
+      d.X < xMin ||
+      d.X < xMinCube ||
+      d.X > xMax ||
+      d.X > xMaxCube ||
       d.Y! < yMin ||
       d.Y! < yMinCube ||
       d.Y! > yMax ||
@@ -105,14 +137,15 @@ const checkXyz = <T extends object = any>(
       d.Z! > zMaxCube,
   )
   return badPoints.length > 0
-    ? Statuses.failureWithInfo(
-        `X, Y, or Z out of bounds: ${badPoints.toLocaleString()}`,
-      )
+    ? Statuses.failureWithInfo(`X, Y, or Z out of bounds: [ ${badPoints} ]`)
     : Statuses.success
 }
 
 // ===== UTILS =====
-type reducedPointData = Record<string, Record<string, number | undefined>>
+export type reducedPointData = Record<
+  string,
+  Record<string, number | undefined>
+>
 /**
  * Utility function to trim dimensions from an enhanced hierarchy page node
  * @param points Hierarchy.Node.Map (or similar object) enhanced with Root Point data,
@@ -120,7 +153,7 @@ type reducedPointData = Record<string, Record<string, number | undefined>>
  * @param dimensions Array of dimension names to keep in the `points` object
  * @returns copy of `points` where `root` contains only the property names in `dimensions`
  */
-const reduceDimensions = <T extends object = any>(
+export const reduceDimensions = <T extends object = any>(
   points: enhancedWithRootPoint<T>,
   dimensions: readonly string[],
 ): Record<string, Record<typeof dimensions[number], number | undefined>> =>
@@ -155,12 +188,30 @@ type pointChecker = (data: Record<string, number | undefined>) => boolean
  * considered a Point Data Record that violates the COPC specification.
  * @returns {string[]} Array of nodes that return `true` given the `check` function
  */
-const getBadPoints = (pd: reducedPointData, check: pointChecker): string[] =>
+export const getReducedBadPoints = (
+  pd: reducedPointData,
+  check: pointChecker,
+): string[] =>
   Object.entries(pd).reduce<string[]>((prev, curr) => {
     const [node, data] = curr
     try {
       // try {} wrapper in case check() fails. Considered a point failure
       if (check(data)) return [...prev, node]
+    } catch (e) {
+      return [...prev, node]
+    }
+    return [...prev]
+  }, [])
+
+export const getBadPoints = <T extends object = any>(
+  pd: enhancedWithRootPoint<T>, //reducedPointData,
+  check: pointChecker,
+): string[] =>
+  Object.entries(pd).reduce<string[]>((prev, curr) => {
+    const [node, { root }] = curr
+    try {
+      // try {} wrapper in case check() fails. Considered a point failure
+      if (check(root)) return [...prev, node]
     } catch (e) {
       return [...prev, node]
     }
