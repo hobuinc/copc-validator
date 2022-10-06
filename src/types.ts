@@ -56,13 +56,14 @@ export declare namespace Report {
   }
   type SuccessCopc = Base & {
     scan: Scans.SuccessCopc
-    copc: {
-      header: Las.Header
-      vlrs: Las.Vlr[]
-      info: Info
-      wkt?: string
-      eb?: Las.ExtraBytes[]
-    }
+    copc: Copc
+    // copc: {
+    //   header: Las.Header
+    //   vlrs: Las.Vlr[]
+    //   info: Info
+    //   wkt?: string
+    //   eb?: Las.ExtraBytes[]
+    // }
   }
   type SuccessLas = Base & {
     scan: Scans.SuccessLas
@@ -75,7 +76,8 @@ export declare namespace Report {
   type Success = SuccessCopc | SuccessLas
   type Failure = Base & {
     scan: Scans.Failed
-    error: Error
+    error: Error // use Error for the copcError if it's the same as the lasError,
+    copcError?: Error // otherwise use copcError for copcError and error for lasError
   }
   export type Report = Success | Failure
 }

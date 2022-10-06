@@ -47,5 +47,6 @@ test('quick non-las-file', async () => {
   expect(quick.scan.type).toEqual('quick')
   expect(quick.scan.filetype).toEqual('Unknown')
   expect(quick.scan.result).toEqual('NA')
-  expect(quick.error.message).toContain('Invalid file signature:')
+  expect(quick.copcError!.message).toContain('Invalid file signature:')
+  expect(quick.error!.message).toContain('Invalid file signature:')
 })

@@ -88,8 +88,7 @@ export const complexCheck = <T>(
   infoOnFailure?: unknown,
   infoOnSuccess?: unknown,
 ): Check.Status => {
-  const result = booleanFn(checker)(source)
-  if (result)
+  if (booleanFn(checker)(source))
     return infoOnSuccess
       ? Statuses.successWithInfo(infoOnSuccess)
       : Statuses.success

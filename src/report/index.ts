@@ -11,22 +11,25 @@ export const generateReport = async (
 ): Promise<Report> => {
   const start = new Date()
   const startTime = performance.now()
-  const get = Getter.create(source)
+  // Getter.create() should never throw error outside of 'bad string'
   try {
+    const get = Getter.create(source)
     try {
       // Attempt Copc.create()
       const copc = await Copc.create(get)
+      // Copc.create() can fail for the following reasons:
+      //   - Las.Header.parse() throws an error (see below 55)
+      //   - Las.Vlr.walk() throws an error (see below 61)
+      //   - copc info VLR is missing
+      //   - Corrupt/bad binary data
+
       // Copc.create() passed, probably valid COPC
-      // need to perform additional checks to confirm
+      // need to perform additional checks to confirm (copcSuite)
 
       const checks = await invokeAllChecks({
         source: get,
         suite: copcSuite,
       })
-      // const checks = await invokeAllChecks([
-      //   { source: copc, suite: copcSuite },
-      //   { source: { get, copc }, suite: hierarchySuite },
-      // ])
 
       return {
         name,
@@ -41,14 +44,25 @@ export const generateReport = async (
         checks,
         copc,
       }
-    } catch (failedCopc) {
-      // Copc.create() failed, definitely not COPC...
+    } catch (copcError) {
+      // Copc.create() failed, definitely not valid COPC...
       // Check file with Las functions to determine why Copc.create() failed
       try {
+        // attempt Las parse inside try { } to fail out *before* attempting
+        // invokeAllChecks() since LasSuite relys on `header` and `vlrs`
         const header = Las.Header.parse(
           await get(0, Las.Constants.minHeaderLength),
         )
+        // Las.Header.parse() can fail for the following reasons:
+        //   - buffer.byteLength < minHeaderLength (375)
+        //   - fileSignature (first 4 bytes) !== 'LASF'
+        //   - majorVersion !== 1 || minorVersion !== 2 | 4
+        //   - Corrupt/bad binary data
         const vlrs = await Las.Vlr.walk(get, header)
+        // Las.Vlr.walk() can fail for the following reasons:
+        //   - vlrHeaderLength !== 54
+        //   - evlrHeaderLength !== 60
+        //   - Corrupt/bad binary data
         const checks = await invokeAllChecks({ source: get, suite: lasSuite })
         return {
           name,
@@ -65,28 +79,42 @@ export const generateReport = async (
             header,
             vlrs,
           },
-          copcError: failedCopc as Error,
+          copcError: copcError as Error,
         }
-      } catch (e) {
-        // Las.* functions failed, can fallback on failedGetter catch (?)
-        throw e
+      } catch (lasError) {
+        // Las.* functions failed, try poking around manually with the Getter
+        // to determine why Las failed to initialize (getterSuite)
+        const checks = await invokeAllChecks({
+          source: get,
+          suite: getterSuite,
+        })
+        const errors: { error: Error; copcError?: Error } = (() => {
+          const same = lasError === copcError
+          if (same) return { error: copcError as Error }
+          return {
+            error: lasError as Error,
+            copcError: copcError as Error,
+          }
+        })()
+        return {
+          name,
+          scan: {
+            type,
+            filetype: 'Unknown',
+            result: 'NA',
+            start,
+            end: new Date(),
+            time: performance.now() - startTime,
+          },
+          checks,
+          ...errors,
+          // error: copcError as Error,
+          // copcError: lasError as Error,
+        }
       }
     }
-  } catch (failedGetter) {
-    // Getter.create() failed, error with source string
-    return {
-      name,
-      scan: {
-        type,
-        filetype: 'Unknown',
-        result: 'NA',
-        start,
-        end: new Date(),
-        time: performance.now() - startTime,
-      },
-      checks: [],
-      error: failedGetter as Error,
-    }
+  } catch (getterError) {
+    throw getterError
   }
 }
 
