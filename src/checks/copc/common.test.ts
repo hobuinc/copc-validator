@@ -10,9 +10,9 @@ import {
   NodePoints,
 } from './common'
 import { Copc, Getter, Hierarchy } from 'copc'
-import { ellipsoidFiles, getItems } from 'test'
+import { ellipsoidFiles, getCopcItems } from 'test'
 
-const items = getItems()
+const items = getCopcItems()
 
 test('enhancedHierarchyNodes', async () => {
   const { get, copc, nodes } = await items

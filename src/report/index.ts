@@ -1,37 +1,24 @@
 import { invokeAllChecks } from '../checks'
 import { Copc, Getter, Las } from 'copc'
 import { Check, Report } from 'types'
-import {
-  enhancedHierarchyNodes,
-  EnhanchedHierarchyParams,
-  HierarchyCheckParams,
-  NodePoint,
-} from '../checks/copc/common'
-import { map } from 'lodash'
 
 export const generateReport = async (
   source: string,
-  // copcSuite: Check.Suite<Copc>,
-  // hierarchySuite: Check.Suite<HierarchyCheckParams>,
   copcSuite: Check.Suite<Getter>,
   lasSuite: Check.Suite<Getter>,
-  options: Report.Options,
+  getterSuite: Check.Suite<Getter>,
+  { name, type }: Report.Options,
 ): Promise<Report> => {
   const start = new Date()
   const startTime = performance.now()
-  const { name, type } = options
+  const get = Getter.create(source)
   try {
-    const get = Getter.create(source)
     try {
       // Attempt Copc.create()
       const copc = await Copc.create(get)
       // Copc.create() passed, probably valid COPC
       // need to perform additional checks to confirm
 
-      // should combine all sync and async check functions into one array and
-      // invoke all tests before awaiting on any checks
-
-      // this should be pretty close to what I'm intending to do, needs further testing
       const checks = await invokeAllChecks({
         source: get,
         suite: copcSuite,
@@ -57,27 +44,32 @@ export const generateReport = async (
     } catch (failedCopc) {
       // Copc.create() failed, definitely not COPC...
       // Check file with Las functions to determine why Copc.create() failed
-      const header = Las.Header.parse(
-        await get(0, Las.Constants.minHeaderLength),
-      )
-      const vlrs = await Las.Vlr.walk(get, header)
-      const checks = await invokeAllChecks({ source: get, suite: lasSuite })
-      return {
-        name,
-        scan: {
-          type,
-          filetype: 'LAS',
-          result: resultFromChecks(checks), //'NA',
-          start,
-          end: new Date(),
-          time: performance.now() - startTime,
-        },
-        checks: [],
-        las: {
-          header,
-          vlrs,
-        },
-        copcError: failedCopc as Error,
+      try {
+        const header = Las.Header.parse(
+          await get(0, Las.Constants.minHeaderLength),
+        )
+        const vlrs = await Las.Vlr.walk(get, header)
+        const checks = await invokeAllChecks({ source: get, suite: lasSuite })
+        return {
+          name,
+          scan: {
+            type,
+            filetype: 'LAS',
+            result: resultFromChecks(checks), //'NA',
+            start,
+            end: new Date(),
+            time: performance.now() - startTime,
+          },
+          checks,
+          las: {
+            header,
+            vlrs,
+          },
+          copcError: failedCopc as Error,
+        }
+      } catch (e) {
+        // Las.* functions failed, can fallback on failedGetter catch (?)
+        throw e
       }
     }
   } catch (failedGetter) {

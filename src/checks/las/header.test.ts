@@ -1,8 +1,16 @@
-import { ellipsoidFiles } from 'test'
-import header from './header'
+import headerSuite from './header'
 import { Binary, Getter, Las } from 'copc'
+import { getLasItems } from 'test'
+import { findCheck, invokeAllChecks } from '../../checks'
 
-const filename = ellipsoidFiles.laz14
+const items = getLasItems()
+
+test('header all-pass', async () => {
+  const { header } = await items
+  const checks = await invokeAllChecks({ source: header, suite: headerSuite })
+  checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
+  //expect(findCheck(checks, 'minorVersion')).toHaveProperty('status', 'fail')
+})
 
 test.todo('header info')
 // test('header info', async () => {

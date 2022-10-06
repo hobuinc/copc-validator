@@ -1,17 +1,16 @@
-import { Las, Binary } from 'copc'
+import { basicCheck, complexCheck } from '../../checks'
+import { Las } from 'copc'
 import { Check } from 'types'
 
-// export const header: Check.SyncGroup<Binary> = {
-//   header: (s) => {
-//     try {
-//       Las.Header.parse(s)
-//       return true //{ status: 'pass', info: header }
-//     } catch (e) {
-//       return { status: 'fail', info: e as Error }
-//     }
-//   },
-// }
-
-export const header: Check.Suite<Binary> = {}
+export const header: Check.Suite<Las.Header> = {
+  minorVersion: (h) => basicCheck(h.minorVersion, 4),
+  pointDataRecordFormat: (h) =>
+    complexCheck(
+      h.pointDataRecordFormat,
+      [6, 7, 8],
+      false,
+      `Point Data Record Format (should be 6,7,8): ${h.pointDataRecordFormat}`,
+    ), //basicCheck(h.pointDataRecordFormat, [6, 7, 8]),
+}
 
 export default header

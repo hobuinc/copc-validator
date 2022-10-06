@@ -1,9 +1,9 @@
 import { invokeAllChecks } from 'checks/utils'
 import { Copc, Getter } from 'copc'
-import { ellipsoidFiles, getItems } from 'test'
+import { ellipsoidFiles, getCopcItems } from 'test'
 import header from './header'
 
-const items = getItems()
+const items = getCopcItems()
 
 test('header all-pass', async () => {
   const { copc } = await items

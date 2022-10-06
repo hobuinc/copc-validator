@@ -1,7 +1,7 @@
 import { invokeAllChecks, findCheck } from 'checks'
 import { enhancedHierarchyNodes, getNodePoint } from './common'
 import { Copc, Getter } from 'copc'
-import { ellipsoidFiles, getItems } from 'test'
+import { ellipsoidFiles, getCopcItems } from 'test'
 import pointData, {
   reduceDimensions,
   getBadPoints,
@@ -13,7 +13,7 @@ import { omit, reduce } from 'lodash'
 
 // jest.setTimeout(7500)
 
-const items = getItems()
+const items = getCopcItems()
 
 test('pd all-pass', async () => {
   const { get, copc, nodes } = await items
@@ -61,7 +61,7 @@ test('pd pdrf=6', async () => {
     get: oldGet,
     copc: oldCopc,
     nodes: oldNodes,
-  } = await getItems(ellipsoidFiles.oldCopc)
+  } = await getCopcItems(ellipsoidFiles.oldCopc)
   const oldPd = enhancedHierarchyNodes(
     oldNodes,
     await getNodePoint(oldGet, oldCopc, oldNodes),
@@ -104,7 +104,7 @@ test('pd failures', async () => {
     get: oldGet,
     copc: oldCopc,
     nodes: oldNodes,
-  } = await getItems(ellipsoidFiles.oldCopc)
+  } = await getCopcItems(ellipsoidFiles.oldCopc)
   // the original ellipsoid.copc.laz file had bad RGB and gpsTime data, so I'm
   // testing for those checks here
   const oldPd = enhancedHierarchyNodes(

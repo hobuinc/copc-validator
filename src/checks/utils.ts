@@ -1,5 +1,6 @@
 import { Check } from '../types'
 import { flatMapDeep, map, flattenDeep } from 'lodash'
+import { Las } from 'copc'
 
 type SuiteWithSource<T = any> = { source: T; suite: Check.Suite<T> }
 /**
@@ -77,6 +78,30 @@ export const basicCheck = <T>(
   info,
 })
 
+// Cleaner output than basicCheck since undefined `info` does not get added to
+// the resulting object, plus allows for warnings and differing info messages
+// based on the check status
+export const complexCheck = <T>(
+  source: T,
+  checker: T | T[] | ((s: T) => boolean),
+  warning = false,
+  infoOnFailure?: unknown,
+  infoOnSuccess?: unknown,
+): Check.Status => {
+  const result = booleanFn(checker)(source)
+  if (result)
+    return infoOnSuccess
+      ? Statuses.successWithInfo(infoOnSuccess)
+      : Statuses.success
+  if (warning)
+    return infoOnFailure
+      ? Statuses.warningWithInfo(infoOnFailure)
+      : Statuses.warningWithInfo(null)
+  return infoOnFailure
+    ? Statuses.failureWithInfo(infoOnFailure)
+    : Statuses.failure
+}
+
 const booleanFn = <T>(check: T | T[] | ((v: T) => boolean)) => {
   if (Array.isArray(check)) return arrayCheck(check)
   else if (check instanceof Function) return check
@@ -104,3 +129,55 @@ export const Statuses = {
 
 export const findCheck = (checks: Check[], id: string) =>
   checks.find((c) => c.id === id)
+
+export const splitChecks = (
+  checks: Check[],
+  isValid: (c: Check) => boolean = (c) => c.status === 'pass',
+): [Check[], Check[]] =>
+  checks.reduce<[Check[], Check[]]>(
+    ([pass, fail], check) =>
+      isValid(check) ? [[...pass, check], fail] : [pass, [...fail, check]],
+    [[], []],
+  )
+
+export const getCheckIds = (checks: Check[]): string[] =>
+  checks.reduce<string[]>((prev, curr) => [...prev, curr.id], [])
+
+export const vlrCheck = (
+  vlrs: Las.Vlr[],
+  userId: string,
+  recordId: number,
+  required: boolean = true,
+  finalCheck?: (vlr: Las.Vlr) => boolean,
+  info?: unknown,
+) => {
+  const vlrName = `${userId}-${recordId}`
+  const vlr = Las.Vlr.find(vlrs, userId, recordId)
+  if (!vlr)
+    return required
+      ? Statuses.failureWithInfo(`Failed to find VLR: ${vlrName}`)
+      : Statuses.warningWithInfo(`Failed to find recommended VLR: ${vlrName}`)
+  if (checkVlrDuplicates(vlrs, userId, recordId))
+    return Statuses.failureWithInfo(`Found multiple ${vlrName} VLRs`)
+  return finalCheck ? basicCheck(vlr, finalCheck, info) : Statuses.success
+}
+
+/**
+ * Utility to check for duplicates of a given VLR in the `Copc.create()` vlrs
+ * array of `Las.Vlr` objects
+ * @param vlrs `Las.Vlr[]` from `Copc.create()`
+ * @param userId ASPRS-registered userId for the VLR issuer
+ * @param recordId Record number indicating the VLR type
+ * @returns A boolean representing if the `Las.Vlr[]` contains two VLRs that
+ * match the given `userId` & `recordId`
+ */
+export const checkVlrDuplicates = (
+  vlrs: Las.Vlr[],
+  userId: string,
+  recordId: number,
+) => !!Las.Vlr.find(removeVlr(vlrs, userId, recordId), userId, recordId)
+
+export const removeVlr = (vlrs: Las.Vlr[], userId: string, recordId: number) =>
+  ((i: number) => vlrs.slice(0, i).concat(vlrs.slice(i + 1)))(
+    vlrs.findIndex((v) => v.userId === userId && v.recordId === recordId),
+  )

@@ -11,6 +11,6 @@ test('hierarchyNestedSuite failure', async () => {
     suite: hierarchy,
   })
   expect(checks).toMatchObject<Check[]>([
-    { id: 'hierarchyNestedSuite', status: 'fail' },
+    { id: 'pointData-NestedSuite', status: 'fail' },
   ])
 })

@@ -1,11 +1,11 @@
-import { ellipsoidFiles } from 'test'
+import { ellipsoidFiles, getLasItems } from 'test'
 import { Copc } from 'copc'
 import QuickScan from './quick'
 import { Report } from 'types'
 
 const filename = ellipsoidFiles.copc
 
-test('quick COPC', async () => {
+test('quick COPC-file', async () => {
   const copc = await Copc.create(filename)
   const quick = (await QuickScan(filename)) as Report.SuccessCopc
   expect(Report.isCopc(quick)).toBe(true)
@@ -25,13 +25,19 @@ test('quick COPC', async () => {
   expect(quickWithName.name).toEqual(reportName)
 })
 
-test.todo('quick las-file')
-// test('quick las-file', async () => {
-//   const quick = (await QuickScan(ellipsoidFiles.laz14)) as Report.SuccessLas
-//   expect(Report.isLas(quick)).toBe(true)
-// })
+test('quick las-file', async () => {
+  const { header, vlrs } = await getLasItems()
+  const quick = (await QuickScan(ellipsoidFiles.laz14)) as Report.SuccessLas
+  expect(Report.isLas(quick)).toBe(true)
 
-// Perform scan on *this* file to ensure failure
+  expect(quick.name).toEqual(ellipsoidFiles.laz14)
+  expect(quick.scan.filetype).toEqual('LAS')
+  expect(quick.scan.result).toEqual('invalid')
+  expect(quick.las.header).toEqual(header)
+  expect(quick.las.vlrs).toEqual(vlrs)
+})
+
+// Perform scan on *this* file to ensure total failure
 test('quick non-las-file', async () => {
   const quick = (await QuickScan(__filename)) as Report.Failure
   expect(Report.isCopc(quick)).toBe(false)

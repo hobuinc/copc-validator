@@ -1,4 +1,4 @@
-import { Copc, Getter, Hierarchy } from 'copc'
+import { Copc, Getter, Hierarchy, Las } from 'copc'
 import { join } from 'path'
 
 export const dirname = __dirname
@@ -19,7 +19,7 @@ export const ellipsoidFiles = {
  * default: ellipsoidFiles.copc
  * @returns {Promise<{get: Getter, copc: Copc, nodes: Hierarchy.Node.Map}>} `{ get, copc, nodes }`
  */
-export const getItems = async (
+export const getCopcItems = async (
   get: string | Getter = ellipsoidFiles.copc,
 ): Promise<{ get: Getter; copc: Copc; nodes: Hierarchy.Node.Map }> => ({
   get: Getter.create(get),
@@ -34,30 +34,10 @@ export const getItems = async (
   ).nodes,
 })
 
-// type ellipsoidNodePoint = {
-//   path: string
-//   rootPoint: {
-//     X: number
-//     Y: number
-//     Z: number
-//     Intensity: number
-//     ReturnNumber: number
-//     NumberOfReturns: number
-//     Synthetic: number
-//     KeyPoint: number
-//     Withheld: number
-//     Overlap: number
-//     ScannerChannel: number
-//     ScanDirectionFlag: number
-//     EdgeOfFlightLine: number
-//     Classification: number
-//     UserData: number
-//     ScanAngle: number
-//     PointSourceId: number
-//     GpsTime: number
-//     Red: number
-//     Green: number
-//     Blue: number
-//     InvertedIntensity: number
-//   }
-// }
+export const getLasItems = async (
+  getter: string | Getter = ellipsoidFiles.laz14,
+): Promise<{ get: Getter; header: Las.Header; vlrs: Las.Vlr[] }> => {
+  const get = Getter.create(getter)
+  const header = Las.Header.parse(await get(0, Las.Constants.minHeaderLength))
+  return { get, header, vlrs: await Las.Vlr.walk(get, header) }
+}
