@@ -15,8 +15,8 @@ export const getNodePoint = async (
   get: Getter,
   copc: Copc,
   nodes: Hierarchy.Node.Map,
-): Promise<NodePoint[]> => {
-  return await Promise.all(
+): Promise<NodePoint[]> =>
+  await Promise.all(
     map(nodes, async (node, path) => {
       const view = await Copc.loadPointDataView(get, copc, node!)
 
@@ -31,7 +31,6 @@ export const getNodePoint = async (
       return { path, rootPoint }
     }),
   )
-}
 
 export type enhancedWithRootPoint<T extends object> = Record<
   string,
@@ -59,8 +58,8 @@ export const getNodePoints = async (
   get: Getter,
   copc: Copc,
   nodes: Hierarchy.Node.Map,
-): Promise<NodePoints[]> => {
-  return await Promise.all(
+): Promise<NodePoints[]> =>
+  await Promise.all(
     map(nodes, async (node, path) => {
       const view = await Copc.loadPointDataView(get, copc, node!)
 
@@ -78,7 +77,6 @@ export const getNodePoints = async (
       return { path, points }
     }),
   )
-}
 
 export type enhancedWithPointData<T extends object> = Record<
   string,
@@ -112,3 +110,10 @@ export const getNodeData = (
   nodes: Hierarchy.Node.Map,
   full: boolean = false,
 ) => (full ? getNodePoints(get, copc, nodes) : getNodePoint(get, copc, nodes))
+export const isRootPoint = (
+  pd: NodePoint[] | NodePoints[],
+): pd is NodePoint[] => 'rootPoint' in pd[0]
+export const isAllPoints = (
+  pd: NodePoint[] | NodePoints[],
+): pd is NodePoints[] => 'points' in pd[0]
+export const NodeData = { isRootPoint, isAllPoints }

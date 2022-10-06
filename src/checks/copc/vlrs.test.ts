@@ -13,14 +13,31 @@ test('vlrs all-pass', async () => {
   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
 })
 
-test('vlrs critical-fail', async () => {
+test('vlrs failures', async () => {
   const copc = await Copc.create(get)
-  const badCopc: Copc = {
+  const emptyVlrCopc: Copc = {
     ...copc,
     vlrs: [],
   }
-  const checks = await invokeAllChecks({ source: badCopc, suite: vlrs })
-  checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
+  const emptyVlrChecks = await invokeAllChecks({
+    source: emptyVlrCopc,
+    suite: vlrs,
+  })
+  emptyVlrChecks.forEach((check) =>
+    expect(check).not.toHaveProperty('status', 'pass'),
+  )
+
+  const doubleVlrCopc = {
+    ...copc,
+    vlrs: copc.vlrs.concat(copc.vlrs),
+  }
+  const doubleVlrChecks = await invokeAllChecks({
+    source: doubleVlrCopc,
+    suite: vlrs,
+  })
+  doubleVlrChecks.forEach((check) =>
+    expect(check).not.toHaveProperty('status', 'pass'),
+  )
 })
 
 test('vlrs utilities', async () => {

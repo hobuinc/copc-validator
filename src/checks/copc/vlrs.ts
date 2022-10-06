@@ -24,6 +24,8 @@ const vlrs: Check.Suite<Copc> = {
   'laszip-encoded': (c) => {
     const vlr = Las.Vlr.find(c.vlrs, 'laszip encoded', 22204)
     if (!vlr) return Messages.recommendedVlrNotFound
+    if (checkVlrDuplicates(c.vlrs, 'laszip encoded', 22204))
+      return Messages.multipleCopcVlrsFound('laszip encoded')
     return basicCheck(
       vlr,
       (v) => !v.isExtended && v.description === 'lazperf variant',

@@ -1,5 +1,5 @@
 import { invokeAllChecks } from '../checks'
-import { Copc, Getter } from 'copc'
+import { Copc, Getter, Las } from 'copc'
 import { Check, Report } from 'types'
 import {
   enhancedHierarchyNodes,
@@ -11,8 +11,10 @@ import { map } from 'lodash'
 
 export const generateReport = async (
   source: string,
-  copcSuite: Check.Suite<Copc>,
-  hierarchySuite: Check.Suite<HierarchyCheckParams>,
+  // copcSuite: Check.Suite<Copc>,
+  // hierarchySuite: Check.Suite<HierarchyCheckParams>,
+  copcSuite: Check.Suite<Getter>,
+  lasSuite: Check.Suite<Getter>,
   options: Report.Options,
 ): Promise<Report> => {
   const start = new Date()
@@ -30,10 +32,14 @@ export const generateReport = async (
       // invoke all tests before awaiting on any checks
 
       // this should be pretty close to what I'm intending to do, needs further testing
-      const checks = await invokeAllChecks([
-        { source: copc, suite: copcSuite },
-        { source: { get, copc }, suite: hierarchySuite },
-      ])
+      const checks = await invokeAllChecks({
+        source: get,
+        suite: copcSuite,
+      })
+      // const checks = await invokeAllChecks([
+      //   { source: copc, suite: copcSuite },
+      //   { source: { get, copc }, suite: hierarchySuite },
+      // ])
 
       return {
         name,
@@ -50,18 +56,28 @@ export const generateReport = async (
       }
     } catch (failedCopc) {
       // Copc.create() failed, definitely not COPC...
+      // Check file with Las functions to determine why Copc.create() failed
+      const header = Las.Header.parse(
+        await get(0, Las.Constants.minHeaderLength),
+      )
+      const vlrs = await Las.Vlr.walk(get, header)
+      const checks = await invokeAllChecks({ source: get, suite: lasSuite })
       return {
         name,
         scan: {
           type,
-          filetype: 'Unknown',
-          result: 'NA',
+          filetype: 'LAS',
+          result: resultFromChecks(checks), //'NA',
           start,
           end: new Date(),
           time: performance.now() - startTime,
         },
         checks: [],
-        error: failedCopc as Error,
+        las: {
+          header,
+          vlrs,
+        },
+        copcError: failedCopc as Error,
       }
     }
   } catch (failedGetter) {

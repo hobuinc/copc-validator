@@ -101,3 +101,6 @@ export const Statuses = {
   failureWithInfo: (info: any) => ({ status: 'fail', info } as Check.Status),
   warningWithInfo: (info: any) => ({ status: 'warn', info } as Check.Status),
 }
+
+export const findCheck = (checks: Check[], id: string) =>
+  checks.find((c) => c.id === id)

@@ -23,11 +23,9 @@ export const hierarchy: Check.Suite<HierarchyCheckParams> = {
       const pd = enhancedHierarchyNodes(nodes, points)
       return invokeAllChecks({ source: { copc, pd }, suite: pointData })
     } catch (error) {
-      return [{ id: 'hierarchyNestedSuite', status: 'fail', info: error }]
+      return [{ id: 'pointData-NestedSuite', status: 'fail', info: error }]
     }
   },
 }
-// currently no `hierarchy.test.ts` since it only calls `point-data.ts`, which
-// is covered by `point-data.test.ts` tests
 
 export default hierarchy

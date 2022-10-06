@@ -70,6 +70,7 @@ export declare namespace Report {
       header: Las.Header
       vlrs: Las.Vlr[]
     }
+    copcError: Error
   }
   type Success = SuccessCopc | SuccessLas
   type Failure = Base & {

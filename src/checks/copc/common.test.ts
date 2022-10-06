@@ -4,33 +4,13 @@ import {
   getNodePoint,
   fullHierarchyNodes,
   getNodePoints,
+  getNodeData,
+  NodeData,
+  NodePoint,
+  NodePoints,
 } from './common'
 import { Copc, Getter, Hierarchy } from 'copc'
-import { ellipsoidFiles } from 'test'
-import { reduce } from 'lodash'
-
-/**
- * Used to quickly turn a `Getter` object into the relevant Copc items for
- * jest tests. Defaults to the `copc` test ellipsoid since most tests utilize
- * that file, but can supply any `Getter` (as long as it works for `Copc.create()`)
- * @param get Getter to create `copc` and `nodes` objects
- * default: ellipsoidFiles.copc
- * @returns {Promise<{get: Getter, copc: Copc, nodes: Hierarchy.Node.Map}>} `{ get, copc, nodes }`
- */
-export const getItems = async (
-  get: Getter = Getter.create(ellipsoidFiles.copc),
-): Promise<{ get: Getter; copc: Copc; nodes: Hierarchy.Node.Map }> => ({
-  get,
-  copc: await Copc.create(get),
-  nodes: (
-    await Copc.loadHierarchyPage(
-      get,
-      (
-        await Copc.create(get)
-      ).info.rootHierarchyPage,
-    )
-  ).nodes,
-})
+import { ellipsoidFiles, getItems } from 'test'
 
 const items = getItems()
 
@@ -43,11 +23,63 @@ test('enhancedHierarchyNodes', async () => {
 })
 test.todo('enhancedHierarchyNodes expect statements')
 
+test('enhancedHierarchyNodes bad-data', async () => {
+  const { get, copc, nodes } = await items
+  // bad nodes
+  expect(
+    enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, {})),
+  ).toEqual({})
+  // bad COPC
+  // expect(async () =>
+  //   enhancedHierarchyNodes(nodes, await getNodePoint(get, {} as Copc, nodes)),
+  // ).toThrow()
+})
+
 // Commented out because the following test takes over 11 minutes, even for
-// the tiny ellipsoid test file:
+// the tiny ellipsoid test file. Since 'getNodePoints' only takes 2 seconds,
+// I should be able to fix it by reworking fullHierarchyNodes() (or something)
 
 // test('fullHierarchyNodes', async () => {
 //   const { get, copc, nodes } = await items
 //   const pd = fullHierarchyNodes(nodes, await getNodePoints(get, copc, nodes))
 //   console.log(pd)
 // })
+
+// Wrapped multiple tests into one here so that they can all share the two calls
+// of `getNodeData()`, which covers both `getNodePoint()` and `getNodePoints()`
+test('getNodeData & getNodePoint(s)', async () => {
+  const { get, copc, nodes } = await items
+  const nodeRootPoints = await getNodeData(get, copc, nodes)
+  const nodeAllPoints = await getNodeData(get, copc, nodes, true)
+  expect(NodeData.isRootPoint(nodeRootPoints)).toBe(true)
+  expect(NodeData.isAllPoints(nodeRootPoints)).toBe(false)
+  expect(NodeData.isRootPoint(nodeAllPoints)).toBe(false)
+  expect(NodeData.isAllPoints(nodeAllPoints)).toBe(true)
+
+  // `as NodePoint[]` is true given the first four expect() statements
+  const nodePoint = nodeRootPoints as NodePoint[]
+  // length matches the original `nodes` object
+  expect(nodePoint).toHaveLength(Object.entries(nodes).length)
+  // each `path` corresponds to a valid node in the nodes map
+  nodePoint.forEach((node) => expect(nodes[node.path]).toBeDefined())
+
+  // The following statements cause a memory leak, so... don't pass invalid Copc
+  // data (Getter or Copc object) to the getNodePoint() function.
+  // Confirm the data is valid by passing through Copc.create() and .loadPointDataView()
+  /* expect(() => getNodePoint(Getter.create(ellipsoidFiles.laz14), copc, nodes)).toThrow() */
+  /* expect(() => getNodePoint(get, {} as Copc, nodes)).toThrow() */
+
+  // However, the nodes data can be messed up:
+  expect(await getNodePoint(get, copc, {})).toEqual([])
+
+  // `as NodePoints[]` is true given the first four expect() statements
+  const nodePoints = nodeAllPoints as NodePoints[]
+  // length matches the original `nodes` object
+  expect(nodePoints).toHaveLength(Object.entries(nodes).length)
+  nodePoints.forEach((node) => {
+    // each `path` corresponds to a valid node in the nodes map
+    expect(nodes[node.path]).toBeDefined()
+    // each `points` array contains the correct number of points
+    expect(node.points).toHaveLength(nodes[node.path]?.pointCount!)
+  })
+})

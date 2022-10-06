@@ -1,7 +1,6 @@
 import { invokeAllChecks } from 'checks/utils'
 import { Copc, Getter } from 'copc'
-import { ellipsoidFiles } from 'test'
-import { getItems } from './common.test'
+import { ellipsoidFiles, getItems } from 'test'
 import header from './header'
 
 const items = getItems()
