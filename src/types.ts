@@ -34,10 +34,10 @@ export type Check = Check.Check
 
 export declare namespace Report {
   namespace Scans {
-    type types = 'quick' | 'full' | 'custom'
+    type types = 'shallow' | 'deep' | 'custom'
     type scan = {
       type: types
-      result: 'valid' | 'invalid' | 'NA'
+      //result: 'valid' | 'invalid' | 'NA'
       start: Date
       end: Date
       time: number
@@ -57,13 +57,6 @@ export declare namespace Report {
   type SuccessCopc = Base & {
     scan: Scans.SuccessCopc
     copc: Copc
-    // copc: {
-    //   header: Las.Header
-    //   vlrs: Las.Vlr[]
-    //   info: Info
-    //   wkt?: string
-    //   eb?: Las.ExtraBytes[]
-    // }
   }
   type SuccessLas = Base & {
     scan: Scans.SuccessLas

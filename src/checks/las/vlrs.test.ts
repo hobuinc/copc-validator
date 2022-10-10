@@ -1,5 +1,5 @@
-import { ellipsoidFiles, getLasItems } from 'test'
-import vlrSuite from './vlrs'
+import { getLasItems } from 'test'
+import vlrSuite from '../vlrs'
 import { getCheckIds, invokeAllChecks, splitChecks } from '../../checks'
 import { difference } from 'lodash'
 

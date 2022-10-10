@@ -11,8 +11,6 @@ import pointData, {
 } from './point-data'
 import { omit, reduce } from 'lodash'
 
-// jest.setTimeout(7500)
-
 const items = getCopcItems()
 
 test('pd all-pass', async () => {

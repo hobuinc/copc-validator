@@ -9,6 +9,7 @@ export const ellipsoidFiles = {
   copc: join(dirname, 'data', 'ellipsoid.copc.laz'),
   laz: join(dirname, 'data', 'ellipsoid.laz'),
   laz14: join(dirname, 'data', 'ellipsoid-1.4.laz'),
+  fake: join(dirname, 'data', 'fake-copc.txt'),
 }
 
 /**

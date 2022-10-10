@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/jest": "^29.0.2",
     "@types/lodash": "^4.14.185",
+    "@types/minimist": "^1.2.2",
     "@types/node": "^18.7.18",
     "jest": "^29.0.3",
     "prettier": "^2.7.1",
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "copc": "^0.0.4",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "minimist": "^1.2.6"
   }
 }

@@ -1,11 +1,11 @@
 import { Copc, Getter, Hierarchy } from 'copc'
 import { map } from 'lodash'
 
-export type HierarchyCheckParams = { get: Getter; copc: Copc }
-export type EnhanchedHierarchyParams = {
-  copc: Copc
-  pd: enhancedWithRootPoint<any>
-}
+// export type HierarchyCheckParams = { get: Getter; copc: Copc }
+// export type EnhanchedHierarchyParams = {
+//   copc: Copc
+//   pd: enhancedWithRootPoint<any>
+// }
 
 export type NodePoint = {
   path: string

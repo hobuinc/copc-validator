@@ -1,10 +1,13 @@
-import { Point } from 'copc'
+import { Copc, Point } from 'copc'
 import { isEqual, reduce } from 'lodash'
 import { Check } from 'types'
-import { enhancedWithRootPoint, EnhanchedHierarchyParams } from './common'
+import { enhancedWithRootPoint } from './common'
 import { Statuses } from '../../checks'
 
-export const pointData: Check.Suite<EnhanchedHierarchyParams> = {
+export const pointData: Check.Suite<{
+  copc: Copc
+  pd: enhancedWithRootPoint<any>
+}> = {
   rgb: ({ copc, pd }) =>
     checkRgb(pd, copc.header.pointDataRecordFormat as 6 | 7 | 8),
   rgbi: ({ copc, pd }) =>
@@ -23,7 +26,6 @@ export const pointData: Check.Suite<EnhanchedHierarchyParams> = {
     pd,
   }) => checkGpsTime(pd, gpsTimeRange),
   returns: ({ pd }) => {
-    // const pointData = reduceDimensions(pd, ['ReturnNumber', 'NumberOfReturns'])
     const badPoints = getBadPoints(
       pd,
       (d) =>

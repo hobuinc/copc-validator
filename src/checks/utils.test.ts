@@ -1,6 +1,7 @@
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
-import { removeVlr, checkVlrDuplicates, complexCheck } from './utils'
+import { complexCheck } from './utils'
+import { removeVlr, checkVlrDuplicates } from './vlrs'
 
 const get = Getter.create(ellipsoidFiles.copc)
 

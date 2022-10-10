@@ -1,0 +1,190 @@
+{
+  "name": "https://s3.amazonaws.com/data.entwine.io/millsite.copc.laz",
+  "scan": {
+    "type": "shallow",
+    "filetype": "COPC",
+    "result": "invalid",
+    "start": "2022-10-10T18:44:02.908Z",
+    "end": "2022-10-10T18:44:15.629Z",
+    "time": 12721.160416960716
+  },
+  "checks": [
+    {
+      "id": "fileSignature",
+      "status": "pass"
+    },
+    {
+      "id": "majorVersion",
+      "status": "pass"
+    },
+    {
+      "id": "minorVersion",
+      "status": "pass"
+    },
+    {
+      "id": "headerLength",
+      "status": "pass"
+    },
+    {
+      "id": "pointDataRecordFormat",
+      "status": "pass"
+    },
+    {
+      "id": "pointCountByReturn",
+      "status": "pass"
+    },
+    {
+      "id": "vlrCount",
+      "status": "pass"
+    },
+    {
+      "id": "evlrCount",
+      "status": "pass"
+    },
+    {
+      "id": "copc-info",
+      "status": "pass"
+    },
+    {
+      "id": "copc-hierarchy",
+      "status": "pass"
+    },
+    {
+      "id": "laszip-encoded",
+      "status": "pass"
+    },
+    {
+      "id": "pointData-NestedSuite",
+      "status": "fail",
+      "info": {
+        "message": "request to https://s3.amazonaws.com/data.entwine.io/millsite.copc.laz failed, reason: read ECONNRESET",
+        "type": "system",
+        "errno": "ECONNRESET",
+        "code": "ECONNRESET"
+      }
+    }
+  ],
+  "copc": {
+    "header": {
+      "fileSignature": "LASF",
+      "fileSourceId": 0,
+      "globalEncoding": 16,
+      "projectId": "00000000-0000-0000-0000000000000000",
+      "majorVersion": 1,
+      "minorVersion": 4,
+      "systemIdentifier": "",
+      "generatingSoftware": "",
+      "fileCreationDayOfYear": 1,
+      "fileCreationYear": 1,
+      "headerLength": 375,
+      "pointDataOffset": 1907,
+      "vlrCount": 4,
+      "pointDataRecordFormat": 6,
+      "pointDataRecordLength": 30,
+      "pointCount": 374609447,
+      "pointCountByReturn": [
+        345233144,
+        23976231,
+        4225291,
+        1174781,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.001,
+        0.001,
+        0.001
+      ],
+      "offset": [
+        483890.005000001,
+        4326706.995,
+        4918.435000001044
+      ],
+      "min": [
+        480516.01,
+        4323333,
+        1544.44
+      ],
+      "max": [
+        486905,
+        4330080.99,
+        2803.84
+      ],
+      "waveformDataOffset": 0,
+      "evlrOffset": 1871964840,
+      "evlrCount": 1
+    },
+    "vlrs": [
+      {
+        "userId": "copc",
+        "recordId": 1,
+        "contentOffset": 429,
+        "contentLength": 160,
+        "description": "COPC offsets",
+        "isExtended": false
+      },
+      {
+        "userId": "laszip encoded",
+        "recordId": 22204,
+        "contentOffset": 643,
+        "contentLength": 40,
+        "description": "lazperf variant",
+        "isExtended": false
+      },
+      {
+        "userId": "LASF_Projection",
+        "recordId": 2112,
+        "contentOffset": 737,
+        "contentLength": 892,
+        "description": "",
+        "isExtended": false
+      },
+      {
+        "userId": "copc",
+        "recordId": 10000,
+        "contentOffset": 1683,
+        "contentLength": 224,
+        "description": "COPC extents",
+        "isExtended": false
+      },
+      {
+        "userId": "copc",
+        "recordId": 1000,
+        "contentOffset": 1871964900,
+        "contentLength": 438816,
+        "description": "EPT Hierarchy",
+        "isExtended": true
+      }
+    ],
+    "info": {
+      "cube": [
+        480516.00999999995,
+        4323332.999999999,
+        1544.4400000000005,
+        487264.00000000204,
+        4330080.990000001,
+        8292.430000002087
+      ],
+      "spacing": 52.7186718750163,
+      "rootHierarchyPage": {
+        "pageOffset": 1872288900,
+        "pageLength": 114816
+      },
+      "gpsTimeRange": [
+        0,
+        0
+      ]
+    },
+    "wkt": "COMPD_CS[\"NAD83(2011) / UTM zone 12N + NAVD88 height - Geoid12B (metres)\",PROJCS[\"NAD83(2011) / UTM zone 12N\",GEOGCS[\"NAD83(2011)\",DATUM[\"NAD83_National_Spatial_Reference_System_2011\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"1116\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"6318\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-111],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],AUTHORITY[\"EPSG\",\"6341\"]],VERT_CS[\"NAVD88 height\",VERT_DATUM[\"North American Vertical Datum 1988\",2005,AUTHORITY[\"EPSG\",\"5103\"]],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Up\",UP],AUTHORITY[\"EPSG\",\"5703\"]]]",
+    "eb": []
+  }
+}

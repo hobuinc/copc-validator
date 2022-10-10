@@ -1,17 +1,13 @@
 import { invokeAllChecks } from '../../checks'
-import { Copc } from 'copc'
+import { Copc, Getter } from 'copc'
 import { Check } from 'types'
-import {
-  HierarchyCheckParams,
-  enhancedHierarchyNodes,
-  getNodePoint,
-} from './common'
+import { enhancedHierarchyNodes, getNodePoint } from './common'
 import pointData from './point-data'
 
 /**
  * hierarchyNestedSuite: Runs point-data.ts suite
  */
-export const hierarchy: Check.Suite<HierarchyCheckParams> = {
+export const hierarchy: Check.Suite<{ get: Getter; copc: Copc }> = {
   hierarchyNestedSuite: async ({ get, copc }) => {
     try {
       const { nodes } = await Copc.loadHierarchyPage(

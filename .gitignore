@@ -2,3 +2,4 @@ node_modules
 autzen*
 coverage
 old*
+.DS_Store
