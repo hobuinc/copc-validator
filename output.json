@@ -1,12 +1,11 @@
 {
-  "name": "https://s3.amazonaws.com/data.entwine.io/millsite.copc.laz",
+  "name": "src/test/data/ellipsoid.copc.laz",
   "scan": {
     "type": "shallow",
     "filetype": "COPC",
-    "result": "invalid",
-    "start": "2022-10-10T18:44:02.908Z",
-    "end": "2022-10-10T18:44:15.629Z",
-    "time": 12721.160416960716
+    "start": "2022-10-10T22:53:09.898Z",
+    "end": "2022-10-10T22:53:10.038Z",
+    "time": 139.87916600704193
   },
   "checks": [
     {
@@ -54,14 +53,24 @@
       "status": "pass"
     },
     {
-      "id": "pointData-NestedSuite",
-      "status": "fail",
-      "info": {
-        "message": "request to https://s3.amazonaws.com/data.entwine.io/millsite.copc.laz failed, reason: read ECONNRESET",
-        "type": "system",
-        "errno": "ECONNRESET",
-        "code": "ECONNRESET"
-      }
+      "id": "rgb",
+      "status": "pass"
+    },
+    {
+      "id": "rgbi",
+      "status": "pass"
+    },
+    {
+      "id": "xyz",
+      "status": "pass"
+    },
+    {
+      "id": "gpsTime",
+      "status": "pass"
+    },
+    {
+      "id": "returns",
+      "status": "pass"
     }
   ],
   "copc": {
@@ -77,16 +86,16 @@
       "fileCreationDayOfYear": 1,
       "fileCreationYear": 1,
       "headerLength": 375,
-      "pointDataOffset": 1907,
+      "pointDataOffset": 1676,
       "vlrCount": 4,
-      "pointDataRecordFormat": 6,
-      "pointDataRecordLength": 30,
-      "pointCount": 374609447,
+      "pointDataRecordFormat": 7,
+      "pointDataRecordLength": 44,
+      "pointCount": 200000,
       "pointCountByReturn": [
-        345233144,
-        23976231,
-        4225291,
-        1174781,
+        100004,
+        99996,
+        0,
+        0,
         0,
         0,
         0,
@@ -100,27 +109,27 @@
         0
       ],
       "scale": [
-        0.001,
-        0.001,
-        0.001
+        0.01,
+        0.01,
+        0.01
       ],
       "offset": [
-        483890.005000001,
-        4326706.995,
-        4918.435000001044
+        -8242596,
+        4966606,
+        0
       ],
       "min": [
-        480516.01,
-        4323333,
-        1544.44
+        -8242746,
+        4966506,
+        -50
       ],
       "max": [
-        486905,
-        4330080.99,
-        2803.84
+        -8242446,
+        4966706,
+        50
       ],
       "waveformDataOffset": 0,
-      "evlrOffset": 1871964840,
+      "evlrOffset": 1184182,
       "evlrCount": 1
     },
     "vlrs": [
@@ -129,62 +138,69 @@
         "recordId": 1,
         "contentOffset": 429,
         "contentLength": 160,
-        "description": "COPC offsets",
+        "description": "COPC info VLR",
         "isExtended": false
       },
       {
         "userId": "laszip encoded",
         "recordId": 22204,
         "contentOffset": 643,
-        "contentLength": 40,
+        "contentLength": 52,
         "description": "lazperf variant",
         "isExtended": false
       },
       {
         "userId": "LASF_Projection",
         "recordId": 2112,
-        "contentOffset": 737,
-        "contentLength": 892,
+        "contentOffset": 749,
+        "contentLength": 681,
+        "description": "",
+        "isExtended": false
+      },
+      {
+        "userId": "LASF_Spec",
+        "recordId": 4,
+        "contentOffset": 1484,
+        "contentLength": 192,
         "description": "",
         "isExtended": false
       },
       {
         "userId": "copc",
-        "recordId": 10000,
-        "contentOffset": 1683,
-        "contentLength": 224,
-        "description": "COPC extents",
-        "isExtended": false
-      },
-      {
-        "userId": "copc",
         "recordId": 1000,
-        "contentOffset": 1871964900,
-        "contentLength": 438816,
+        "contentOffset": 1184242,
+        "contentLength": 160,
         "description": "EPT Hierarchy",
         "isExtended": true
       }
     ],
     "info": {
       "cube": [
-        480516.00999999995,
-        4323332.999999999,
-        1544.4400000000005,
-        487264.00000000204,
-        4330080.990000001,
-        8292.430000002087
+        -8242746,
+        4966506,
+        -50,
+        -8242446,
+        4966806,
+        250
       ],
-      "spacing": 52.7186718750163,
+      "spacing": 2.34375,
       "rootHierarchyPage": {
-        "pageOffset": 1872288900,
-        "pageLength": 114816
+        "pageOffset": 1184242,
+        "pageLength": 160
       },
       "gpsTimeRange": [
-        0,
-        0
+        42,
+        42.99999
       ]
     },
-    "wkt": "COMPD_CS[\"NAD83(2011) / UTM zone 12N + NAVD88 height - Geoid12B (metres)\",PROJCS[\"NAD83(2011) / UTM zone 12N\",GEOGCS[\"NAD83(2011)\",DATUM[\"NAD83_National_Spatial_Reference_System_2011\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"1116\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"6318\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-111],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],AUTHORITY[\"EPSG\",\"6341\"]],VERT_CS[\"NAVD88 height\",VERT_DATUM[\"North American Vertical Datum 1988\",2005,AUTHORITY[\"EPSG\",\"5103\"]],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Up\",UP],AUTHORITY[\"EPSG\",\"5703\"]]]",
-    "eb": []
+    "wkt": "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]",
+    "eb": [
+      {
+        "name": "InvertedIntensity",
+        "description": "",
+        "type": "float",
+        "length": 8
+      }
+    ]
   }
 }

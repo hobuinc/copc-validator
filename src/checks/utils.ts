@@ -47,16 +47,15 @@ const checkPromise = async (
   // but I need more testing to be sure. Maybe it has no affect and I've made this all
   // more complicated on myself than it needed to be ¯\_(ツ)_/¯
   try {
+    // If the Check.Function or Check.NestedSuite Errors for any reason, we
+    // will give the Error.message as the info
     const r = await f(source)
     if (Array.isArray(r)) return r
     return [{ id, ...r }]
   } catch (e) {
-    return [{ id, status: 'fail', info: e }]
+    return [{ id, status: 'fail', info: (e as Error).message }]
   }
 }
-// Function.isNestedSuite(f) ? f(source) : [{id, ...(await f(source))}]
-// I was returning the above statement, but my isNestedSuite type guard
-// was not working effectively
 
 /**
  * Utility function to convert simple boolean logic and basic functions
@@ -72,7 +71,7 @@ const checkPromise = async (
 export const basicCheck = <T>(
   source: T,
   checker: T | T[] | ((s: T) => boolean),
-  info?: unknown,
+  info?: string,
 ): Check.Status => ({
   status: booleanFn(checker)(source) ? 'pass' : 'fail',
   info,
@@ -85,8 +84,8 @@ export const complexCheck = <T>(
   source: T,
   checker: T | T[] | ((s: T) => boolean),
   warning = false,
-  infoOnFailure?: unknown,
-  infoOnSuccess?: unknown,
+  infoOnFailure?: string,
+  infoOnSuccess?: string,
 ): Check.Status => {
   if (booleanFn(checker)(source))
     return infoOnSuccess
@@ -95,7 +94,7 @@ export const complexCheck = <T>(
   if (warning)
     return infoOnFailure
       ? Statuses.warningWithInfo(infoOnFailure)
-      : Statuses.warningWithInfo(null)
+      : Statuses.warningWithInfo('No information provided')
   return infoOnFailure
     ? Statuses.failureWithInfo(infoOnFailure)
     : Statuses.failure
@@ -121,9 +120,9 @@ export const Statuses = {
   moreInfoOnFullScan: 'Run a Full Scan for more information',
   success: { status: 'pass' } as Check.Status,
   failure: { status: 'fail' } as Check.Status,
-  successWithInfo: (info: any) => ({ status: 'pass', info } as Check.Status),
-  failureWithInfo: (info: any) => ({ status: 'fail', info } as Check.Status),
-  warningWithInfo: (info: any) => ({ status: 'warn', info } as Check.Status),
+  successWithInfo: (info: string) => ({ status: 'pass', info } as Check.Status),
+  failureWithInfo: (info: string) => ({ status: 'fail', info } as Check.Status),
+  warningWithInfo: (info: string) => ({ status: 'warn', info } as Check.Status),
 }
 
 export const findCheck = (checks: Check[], id: string) =>

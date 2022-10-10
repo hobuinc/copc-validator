@@ -19,7 +19,13 @@ export const hierarchy: Check.Suite<{ get: Getter; copc: Copc }> = {
       const pd = enhancedHierarchyNodes(nodes, points)
       return invokeAllChecks({ source: { copc, pd }, suite: pointData })
     } catch (error) {
-      return [{ id: 'pointData-NestedSuite', status: 'fail', info: error }]
+      return [
+        {
+          id: 'pointData-NestedSuite',
+          status: 'fail',
+          info: (error as Error).message,
+        },
+      ]
     }
   },
 }

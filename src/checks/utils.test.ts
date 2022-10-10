@@ -7,10 +7,11 @@ const get = Getter.create(ellipsoidFiles.copc)
 
 test('complexCheck()', async () => {
   const { copc } = await getCopcItems()
-  const successInfo = { prop: 'some value' }
-  const fakeInfo = undefined
+  const successInfo =
+    'Changed info type to string, so must change these variables'
+  const undefinedInfo = undefined // this should be fine
   const stringInfo = 'This is a string'
-  const failureInfo = new Error('Error Test')
+  const failureInfo = 'This too must be a string: new Error()'
   const successWithInfo = complexCheck(
     copc.header.pointDataRecordFormat,
     [6, 7, 8],
@@ -18,7 +19,7 @@ test('complexCheck()', async () => {
     undefined,
     successInfo,
   )
-  const warning = complexCheck(copc.header.minorVersion, 3, true, fakeInfo)
+  const warning = complexCheck(copc.header.minorVersion, 3, true, undefinedInfo)
   const warningWithInfo = complexCheck(
     copc.header.minorVersion,
     3,
@@ -35,7 +36,7 @@ test('complexCheck()', async () => {
   )
 
   expect(successWithInfo.info).toEqual(successInfo)
-  expect(warning.info).toBeNull()
+  expect(warning.info).toEqual('No information provided')
   expect(warningWithInfo.info).toEqual(stringInfo)
   expect(failure.info).toBeUndefined()
   expect(failureWithInfo.info).toEqual(failureInfo)

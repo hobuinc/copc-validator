@@ -32,7 +32,7 @@ export const vlrs: Check.Suite<{ get: Getter; info: Las.Vlr.OffsetInfo }> = {
         {
           id: 'GetterVLR-NestedSuite',
           status: 'fail',
-          info: [...vlrs, ...evlrs],
+          info: [...vlrs, ...evlrs].toLocaleString(),
         },
       ]
     }

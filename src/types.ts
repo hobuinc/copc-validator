@@ -4,7 +4,7 @@ export declare namespace Check {
   type status = 'pass' | 'fail' | 'warn'
   type Status = {
     status: status
-    info?: unknown
+    info?: string
   }
 
   namespace Function {

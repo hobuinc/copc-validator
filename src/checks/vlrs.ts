@@ -32,7 +32,7 @@ export const vlrCheck = (
   recordId: number,
   required: boolean = true,
   finalCheck?: (vlr: Las.Vlr) => boolean,
-  info?: unknown,
+  info?: string,
 ) => {
   const vlrName = `${userId}-${recordId}`
   const vlr = Las.Vlr.find(vlrs, userId, recordId)
