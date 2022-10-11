@@ -4,9 +4,11 @@ import vlrs from '../vlrs'
 import hierarchy from './hierarchy'
 import { Copc, Getter } from 'copc'
 import { invokeAllChecks } from '../../checks'
+import { pick } from 'lodash'
 
 const copcSuite = { ...header, ...vlrs }
-const copcGetSuite = hierarchy //{ ...hierarchy }
+const copcGetSuite = pick(hierarchy, 'hierarchyNestedSuite') //{ ...hierarchy }
+const copcGetSuiteDeep = hierarchy
 
 // Swapped different Suite types for a single Check.NestedSuite<Getter> object,
 // which simplifies the generateReport() parameters for both Copc and Las files,
@@ -23,4 +25,12 @@ export const CopcSuite: Check.Suite<{ get: Getter; copc: Copc }> = {
       { source: { get, copc }, suite: copcGetSuite },
     ])
   },
+}
+
+export const CopcSuiteDeep: Check.Suite<{ get: Getter; copc: Copc }> = {
+  suites: async ({ get, copc }) =>
+    invokeAllChecks([
+      { source: copc, suite: copcSuite },
+      { source: { get, copc }, suite: copcGetSuiteDeep },
+    ]),
 }

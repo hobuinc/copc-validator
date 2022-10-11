@@ -83,6 +83,8 @@ export type enhancedWithPointData<T extends object> = Record<
   T & { points: Record<number, Record<string, number>> }
 >
 // For Full Scan of Hierarchy page
+// WARNING: DO NOT USE!!! IT'S VERY BAD ON YOUR CPU!
+// *at least in ts-node*
 export type fullHierarchyNodes = enhancedWithPointData<Hierarchy.Node>
 export const fullHierarchyNodes = (
   nodes: Hierarchy.Node.Map,
