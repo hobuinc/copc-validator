@@ -14,7 +14,6 @@ test('shallow COPC-file', async () => {
   expect(shallow.name).toEqual(filename)
   expect(shallow.scan.type).toEqual('shallow')
   expect(shallow.scan.filetype).toEqual('COPC')
-  //expect(shallow.scan.result).toEqual('valid')
   expect(shallow.copc.header).toEqual(copc.header)
   expect(shallow.copc.vlrs).toEqual(copc.vlrs)
   expect(shallow.copc.info).toEqual(copc.info)
@@ -32,7 +31,6 @@ test('shallow las-file', async () => {
 
   expect(shallow.name).toEqual(ellipsoidFiles.laz14)
   expect(shallow.scan.filetype).toEqual('LAS')
-  //expect(shallow.scan.result).toEqual('invalid')
   expect(shallow.las.header).toEqual(header)
   expect(shallow.las.vlrs).toEqual(vlrs)
 })
@@ -46,7 +44,6 @@ test('shallow non-las-file', async () => {
   expect(shallow.name).toEqual(__filename)
   expect(shallow.scan.type).toEqual('shallow')
   expect(shallow.scan.filetype).toEqual('Unknown')
-  //expect(shallow.scan.result).toEqual('NA')
   expect(shallow.error.message).toContain('Invalid file signature:')
   // copcError undefined since both lasError & copcError fail for same reason
   expect(shallow.copcError).toBeUndefined()

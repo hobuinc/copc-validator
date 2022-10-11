@@ -2,7 +2,7 @@ import { invokeAllChecks } from 'checks/utils'
 import {
   enhancedHierarchyNodes,
   getNodePoint,
-  fullHierarchyNodes,
+  // fullHierarchyNodes,
   getNodePoints,
   getNodeData,
   NodeData,
@@ -30,9 +30,9 @@ test('enhancedHierarchyNodes bad-data', async () => {
     enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, {})),
   ).toEqual({})
   // bad COPC
-  // expect(async () =>
-  //   enhancedHierarchyNodes(nodes, await getNodePoint(get, {} as Copc, nodes)),
-  // ).toThrow()
+  await expect(async () =>
+    enhancedHierarchyNodes(nodes, await getNodePoint(get, {} as Copc, nodes)),
+  ).rejects.toThrow()
 })
 
 // Commented out because the following test takes over 11 minutes, even for
@@ -66,8 +66,11 @@ test('getNodeData & getNodePoint(s)', async () => {
   // The following statements cause a memory leak, so... don't pass invalid Copc
   // data (Getter or Copc object) to the getNodePoint() function.
   // Confirm the data is valid by passing through Copc.create() and .loadPointDataView()
-  /* expect(() => getNodePoint(Getter.create(ellipsoidFiles.laz14), copc, nodes)).toThrow() */
-  /* expect(() => getNodePoint(get, {} as Copc, nodes)).toThrow() */
+
+  // await expect(
+  //   getNodePoint(Getter.create(ellipsoidFiles.laz14), copc, nodes),
+  // ).rejects.toThrow()
+  // await expect(getNodePoint(get, {} as Copc, nodes)).rejects.toThrow()
 
   // However, the nodes data can be messed up:
   expect(await getNodePoint(get, copc, {})).toEqual([])

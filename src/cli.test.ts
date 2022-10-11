@@ -1,20 +1,7 @@
 import copcc, { fs } from './cli'
-import { resolve } from 'path'
 import { shallowScan, deepScan } from './report'
 import { ellipsoidFiles } from 'test'
 import { Report } from 'types'
-
-const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {})
-const mockProcessWrite = jest
-  .spyOn(process.stdout, 'write')
-  .mockImplementation(() => true)
-  .mockName('process.write')
-const mockFileWrite = jest
-  .spyOn(fs, 'writeFileSync')
-  .mockImplementation((_file, data) =>
-    JSON.parse(typeof data === 'string' ? data : data.toString()),
-  )
-  .mockName('fs.writeFileSync')
 
 const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
@@ -23,6 +10,7 @@ const reportName = 'report-name'
 afterEach(() => jest.clearAllMocks())
 afterAll(() => jest.restoreAllMocks())
 
+// ========== TESTS ==========
 test('cli shallow', async () => {
   const expectedScan = expectScan(await shallowScan(filename))
 
@@ -30,8 +18,9 @@ test('cli shallow', async () => {
   await validateGoodScan([filename, '-o', outputPath], expectedScan)
 })
 
+jest.setTimeout(20000)
 test('cli deep', async () => {
-  jest.setTimeout(10000)
+  jest.setTimeout(20000)
   const expectedScan = expectScan(await deepScan(filename))
 
   await validateGoodScan([filename, '--deep'], expectedScan)
@@ -47,14 +36,15 @@ test('cli errors', async () => {
     'Must provide at least one (1) file to be validated',
   )
 
-  // force 'fs' error
-  mockFileWrite.mockImplementationOnce(() => {
-    throw new Error('Mock Error')
-  })
   // silence console.error() in copcc() since we don't currently care about it
   const mockConsoleError = jest
     .spyOn(console, 'error')
     .mockImplementation(() => {})
+  mockFileWrite.mockClear()
+  // force 'fs' error
+  mockFileWrite.mockImplementationOnce(() => {
+    throw new Error('Mock Error')
+  })
 
   await copcc([filename, `-o=${outputPath}`])
 
@@ -74,6 +64,20 @@ test('cli named-reports', async () => {
   const expectedDeep = expectScan(await deepScan(filename, reportName))
   await validateGoodScan([filename, '-d', `--name=${reportName}`], expectedDeep)
 })
+
+// ========== MOCKS ==========
+
+const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {})
+const mockProcessWrite = jest
+  .spyOn(process.stdout, 'write')
+  .mockImplementation(() => true)
+  .mockName('process.write')
+const mockFileWrite = jest
+  .spyOn(fs, 'writeFileSync')
+  .mockImplementation((_file, data) =>
+    JSON.parse(typeof data === 'string' ? data : data.toString()),
+  )
+  .mockName('fs.writeFileSync')
 
 // ========== UTILITIES ==========
 

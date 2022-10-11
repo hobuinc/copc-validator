@@ -14,7 +14,6 @@ test('deep COPC-file', async () => {
   expect(deep.name).toEqual(filename)
   expect(deep.scan.type).toEqual('deep')
   expect(deep.scan.filetype).toEqual('COPC')
-  //expect(deep.scan.result).toEqual('valid')
   expect(deep.copc.header).toEqual(copc.header)
   expect(deep.copc.vlrs).toEqual(copc.vlrs)
   expect(deep.copc.info).toEqual(copc.info)
@@ -32,7 +31,6 @@ test('deep las-file', async () => {
 
   expect(deep.name).toEqual(ellipsoidFiles.laz14)
   expect(deep.scan.filetype).toEqual('LAS')
-  //expect(deep.scan.result).toEqual('invalid')
   expect(deep.las.header).toEqual(header)
   expect(deep.las.vlrs).toEqual(vlrs)
 })
@@ -46,7 +44,6 @@ test('deep non-las-file', async () => {
   expect(deep.name).toEqual(__filename)
   expect(deep.scan.type).toEqual('deep')
   expect(deep.scan.filetype).toEqual('Unknown')
-  //expect(deep.scan.result).toEqual('NA')
   expect(deep.error.message).toContain('Invalid file signature:')
   // copcError undefined since both lasError & copcError fail for same reason
   expect(deep.copcError).toBeUndefined()

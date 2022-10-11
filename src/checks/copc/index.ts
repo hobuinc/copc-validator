@@ -7,8 +7,11 @@ import { invokeAllChecks } from '../../checks'
 import { pick } from 'lodash'
 
 const copcSuite = { ...header, ...vlrs }
-const copcGetSuite = pick(hierarchy, 'hierarchyNestedSuite') //{ ...hierarchy }
-const copcGetSuiteDeep = hierarchy
+// there should be a more elegant solution than this, possibly replacing the
+// hierarchy.ts mess with pointdata.ts and deep-pointdata.ts that export their
+// respective nested suites
+const copcGetSuite = pick(hierarchy, 'hierarchyNestedSuite')
+const copcGetSuiteDeep = pick(hierarchy, 'hierarchyNestedSuiteDeep')
 
 // Swapped different Suite types for a single Check.NestedSuite<Getter> object,
 // which simplifies the generateReport() parameters for both Copc and Las files,
@@ -17,9 +20,6 @@ export const CopcSuite: Check.Suite<{ get: Getter; copc: Copc }> = {
   suites: async ({ get, copc }) => {
     // no need to wrap in try...catch since `await Copc.create(get)` is already
     // tested inside the try {} of generateReport()
-    // Also, removed the following statement by changing the Suite input
-    // const copc = await Copc.create(get)
-    // Wrapped different suites together since they both expect a valid Copc object
     return invokeAllChecks([
       { source: copc, suite: copcSuite },
       { source: { get, copc }, suite: copcGetSuite },

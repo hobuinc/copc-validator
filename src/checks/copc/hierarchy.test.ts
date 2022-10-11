@@ -14,8 +14,7 @@ test('hierarchyNestedSuite failure', async () => {
     { id: 'pointData-NestedSuite', status: 'fail' },
     {
       id: 'pointData.deep-NestedSuite',
-      status: 'pass',
-      info: expect.any(String),
+      status: 'fail',
     },
   ])
 })

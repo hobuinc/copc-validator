@@ -84,25 +84,25 @@ export type enhancedWithPointData<T extends object> = Record<
 >
 // For Full Scan of Hierarchy page
 // WARNING: DO NOT USE!!! IT'S VERY BAD ON YOUR CPU!
-// *at least in ts-node*
-export type fullHierarchyNodes = enhancedWithPointData<Hierarchy.Node>
-export const fullHierarchyNodes = (
-  nodes: Hierarchy.Node.Map,
-  points: NodePoints[],
-): fullHierarchyNodes =>
-  points.reduce(
-    (prev, curr) => ({
-      ...prev,
-      [curr.path]: {
-        ...nodes[curr.path],
-        points: curr.points.reduce(
-          (prev, curr, i) => ({ ...prev, [i]: curr }),
-          {},
-        ),
-      },
-    }),
-    {},
-  )
+// *at least in ts-node* -- commenting out to enhance test coverage
+// export type fullHierarchyNodes = enhancedWithPointData<Hierarchy.Node>
+// export const fullHierarchyNodes = (
+//   nodes: Hierarchy.Node.Map,
+//   points: NodePoints[],
+// ): fullHierarchyNodes =>
+//   points.reduce(
+//     (prev, curr) => ({
+//       ...prev,
+//       [curr.path]: {
+//         ...nodes[curr.path],
+//         points: curr.points.reduce(
+//           (prev, curr, i) => ({ ...prev, [i]: curr }),
+//           {},
+//         ),
+//       },
+//     }),
+//     {},
+//   )
 
 // Intended to be one import for both full and quick scans, but the return type
 // is messy so I'm currently not using it (getNodePoint vs getNodePoints is good enough)
