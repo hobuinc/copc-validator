@@ -118,5 +118,5 @@ export const generateReport = async (
 }
 
 // .some() should be more optimal than .every() in this case, but could be double-checked
-const resultFromChecks = (checks: Check[]): 'valid' | 'invalid' =>
-  checks.some((check) => check.status === 'fail') ? 'invalid' : 'valid'
+// const resultFromChecks = (checks: Check[]): 'valid' | 'invalid' =>
+//   checks.some((check) => check.status === 'fail') ? 'invalid' : 'valid'

@@ -2,8 +2,10 @@ import minimist from 'minimist'
 import { ellipsoidFilename, ellipsoidFiles } from './test'
 import { shallowScan, deepScan } from './report'
 import { writeFileSync } from 'fs'
+// import * as fs from 'fs'
 import { resolve } from 'path'
-import { exit } from 'process'
+
+export const fs = { writeFileSync }
 
 /** CLI Usage:
  * ```
@@ -21,6 +23,9 @@ import { exit } from 'process'
  * `files...`: A list of file(s) to run the validation checks against  *Required >= 1*
  */
 export const copcc = async (argv: string[]) => {
+  if (argv === undefined || argv.length < 1)
+    throw new Error('Not enough argument(s) provided')
+
   // PARSE ARGS
   const args = minimist<ExpectedArgv>(argv, {
     boolean: ['deep'],
@@ -56,7 +61,7 @@ export const copcc = async (argv: string[]) => {
   if (output) {
     const path = resolve(output)
     try {
-      writeFileSync(path, JSON.stringify(report, null, 2))
+      fs.writeFileSync(path, JSON.stringify(report, null, 2))
       console.log(`Report successfully written to: ${path}`)
     } catch (err) {
       console.error(err)
@@ -64,9 +69,10 @@ export const copcc = async (argv: string[]) => {
   } else process.stdout.write(JSON.stringify(report, null, 2) + '\n') //console.dir(report, { depth: null })
   // console.dir prints entire report object & keeps VSCode syntax highlighting
   // but process.stdout.write() may be preferred? will check with Connor
-  // currently using process.stdout.write() so shape (newlines) matches output file
+  // currently using process.stdout.write() so the shape of the output
+  // (newlines, undefined, etc) matches the output file
   console.log(`Scan time: ${end - start}ms`)
-  exit()
+  return
 }
 
 export default copcc
@@ -80,8 +86,3 @@ type ExpectedArgv = {
   name?: string
   n?: string //alias
 }
-const argvIsValid = (argv: minimist.ParsedArgs): argv is ExpectedArgv =>
-  argv._.length >= 1 &&
-  typeof argv.deep === 'boolean' &&
-  (typeof argv.output === 'string' || typeof argv.output === 'undefined') &&
-  (typeof argv.name === 'string' || typeof argv.name === 'undefined')

@@ -3,3 +3,4 @@ autzen*
 coverage
 old*
 .DS_Store
+output.json
