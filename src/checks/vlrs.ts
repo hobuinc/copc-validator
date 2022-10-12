@@ -1,5 +1,5 @@
 // This suite can be shared between all three master suites (copc, las, getter)
-import { basicCheck, Statuses } from '.'
+import { basicCheck, Statuses } from 'checks'
 import { Las } from 'copc'
 import { Check } from 'types'
 

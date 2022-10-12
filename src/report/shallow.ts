@@ -1,5 +1,5 @@
-import { CopcSuite, GetterSuite, LasSuite } from '../checks'
-import { generateReport } from '.'
+import { CopcSuite, GetterSuite, LasSuite } from 'checks'
+import { generateReport } from 'report'
 
 export const shallowScan = (source: string, name?: string) =>
   generateReport(source, CopcSuite, LasSuite, GetterSuite, {

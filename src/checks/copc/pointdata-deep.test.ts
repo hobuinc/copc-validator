@@ -1,4 +1,4 @@
-import { invokeAllChecks } from 'checks/utils'
+import { invokeAllChecks } from 'checks'
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
 import deepNodeScan from './pointdata-deep'

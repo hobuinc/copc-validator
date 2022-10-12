@@ -1,8 +1,8 @@
 import { Getter, Las } from 'copc'
 import headerSuite from './header'
-import vlrSuite from '../vlrs'
+import vlrSuite from 'checks/vlrs'
 import { Check } from 'types'
-import { invokeAllChecks } from '../../checks'
+import { invokeAllChecks } from 'checks'
 
 // TODO: Rewrite LAS checks
 

@@ -5,9 +5,9 @@ import {
   getterToHeader,
   splitChecks,
   getCheckIds,
-} from '../../checks'
+} from 'checks'
 import headerSuite, { headerChecks } from './header'
-import lasHeaderSuite from '../las/header'
+import lasHeaderSuite from 'checks/las/header'
 import { difference } from 'lodash'
 
 const get = Getter.create(ellipsoidFiles.laz14)

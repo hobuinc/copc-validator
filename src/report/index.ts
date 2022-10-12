@@ -1,4 +1,4 @@
-import { invokeAllChecks } from '../checks'
+import { invokeAllChecks } from 'checks'
 import { Copc, Getter, Las } from 'copc'
 import { Check, Report } from 'types'
 import { isEqual, omit } from 'lodash'

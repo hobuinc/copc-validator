@@ -7,7 +7,7 @@ import {
   parseBigInt,
   Point,
 } from 'copc'
-import { basicCheck, invokeAllChecks, Statuses } from '../../checks'
+import { basicCheck, invokeAllChecks, Statuses } from 'checks'
 import { Check } from 'types'
 
 export const header: Check.Suite<Copc> = {

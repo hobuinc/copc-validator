@@ -1,6 +1,6 @@
 import { Check } from 'types'
 import header, { headerGetter } from './header'
-import vlrs from '../vlrs'
+import vlrs from 'checks/vlrs'
 import { Copc, Getter } from 'copc'
 import { invokeAllChecks } from 'checks'
 import shallowNodeScan from './pointdata'

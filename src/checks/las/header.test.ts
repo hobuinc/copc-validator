@@ -1,7 +1,7 @@
 import headerSuite from './header'
 import { Binary, Getter, Las } from 'copc'
 import { getLasItems } from 'test'
-import { findCheck, invokeAllChecks } from '../../checks'
+import { findCheck, invokeAllChecks } from 'checks'
 
 const items = getLasItems()
 

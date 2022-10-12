@@ -1,5 +1,4 @@
 import minimist from 'minimist'
-import { ellipsoidFilename, ellipsoidFiles } from './test'
 import { shallowScan, deepScan } from './report'
 import { writeFileSync } from 'fs'
 // import * as fs from 'fs'
@@ -19,6 +18,9 @@ export const fs = { writeFileSync }
  *                                       *Optional - writes to stdout if omitted*
  *
  * `name` | `n`: Name for the report.    *Optional - uses filename if omitted*
+ *
+ * TODO: `las`: Skip attempting to validate as COPC and just validate the LAS specs
+ *                                       *Optional - attempts Copc first if omitted*
  *
  * `files...`: A list of file(s) to run the validation checks against  *Required >= 1*
  */

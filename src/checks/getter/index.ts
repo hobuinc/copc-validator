@@ -1,4 +1,4 @@
-import { basicCheck, invokeAllChecks } from '../../checks'
+import { basicCheck, invokeAllChecks } from 'checks'
 import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
 import { Check } from 'types'
 import headerSuite from './header'

@@ -1,4 +1,4 @@
-import { invokeAllChecks, Statuses } from '../../checks'
+import { invokeAllChecks, Statuses } from 'checks'
 import { Copc, Getter, Point } from 'copc'
 import { Check } from 'types'
 import {

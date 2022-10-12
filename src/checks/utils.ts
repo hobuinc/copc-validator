@@ -1,6 +1,5 @@
-import { Check } from '../types'
+import { Check } from 'types'
 import { flatMapDeep, map, flattenDeep } from 'lodash'
-import { Las } from 'copc'
 
 type SuiteWithSource<T = any> = { source: T; suite: Check.Suite<T> }
 /**

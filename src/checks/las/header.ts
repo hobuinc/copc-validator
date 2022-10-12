@@ -1,4 +1,4 @@
-import { basicCheck, complexCheck } from '../../checks'
+import { basicCheck, complexCheck } from 'checks'
 import { Las } from 'copc'
 import { Check } from 'types'
 

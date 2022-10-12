@@ -1,7 +1,7 @@
-import { invokeAllChecks } from '../../checks'
+import { invokeAllChecks } from 'checks'
 import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
 import { Check } from 'types'
-import vlrSuite from '../vlrs'
+import vlrSuite from 'checks/vlrs'
 
 export const vlrs: Check.Suite<{ get: Getter; info: Las.Vlr.OffsetInfo }> = {
   vlrWalkTest: async ({ get, info }) => {

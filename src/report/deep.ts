@@ -1,5 +1,5 @@
-import { CopcSuiteDeep, GetterSuite, LasSuite } from '../checks'
-import { generateReport } from '.'
+import { CopcSuiteDeep, GetterSuite, LasSuite } from 'checks'
+import { generateReport } from 'report'
 
 // Currently the same functions as the Shallow Scan
 // TODO: Write Deep Scan checks & omit them from `shallowScan`

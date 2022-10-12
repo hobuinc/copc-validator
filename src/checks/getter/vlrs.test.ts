@@ -1,8 +1,8 @@
 import { Getter } from 'copc'
 import { getLasItems, ellipsoidFiles } from 'test'
-import { invokeAllChecks, getterToHeader } from '../../checks'
+import { invokeAllChecks, getterToHeader } from 'checks'
 import vlrSuite from './vlrs'
-import generalVlrSuite from '../vlrs'
+import generalVlrSuite from 'checks/vlrs'
 
 const get = Getter.create(ellipsoidFiles.laz14)
 const badGet = Getter.create(ellipsoidFiles.fake)

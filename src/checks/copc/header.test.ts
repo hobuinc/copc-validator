@@ -1,4 +1,4 @@
-import { invokeAllChecks } from '../../checks/utils'
+import { invokeAllChecks } from 'checks'
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
 import header, { formatGuid, headerGetter, parsePoint } from './header'

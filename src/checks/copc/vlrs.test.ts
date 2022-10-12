@@ -1,6 +1,6 @@
 import { getCopcItems } from 'test'
-import vlrs from '../vlrs'
 import { invokeAllChecks } from 'checks'
+import vlrs from 'checks/vlrs'
 
 const items = getCopcItems()
 

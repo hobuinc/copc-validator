@@ -1,7 +1,7 @@
-import { basicCheck, complexCheck, invokeAllChecks } from '../../checks'
+import { basicCheck, complexCheck, invokeAllChecks } from 'checks'
 import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
 import { Check } from 'types'
-import lasHeaderSuite from '../las/header'
+import lasHeaderSuite from 'checks/las/header'
 
 export const header: Check.Suite<{
   get: Getter
