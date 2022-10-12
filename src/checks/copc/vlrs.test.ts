@@ -2,6 +2,8 @@ import { getCopcItems } from 'test'
 import { invokeAllChecks } from 'checks'
 import vlrs from 'checks/vlrs'
 
+// TESTING src/checks/vlrs.ts WITH COPC DATA
+
 const items = getCopcItems()
 
 test('copc vlrs all-pass', async () => {

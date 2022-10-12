@@ -9,7 +9,7 @@ export const header: Check.Suite<Las.Header> = {
       h.pointDataRecordFormat,
       [6, 7, 8],
       false,
-      `Point Data Record Format (should be 6,7,8): ${h.pointDataRecordFormat}`,
+      `Point Data Record Format (should be 6, 7, or 8): ${h.pointDataRecordFormat}`,
     ),
 }
 

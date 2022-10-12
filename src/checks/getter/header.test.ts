@@ -6,7 +6,7 @@ import {
   splitChecks,
   getCheckIds,
 } from 'checks'
-import headerSuite, { headerChecks } from './header'
+import headerSuite, { formatGuid, fullHeaderSuite, parsePoint } from './header'
 import lasHeaderSuite from 'checks/las/header'
 import { difference } from 'lodash'
 
@@ -33,10 +33,22 @@ test('getter header fake-copc', async () => {
   })
 
   const expectedPassed = ['fileSignature', 'headerLength']
-  const expectedFailed = difference(Object.keys(headerChecks), expectedPassed)
+  const expectedFailed = difference(
+    Object.keys(fullHeaderSuite),
+    expectedPassed,
+  )
 
   const [passed, failed] = splitChecks(checks)
 
   expect(getCheckIds(passed)).toEqual(expectedPassed)
   expect(getCheckIds(failed)).toEqual(expectedFailed)
+})
+
+test('getter header branch-coverage', async () => {
+  expect(() => {
+    formatGuid(new Uint8Array(15))
+  }).toThrow('Invalid GUID buffer length')
+  expect(() => {
+    parsePoint(new Uint8Array(25))
+  }).toThrow('Invalid tuple buffer length')
 })

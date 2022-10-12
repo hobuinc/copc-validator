@@ -1,13 +1,13 @@
 import { invokeAllChecks, Statuses } from 'checks'
-import { Copc, Getter, Point } from 'copc'
+import { Copc, Getter, Hierarchy, Point } from 'copc'
 import { Check } from 'types'
 import {
   copcWithGetter,
-  enhancedHierarchyNodes,
-  enhancedWithRootPoint,
-  getNodePoint,
+  // enhancedHierarchyNodes,
+  // enhancedWithRootPoint,
+  // getNodePoint,
 } from './common'
-import { isEqual, reduce } from 'lodash'
+import { isEqual, map, reduce } from 'lodash'
 
 export const shallowNodeScan: Check.Suite<copcWithGetter> = {
   readRootPoints: async ({ get, copc }) => {
@@ -38,7 +38,7 @@ export default shallowNodeScan
 
 export const pointData: Check.Suite<{
   copc: Copc
-  pd: enhancedWithRootPoint<any>
+  pd: shallowHierarchy //enhancedWithRootPoint<any>
 }> = {
   rgb: ({ copc, pd }) =>
     checkRgb(pd, copc.header.pointDataRecordFormat as 6 | 7 | 8),
@@ -74,10 +74,7 @@ export const pointData: Check.Suite<{
 }
 
 // ========== CHECKS ==========
-const checkRgb = <T extends object = any>(
-  points: enhancedWithRootPoint<T>,
-  pdrf: 6 | 7 | 8,
-): Check.Status => {
+const checkRgb = (points: shallowHierarchy, pdrf: 6 | 7 | 8): Check.Status => {
   const pointData = reduceDimensions(points, ['Red', 'Green', 'Blue'])
   if (pdrf === 6) {
     const badRootPoints = getReducedBadPoints(pointData, (d) => !isEqual(d, {}))
@@ -101,16 +98,10 @@ const checkRgb = <T extends object = any>(
     : Statuses.success
 }
 
-const checkRgbi = <T extends object = any>(
-  pointData: enhancedWithRootPoint<T>,
+const checkRgbi = (
+  pointData: shallowHierarchy, //enhancedWithRootPoint<T>,
   pdrf: 6 | 7 | 8,
 ): Check.Status => {
-  // const pointData = reduceDimensions(points, [
-  //   'Red',
-  //   'Green',
-  //   'Blue',
-  //   'Intensity',
-  // ])
   const hasRgb = pdrf !== 6
   if (hasRgb) {
     const badPoints = getBadPoints(
@@ -145,15 +136,12 @@ const checkRgbi = <T extends object = any>(
 }
 
 // TODO: XYZ within node cube (based on D-X-Y-Z key)
-const checkXyz = <T extends object = any>(
-  pointData: enhancedWithRootPoint<T>,
+const checkXyz = (
+  pointData: shallowHierarchy,
   [xMin, yMin, zMin]: Point,
   [xMax, yMax, zMax]: Point,
   cube: [number, number, number, number, number, number],
 ): Check.Status => {
-  // const pointData = reduceDimensions(points, ['X', 'Y', 'Z'])
-  // const [xMin, yMin, zMin] = min
-  // const [xMax, yMax, zMax] = max
   const [xMinCube, yMinCube, zMinCube, xMaxCube, yMaxCube, zMaxCube] = cube
   const badPoints = getBadPoints(
     pointData,
@@ -180,8 +168,8 @@ const checkXyz = <T extends object = any>(
 }
 
 type gpsTimeRange = [number, number]
-const checkGpsTime = <T extends object = any>(
-  pointData: enhancedWithRootPoint<T>,
+const checkGpsTime = (
+  pointData: shallowHierarchy,
   [min, max]: gpsTimeRange,
 ): Check.Status => {
   const badPoints = getBadPoints(
@@ -217,12 +205,11 @@ export type pointChecker = (data: Record<string, number | undefined>) => boolean
  * considered a Point Data Record that violates the COPC specification.
  * @returns {string[]} Array of nodes that return `true` given the `check` function
  */
-export const getBadPoints = <T extends object = any>(
-  pd: enhancedWithRootPoint<T>, //reducedPointData,
+export const getBadPoints = (
+  pd: shallowHierarchy,
   check: pointChecker,
 ): string[] =>
-  Object.entries(pd).reduce<string[]>((prev, curr) => {
-    const [node, { root }] = curr
+  Object.entries(pd).reduce<string[]>((prev, [node, { root }]) => {
     try {
       // try {} wrapper in case check() fails. Considered a point failure
       if (check(root)) return [...prev, node]
@@ -259,8 +246,8 @@ export type reducedPointData = Record<
  * @returns copy of `points`, without Hierarchy data, with `root`'s properties
  * matching the `dimensions` array flattened onto the top level
  */
-export const reduceDimensions = <T extends object = any>(
-  points: enhancedWithRootPoint<T>,
+export const reduceDimensions = (
+  points: shallowHierarchy,
   dimensions: readonly string[],
 ): Record<string, Record<typeof dimensions[number], number>> =>
   reduce(
@@ -272,6 +259,46 @@ export const reduceDimensions = <T extends object = any>(
           .map<[string, number]>((d) => [d, curr.root[d]])
           .filter(([_dim, value]) => value !== undefined),
       ),
+    }),
+    {},
+  )
+
+export type NodePoint = {
+  key: string
+  root: Record<string, number>
+}
+export const getNodePoint = async (
+  get: Getter,
+  copc: Copc,
+  nodes: Hierarchy.Node.Map,
+): Promise<NodePoint[]> =>
+  await Promise.all(
+    map(nodes, async (node, key) => {
+      const view = await Copc.loadPointDataView(get, copc, node!)
+
+      const dimensions = Object.keys(view.dimensions)
+      const getters = dimensions.map(view.getter)
+      const getDimensions = (index: number): Record<string, number> =>
+        getters.reduce(
+          (prev, curr, i) => ({ ...prev, [dimensions[i]]: curr(index) }),
+          {},
+        )
+      return { key, root: getDimensions(0) }
+    }),
+  )
+
+export type shallowHierarchy = Record<
+  string,
+  Hierarchy.Node & { root: Record<string, number> }
+>
+export const enhancedHierarchyNodes = (
+  nodes: Hierarchy.Node.Map,
+  points: NodePoint[],
+): shallowHierarchy =>
+  points.reduce(
+    (prev, { key, root }) => ({
+      ...prev,
+      [key]: { ...nodes[key], root },
     }),
     {},
   )

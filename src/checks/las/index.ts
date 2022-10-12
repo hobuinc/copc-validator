@@ -4,8 +4,11 @@ import vlrSuite from 'checks/vlrs'
 import { Check } from 'types'
 import { invokeAllChecks } from 'checks'
 
-// TODO: Rewrite LAS checks
+// TODO: Rewrite LAS checks/write more LAS checks that allow validating the
+// Las 1.4 spec instead of just checking against the COPC spec
 
+// Currently (10/12/2022 @ ~3:30pm), this suite is written to check why the Copc
+// suite was unable to run (`Copc.create()` failed, so dig deeper)
 export const LasSuite: Check.Suite<{
   get: Getter
   header: Las.Header

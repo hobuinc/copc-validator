@@ -7,7 +7,15 @@ import {
   parseBigInt,
   Point,
 } from 'copc'
-import { basicCheck, invokeAllChecks, Statuses } from 'checks'
+import {
+  basicCheck,
+  formatGuid,
+  invokeAllChecks,
+  parseLegacyNumberOfPointsByReturn,
+  parseNumberOfPointsByReturn,
+  parsePoint,
+  Statuses,
+} from 'checks'
 import { Check } from 'types'
 
 export const header: Check.Suite<Copc> = {
@@ -113,55 +121,6 @@ const fullHeaderSuite: Check.Suite<FullHeader> = {
     legacyPointCountByReturn.some((num) => num !== 0)
       ? Statuses.success
       : Statuses.failure,
-}
-
-// =========== LAS HEADER UTILS ==========
-
-function parseNumberOfPointsByReturn(buffer: Binary): number[] {
-  const dv = Binary.toDataView(buffer)
-  const bigs: BigInt[] = []
-  for (let offset = 0; offset < 15 * 8; offset += 8) {
-    bigs.push(getBigUint64(dv, offset, true))
-  }
-  return bigs.map((v) => parseBigInt(v))
-}
-
-function parseLegacyNumberOfPointsByReturn(buffer: Binary): number[] {
-  const dv = Binary.toDataView(buffer)
-  const v: number[] = []
-  for (let offset = 0; offset < 5 * 4; offset += 4) {
-    v.push(dv.getUint32(offset, true))
-  }
-  return v
-}
-
-export function parsePoint(buffer: Binary): Point {
-  const dv = Binary.toDataView(buffer)
-  if (dv.byteLength !== 24) {
-    throw new Error(`Invalid tuple buffer length: ${dv.byteLength}`)
-  }
-  return [
-    dv.getFloat64(0, true),
-    dv.getFloat64(8, true),
-    dv.getFloat64(16, true),
-  ]
-}
-
-export function formatGuid(buffer: Binary): string {
-  const dv = Binary.toDataView(buffer)
-  if (dv.byteLength !== 16) {
-    throw new Error(`Invalid GUID buffer length: ${dv.byteLength}`)
-  }
-
-  let s = ''
-  for (let i = 0; i < dv.byteLength; i += 4) {
-    const c = dv.getUint32(i, true)
-    s += c.toString(16).padStart(8, '0')
-  }
-
-  return [s.slice(0, 8), s.slice(8, 12), s.slice(12, 16), s.slice(16, 32)].join(
-    '-',
-  )
 }
 
 const UINT32_MAX = 4_294_967_295

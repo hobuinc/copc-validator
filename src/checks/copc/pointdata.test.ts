@@ -1,14 +1,15 @@
 import { invokeAllChecks, findCheck } from 'checks'
-import { enhancedHierarchyNodes, getNodePoint } from './common'
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
 import shallowNodeScan, {
   pointData,
   reduceDimensions,
   getBadPoints,
-  reducedPointData,
   getReducedBadPoints,
   pointChecker,
+  enhancedHierarchyNodes,
+  getNodePoint,
+  shallowHierarchy,
 } from './pointdata'
 import { omit, reduce } from 'lodash'
 
@@ -52,7 +53,7 @@ test('pd pdrf=6', async () => {
     },
   }
   const pd = enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, nodes))
-  const nonRgbPd: enhancedHierarchyNodes = reduce(
+  const nonRgbPd: shallowHierarchy = reduce(
     pd,
     (prev, curr, path) => ({
       ...prev,
@@ -105,7 +106,7 @@ test('pd failures', async () => {
   const { get, copc, nodes } = await items
   const pd = enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, nodes))
   // Creating point data with no dimensions to ensure complete failure of the suite
-  const badPd: enhancedHierarchyNodes = reduce(
+  const badPd: shallowHierarchy = reduce(
     pd,
     (prev, curr, path) => ({ ...prev, [path]: { ...curr, root: {} } }),
     {},
@@ -178,6 +179,29 @@ test('pd utilities', async () => {
   ).toEqual(allNodes)
 })
 
+test('getNodePoint', async () => {
+  const { get, copc, nodes } = await items
+  const nodePoint = await getNodePoint(get, copc, nodes)
+  // length matches the original `nodes` object
+  expect(nodePoint).toHaveLength(Object.entries(nodes).length)
+  // each `path` corresponds to a valid node in the nodes map
+  nodePoint.forEach((node) => expect(nodes[node.key]).toBeDefined())
+
+  // The following statements cause a memory leak, so... don't pass invalid Copc
+  // data (Getter or Copc object) to the getNodePoint() function.
+  // Confirm the data is valid by passing through Copc.create() and .loadPointDataView()
+
+  /* await expect(
+    getNodePoint(Getter.create(ellipsoidFiles.laz14), copc, nodes),
+  ).rejects.toThrow() */
+  /* await expect(getNodePoint(get, {} as Copc, nodes)).rejects.toThrow() */
+
+  // However, the nodes data can be messed up:
+  expect(await getNodePoint(get, copc, {})).toEqual([])
+})
+
+test.todo('other pointData tests')
+
 // I realized reduceDimensions wasn't actually *doing* anything internally for
 // the point-data.ts check functions, and I used this test to confirm that calling
 // it was actually detrimental to overall performance. Can still be useful for logging
@@ -200,8 +224,6 @@ test('getBadPoints performance test', async () => {
   expect(f).toBeGreaterThan(g)
 })
 
-test.todo('other pointData tests')
-
 const comparePerformance = (
   f: () => unknown,
   g: () => unknown,
@@ -213,6 +235,7 @@ const comparePerformance = (
   const end = performance.now()
   return { f: mid - start, g: end - mid }
 }
+
 const averagePerformance = (f: () => unknown, g: () => unknown, n = 10) => {
   const performances = Array.from(new Array(n), () => comparePerformance(f, g))
   // console.log(performances)

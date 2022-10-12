@@ -1,5 +1,5 @@
-import { basicCheck, complexCheck, invokeAllChecks } from 'checks'
-import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
+import { basicCheck, complexCheck, invokeAllChecks, Statuses } from 'checks'
+import { Binary, getBigUint64, Getter, Las, parseBigInt, Point } from 'copc'
 import { Check } from 'types'
 import lasHeaderSuite from 'checks/las/header'
 
@@ -14,98 +14,153 @@ export const header: Check.Suite<{
       // If Las.Header.parse() didn't throw the error, we can reuse the lasHeaderSuite checks
       return invokeAllChecks({ source: header, suite: lasHeaderSuite })
     } catch (error) {
-      return invokeAllChecks({ source: { buffer, dv }, suite: headerChecks })
+      return invokeAllChecks({ source: { buffer, dv }, suite: manualParse })
     }
   },
 }
 
-export const headerChecks: Check.Suite<{ buffer: Binary; dv: DataView }> = {
-  fileSignature: ({ buffer }) => {
+type FullHeader = Omit<Las.Header, 'fileSignature'> & {
+  fileSignature: string
+  legacyPointCount: number
+  legacyPointCountByReturn: number[]
+}
+export const manualParse: Check.Suite<{ buffer: Binary; dv: DataView }> = {
+  parse: async ({ buffer, dv }) => {
+    if (buffer.byteLength < Las.Constants.minHeaderLength)
+      return [
+        {
+          id: 'header-get.parse',
+          status: 'fail',
+          info: `Invalid header: must be at least ${Las.Constants.minHeaderLength} bytes`,
+        },
+      ]
     const fileSignature = Binary.toCString(buffer.slice(0, 4))
-    return complexCheck(
+    const majorVersion = dv.getUint8(24)
+    const minorVersion = dv.getUint8(25)
+    const header: FullHeader = {
+      fileSignature,
+      fileSourceId: dv.getUint16(4, true),
+      globalEncoding: dv.getUint16(6, true),
+      projectId: formatGuid(buffer.slice(8, 24)),
+      majorVersion,
+      minorVersion,
+      systemIdentifier: Binary.toCString(buffer.slice(26, 58)),
+      generatingSoftware: Binary.toCString(buffer.slice(58, 90)),
+      fileCreationDayOfYear: dv.getUint16(90, true),
+      fileCreationYear: dv.getUint16(92, true),
+      headerLength: dv.getUint16(94, true),
+      pointDataOffset: dv.getUint32(96, true),
+      vlrCount: dv.getUint32(100, true),
+      pointDataRecordFormat: dv.getUint8(104) & 0b1111,
+      pointDataRecordLength: dv.getUint16(105, true),
+      legacyPointCount: dv.getUint32(107, true),
+      legacyPointCountByReturn: parseLegacyNumberOfPointsByReturn(
+        buffer.slice(111, 131),
+      ),
+      scale: parsePoint(buffer.slice(131, 155)),
+      offset: parsePoint(buffer.slice(155, 179)),
+      min: [
+        dv.getFloat64(187, true),
+        dv.getFloat64(203, true),
+        dv.getFloat64(219, true),
+      ],
+      max: [
+        dv.getFloat64(179, true),
+        dv.getFloat64(195, true),
+        dv.getFloat64(211, true),
+      ],
+      pointCount: parseBigInt(getBigUint64(dv, 247, true)),
+      pointCountByReturn: parseNumberOfPointsByReturn(buffer.slice(255, 375)),
+      waveformDataOffset: parseBigInt(getBigUint64(dv, 227, true)),
+      evlrOffset: parseBigInt(getBigUint64(dv, 235, true)),
+      evlrCount: dv.getUint32(243, true),
+    }
+    return invokeAllChecks({ source: header, suite: fullHeaderSuite })
+  },
+}
+
+export const fullHeaderSuite: Check.Suite<FullHeader> = {
+  fileSignature: ({ fileSignature }) =>
+    complexCheck(
       fileSignature,
       'LASF',
       false,
       `('LASF') File Signature: '${fileSignature}'`,
-    )
-  },
-  majorVersion: ({ buffer }) => {
-    const majorVersion = Binary.toDataView(buffer).getUint8(24)
-    return complexCheck(
-      majorVersion,
-      1,
-      false,
-      `(1) Major Version: ${majorVersion}`,
-    )
-  },
-  minorVersion: ({ buffer }) => {
-    const minorVersion = Binary.toDataView(buffer).getUint8(25)
-    return complexCheck(
-      minorVersion,
-      4,
-      false,
-      `(4) Minor Version: ${minorVersion}`,
-    )
-  },
-  headerLength: ({ dv }) => {
-    const headerLength = dv.getUint16(94, true)
-    return complexCheck(
+    ),
+  majorVersion: ({ majorVersion }) =>
+    complexCheck(majorVersion, 1, false, `(1) Major Version: ${majorVersion}`),
+  minorVersion: ({ minorVersion }) =>
+    complexCheck(minorVersion, 4, false, `(4) Minor Version: ${minorVersion}`),
+  headerLength: ({ headerLength }) =>
+    complexCheck(
       headerLength,
       (n) => n >= Las.Constants.minHeaderLength,
       false,
       `(>=375) Header Length: ${headerLength}`,
-    )
-  },
+    ),
+  legacyPointCount: ({ pointDataRecordFormat, pointCount, legacyPointCount }) =>
+    basicCheck(
+      { pointDataRecordFormat, pointCount, legacyPointCount },
+      ({ pointDataRecordFormat, pointCount, legacyPointCount }) =>
+        ([6, 7, 8, 9, 10].includes(pointDataRecordFormat) &&
+          legacyPointCount === 0) ||
+        (pointCount < UINT32_MAX && legacyPointCount === pointCount) ||
+        legacyPointCount === 0,
+    ),
+  legacyNumberOfPointsByReturn: ({ legacyPointCountByReturn }) =>
+    legacyPointCountByReturn.some((num) => num !== 0)
+      ? Statuses.success
+      : Statuses.failure,
 }
 
 export default header
 
-/* FROM `copc.js`:
-const header: Header = {
-  fileSignature,
-  fileSourceId: dv.getUint16(4, true),
-  globalEncoding: dv.getUint16(6, true),
-  projectId: formatGuid(buffer.slice(8, 24)),
-  majorVersion,
-  minorVersion,
-  systemIdentifier: Binary.toCString(buffer.slice(26, 58)),
-  generatingSoftware: Binary.toCString(buffer.slice(58, 90)),
-  fileCreationDayOfYear: dv.getUint16(90, true),
-  fileCreationYear: dv.getUint16(92, true),
-  headerLength: dv.getUint16(94, true),
-  pointDataOffset: dv.getUint32(96, true),
-  vlrCount: dv.getUint32(100, true),
-  pointDataRecordFormat: dv.getUint8(104) & 0b1111,
-  pointDataRecordLength: dv.getUint16(105, true),
-  pointCount: dv.getUint32(107, true),
-  pointCountByReturn: parseLegacyNumberOfPointsByReturn(
-    buffer.slice(111, 131)
-  ),
-  scale: parsePoint(buffer.slice(131, 155)),
-  offset: parsePoint(buffer.slice(155, 179)),
-  min: [
-    dv.getFloat64(187, true),
-    dv.getFloat64(203, true),
-    dv.getFloat64(219, true),
-  ],
-  max: [
-    dv.getFloat64(179, true),
-    dv.getFloat64(195, true),
-    dv.getFloat64(211, true),
-  ],
-  waveformDataOffset: 0,
-  evlrOffset: 0,
-  evlrCount: 0,
+// =========== LAS HEADER UTILS ==========
+export function parseNumberOfPointsByReturn(buffer: Binary): number[] {
+  const dv = Binary.toDataView(buffer)
+  const bigs: BigInt[] = []
+  for (let offset = 0; offset < 15 * 8; offset += 8) {
+    bigs.push(getBigUint64(dv, offset, true))
+  }
+  return bigs.map((v) => parseBigInt(v))
 }
 
-if (minorVersion == 2) return header
-
-return {
-  ...header,
-  pointCount: parseBigInt(getBigUint64(dv, 247, true)),
-  pointCountByReturn: parseNumberOfPointsByReturn(buffer.slice(255, 375)),
-  waveformDataOffset: parseBigInt(getBigUint64(dv, 227, true)),
-  evlrOffset: parseBigInt(getBigUint64(dv, 235, true)),
-  evlrCount: dv.getUint32(243, true),
+export function parseLegacyNumberOfPointsByReturn(buffer: Binary): number[] {
+  const dv = Binary.toDataView(buffer)
+  const v: number[] = []
+  for (let offset = 0; offset < 5 * 4; offset += 4) {
+    v.push(dv.getUint32(offset, true))
+  }
+  return v
 }
-*/
+
+export function parsePoint(buffer: Binary): Point {
+  const dv = Binary.toDataView(buffer)
+  if (dv.byteLength !== 24) {
+    throw new Error(`Invalid tuple buffer length: ${dv.byteLength}`)
+  }
+  return [
+    dv.getFloat64(0, true),
+    dv.getFloat64(8, true),
+    dv.getFloat64(16, true),
+  ]
+}
+
+export function formatGuid(buffer: Binary): string {
+  const dv = Binary.toDataView(buffer)
+  if (dv.byteLength !== 16) {
+    throw new Error(`Invalid GUID buffer length: ${dv.byteLength}`)
+  }
+
+  let s = ''
+  for (let i = 0; i < dv.byteLength; i += 4) {
+    const c = dv.getUint32(i, true)
+    s += c.toString(16).padStart(8, '0')
+  }
+
+  return [s.slice(0, 8), s.slice(8, 12), s.slice(12, 16), s.slice(16, 32)].join(
+    '-',
+  )
+}
+
+const UINT32_MAX = 4_294_967_295

@@ -1,7 +1,7 @@
 import { invokeAllChecks } from 'checks'
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
-import header, { formatGuid, headerGetter, parsePoint } from './header'
+import header, { headerGetter } from './header'
 import { resolve } from 'path'
 
 const items = getCopcItems()
@@ -35,12 +35,6 @@ test('headerGetter branch-coverage', async () => {
       info: 'Invalid header: must be at least 375 bytes',
     },
   ])
-  expect(() => {
-    formatGuid(new Uint8Array(15))
-  }).toThrow('Invalid GUID buffer length')
-  expect(() => {
-    parsePoint(new Uint8Array(25))
-  }).toThrow('Invalid tuple buffer length')
 })
 
 test.todo('other header tests')

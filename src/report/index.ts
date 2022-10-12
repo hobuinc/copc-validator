@@ -21,8 +21,8 @@ export const generateReport = async (
     // Attempt Copc.create()
     const copc = await Copc.create(get)
     // Copc.create() can fail for the following reasons:
-    //   - Las.Header.parse() throws an error (see below, 56)
-    //   - Las.Vlr.walk() throws an error (see below, 62)
+    //   - Las.Header.parse() throws an error (see below, 58)
+    //   - Las.Vlr.walk() throws an error (see below, 64)
     //   - copc info VLR is missing
     //   - Corrupt/bad binary data
 
@@ -88,7 +88,10 @@ export const generateReport = async (
       }
     } catch (lasError) {
       // Las.* functions failed, try poking around manually with the Getter
-      // to determine why Las failed to initialize (getterSuite)
+      // to determine why Las failed to initialize
+
+      // Should only need to check for the possibilities above (lines 58 & 64),
+      // otherwise the Las suite would be running instead
       const checks = await invokeAllChecks({
         source: get,
         suite: getterSuite,

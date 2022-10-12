@@ -1,8 +1,10 @@
 import { basicCheck, invokeAllChecks } from 'checks'
-import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
+import { Binary, getBigUint64, Getter, Las, parseBigInt, Point } from 'copc'
 import { Check } from 'types'
 import headerSuite from './header'
 import vlrSuite from './vlrs'
+
+export * from './header'
 
 export const GetterSuite: Check.Suite<Getter> = {
   decode: async (get) => {
