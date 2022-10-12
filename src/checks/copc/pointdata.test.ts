@@ -2,16 +2,34 @@ import { invokeAllChecks, findCheck } from 'checks'
 import { enhancedHierarchyNodes, getNodePoint } from './common'
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
-import pointData, {
+import shallowNodeScan, {
+  pointData,
   reduceDimensions,
   getBadPoints,
   reducedPointData,
   getReducedBadPoints,
   pointChecker,
-} from './point-data'
+} from './pointdata'
 import { omit, reduce } from 'lodash'
 
 const items = getCopcItems()
+
+test('shallowNodeScan all-pass', async () => {
+  const { get, copc } = await items
+  const checks = await invokeAllChecks({
+    source: { get, copc },
+    suite: shallowNodeScan,
+  })
+  checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
+})
+
+test('shallowNodeScan failures', async () => {
+  const checks = await invokeAllChecks({
+    source: { get: Getter.create(ellipsoidFiles.laz14), copc: {} as Copc },
+    suite: shallowNodeScan,
+  })
+  checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
+})
 
 test('pd all-pass', async () => {
   const { get, copc, nodes } = await items
@@ -176,7 +194,7 @@ test('getBadPoints performance test', async () => {
   const { f, g } = averagePerformance(
     () => getReducedBadPoints(reduceDimensions(pd, ['X', 'Y', 'Z']), check),
     () => getBadPoints(pd, check),
-    25,
+    10,
   )
 
   expect(f).toBeGreaterThan(g)

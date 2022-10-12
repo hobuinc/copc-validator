@@ -1,8 +1,6 @@
-import { invokeAllChecks } from 'checks/utils'
 import {
   enhancedHierarchyNodes,
   getNodePoint,
-  // fullHierarchyNodes,
   getNodePoints,
   getNodeData,
   NodeData,
@@ -61,7 +59,7 @@ test('getNodeData & getNodePoint(s)', async () => {
   // length matches the original `nodes` object
   expect(nodePoint).toHaveLength(Object.entries(nodes).length)
   // each `path` corresponds to a valid node in the nodes map
-  nodePoint.forEach((node) => expect(nodes[node.path]).toBeDefined())
+  nodePoint.forEach((node) => expect(nodes[node.key]).toBeDefined())
 
   // The following statements cause a memory leak, so... don't pass invalid Copc
   // data (Getter or Copc object) to the getNodePoint() function.
@@ -81,8 +79,8 @@ test('getNodeData & getNodePoint(s)', async () => {
   expect(nodePoints).toHaveLength(Object.entries(nodes).length)
   nodePoints.forEach((node) => {
     // each `path` corresponds to a valid node in the nodes map
-    expect(nodes[node.path]).toBeDefined()
+    expect(nodes[node.key]).toBeDefined()
     // each `points` array contains the correct number of points
-    expect(node.points).toHaveLength(nodes[node.path]?.pointCount!)
+    expect(node.points).toHaveLength(nodes[node.key]?.pointCount!)
   })
 })

@@ -1,36 +1,25 @@
 import { Check } from 'types'
-import header from './header'
+import header, { headerGetter } from './header'
 import vlrs from '../vlrs'
-import hierarchy from './hierarchy'
 import { Copc, Getter } from 'copc'
-import { invokeAllChecks } from '../../checks'
-import { pick } from 'lodash'
+import { invokeAllChecks } from 'checks'
+import shallowNodeScan from './pointdata'
+import deepNodeScan from './pointdata-deep'
+import { copcWithGetter } from './common'
 
-const copcSuite = { ...header, ...vlrs }
-// there should be a more elegant solution than this, possibly replacing the
-// hierarchy.ts mess with pointdata.ts and deep-pointdata.ts that export their
-// respective nested suites
-const copcGetSuite = pick(hierarchy, 'hierarchyNestedSuite')
-const copcGetSuiteDeep = pick(hierarchy, 'hierarchyNestedSuiteDeep')
+const copcSuite: Check.Suite<Copc> = { ...header, ...vlrs }
+const getterSuite: Check.Suite<Getter> = { ...headerGetter }
 
-// Swapped different Suite types for a single Check.NestedSuite<Getter> object,
-// which simplifies the generateReport() parameters for both Copc and Las files,
-// and especially so for adding future tests or suites
-export const CopcSuite: Check.Suite<{ get: Getter; copc: Copc }> = {
-  suites: async ({ get, copc }) => {
-    // no need to wrap in try...catch since `await Copc.create(get)` is already
-    // tested inside the try {} of generateReport()
-    return invokeAllChecks([
-      { source: copc, suite: copcSuite },
-      { source: { get, copc }, suite: copcGetSuite },
-    ])
-  },
-}
-
-export const CopcSuiteDeep: Check.Suite<{ get: Getter; copc: Copc }> = {
+const buildCopcSuite = (
+  copcGetSuite: Check.Suite<copcWithGetter>,
+): Check.Suite<copcWithGetter> => ({
   suites: async ({ get, copc }) =>
     invokeAllChecks([
       { source: copc, suite: copcSuite },
-      { source: { get, copc }, suite: copcGetSuiteDeep },
+      { source: get, suite: getterSuite },
+      { source: { get, copc }, suite: copcGetSuite },
     ]),
-}
+})
+
+export const CopcSuite = buildCopcSuite(shallowNodeScan)
+export const CopcSuiteDeep = buildCopcSuite(deepNodeScan)

@@ -1,8 +1,40 @@
-import { Copc, Point } from 'copc'
-import { isEqual, reduce } from 'lodash'
+import { invokeAllChecks, Statuses } from '../../checks'
+import { Copc, Getter, Point } from 'copc'
 import { Check } from 'types'
-import { enhancedWithRootPoint } from './common'
-import { Statuses } from '../../checks'
+import {
+  copcWithGetter,
+  enhancedHierarchyNodes,
+  enhancedWithRootPoint,
+  getNodePoint,
+} from './common'
+import { isEqual, reduce } from 'lodash'
+
+export const shallowNodeScan: Check.Suite<copcWithGetter> = {
+  readRootPoints: async ({ get, copc }) => {
+    try {
+      const { nodes } = await Copc.loadHierarchyPage(
+        get,
+        copc.info.rootHierarchyPage,
+      )
+      // TODO: Handle more than one page
+      const points = await getNodePoint(get, copc, nodes)
+      const pd = enhancedHierarchyNodes(nodes, points)
+      return invokeAllChecks({ source: { copc, pd }, suite: pointData })
+    } catch (error) {
+      return [
+        {
+          id: 'pointData-NestedSuite',
+          status: 'fail',
+          info: (error as Error).message,
+        },
+      ]
+    }
+  },
+}
+
+export default shallowNodeScan
+
+// ========== POINT DATA CHECKS ==========
 
 export const pointData: Check.Suite<{
   copc: Copc
@@ -41,9 +73,7 @@ export const pointData: Check.Suite<{
   },
 }
 
-export default pointData
-
-// ===== CHECKS =====
+// ========== CHECKS ==========
 const checkRgb = <T extends object = any>(
   points: enhancedWithRootPoint<T>,
   pdrf: 6 | 7 | 8,
@@ -164,7 +194,7 @@ const checkGpsTime = <T extends object = any>(
     : Statuses.success
 }
 
-// ===== UTILS =====
+// ========== UTILS ==========
 /**
  * Function to check the output of `reduceDimensions()` for points that go against
  * the COPC spec. A `true` returned by this function is considered a Point Data

@@ -1,14 +1,10 @@
 import { Copc, Getter, Hierarchy } from 'copc'
 import { map } from 'lodash'
 
-// export type HierarchyCheckParams = { get: Getter; copc: Copc }
-// export type EnhanchedHierarchyParams = {
-//   copc: Copc
-//   pd: enhancedWithRootPoint<any>
-// }
+export type copcWithGetter = { get: Getter; copc: Copc }
 
 export type NodePoint = {
-  path: string
+  key: string
   rootPoint: Record<string, number>
 }
 export const getNodePoint = async (
@@ -17,7 +13,7 @@ export const getNodePoint = async (
   nodes: Hierarchy.Node.Map,
 ): Promise<NodePoint[]> =>
   await Promise.all(
-    map(nodes, async (node, path) => {
+    map(nodes, async (node, key) => {
       const view = await Copc.loadPointDataView(get, copc, node!)
 
       const dimensions = Object.keys(view.dimensions)
@@ -28,7 +24,7 @@ export const getNodePoint = async (
           {},
         )
       const rootPoint = getDimensions(0)
-      return { path, rootPoint }
+      return { key, rootPoint }
     }),
   )
 
@@ -45,13 +41,17 @@ export const enhancedHierarchyNodes = (
   points.reduce(
     (prev, curr) => ({
       ...prev,
-      [curr.path]: { ...nodes[curr.path], root: curr.rootPoint },
+      [curr.key]: { ...nodes[curr.key], root: curr.rootPoint },
     }),
     {},
   )
 
 export type NodePoints = {
-  path: string
+  key: string
+  /** Array of PointData:
+   * array index = point index in node
+   * Object: `{ [dimension: string]: number }`
+   */
   points: Record<string, number>[]
 }
 export const getNodePoints = async (
@@ -60,7 +60,7 @@ export const getNodePoints = async (
   nodes: Hierarchy.Node.Map,
 ): Promise<NodePoints[]> =>
   await Promise.all(
-    map(nodes, async (node, path) => {
+    map(nodes, async (node, key) => {
       const view = await Copc.loadPointDataView(get, copc, node!)
 
       const dimensions = Object.keys(view.dimensions)
@@ -74,7 +74,7 @@ export const getNodePoints = async (
         Array.from(new Array(view.pointCount), (_v, index) =>
           getDimensions(index),
         ))()
-      return { path, points }
+      return { key, points }
     }),
   )
 
