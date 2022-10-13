@@ -5,7 +5,7 @@ import { Check } from 'types'
 // This suite can be shared between all three master suites (copc, las, getter)
 
 // Was originally `src/checks/las/vlrs.ts` but I realized it could work on each report branch
-export const vlrs: Check.Suite<{
+export const vlrSuite: Check.Suite<{
   header: Las.Vlr.OffsetInfo
   vlrs: Las.Vlr[]
 }> = {
@@ -26,4 +26,4 @@ export const vlrs: Check.Suite<{
     vlrCheck(vlrs, 'laszip encoded', 22204, false, (v) => !v.isExtended),
 }
 
-export default vlrs
+export default vlrSuite

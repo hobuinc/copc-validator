@@ -1,6 +1,6 @@
 import { getCopcItems } from 'test'
 import { invokeAllChecks } from 'checks'
-import vlrs from 'checks/vlrs'
+import { vlrSuite } from 'checks/las'
 
 // TESTING src/checks/vlrs.ts WITH COPC DATA
 
@@ -8,7 +8,7 @@ const items = getCopcItems()
 
 test('copc vlrs all-pass', async () => {
   const { copc } = await items
-  const checks = await invokeAllChecks({ source: copc, suite: vlrs })
+  const checks = await invokeAllChecks({ source: copc, suite: vlrSuite })
   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
 })
 
@@ -20,7 +20,7 @@ test('copc vlrs failures', async () => {
       ...copc,
       vlrs: [],
     },
-    suite: vlrs,
+    suite: vlrSuite,
   })
   emptyVlrChecks.forEach((check) =>
     expect(check).not.toHaveProperty('status', 'pass'),
@@ -31,7 +31,7 @@ test('copc vlrs failures', async () => {
       ...copc,
       vlrs: copc.vlrs.concat(copc.vlrs),
     },
-    suite: vlrs,
+    suite: vlrSuite,
   })
   doubleVlrChecks.forEach((check) =>
     expect(check).not.toHaveProperty('status', 'pass'),

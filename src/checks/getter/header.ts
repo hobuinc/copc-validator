@@ -8,7 +8,7 @@ export const header: Check.Suite<{
   buffer: Binary
   dv: DataView
 }> = {
-  lasParse: async ({ buffer, dv }) => {
+  tryLasParse: async ({ buffer, dv }) => {
     try {
       const header = Las.Header.parse(buffer)
       // If Las.Header.parse() didn't throw the error, we can reuse the lasHeaderSuite checks
@@ -19,13 +19,22 @@ export const header: Check.Suite<{
   },
 }
 
-type FullHeader = Omit<Las.Header, 'fileSignature'> & {
+// This is currently a mess and doesn't work very well, but I'll get back to it
+export type RelevantHeader = Pick<
+  Las.Header,
+  | 'majorVersion'
+  | 'minorVersion'
+  | 'headerLength'
+  | 'pointDataRecordFormat'
+  | 'pointCount'
+  | 'pointCountByReturn'
+> & {
   fileSignature: string
   legacyPointCount: number
   legacyPointCountByReturn: number[]
 }
 export const manualParse: Check.Suite<{ buffer: Binary; dv: DataView }> = {
-  parse: async ({ buffer, dv }) => {
+  manualLasParse: async ({ buffer, dv }) => {
     if (buffer.byteLength < Las.Constants.minHeaderLength)
       return [
         {
@@ -37,49 +46,52 @@ export const manualParse: Check.Suite<{ buffer: Binary; dv: DataView }> = {
     const fileSignature = Binary.toCString(buffer.slice(0, 4))
     const majorVersion = dv.getUint8(24)
     const minorVersion = dv.getUint8(25)
-    const header: FullHeader = {
+    // was erroring on tests with parseBigInt() so I trimmed down as much as I could,
+    // but I couldn't find a file that would fail Las.Header.parse() but would not error
+    // on my manualParse, so I'm just manually testing fullHeaderSuite
+    const header: RelevantHeader = {
       fileSignature,
-      fileSourceId: dv.getUint16(4, true),
-      globalEncoding: dv.getUint16(6, true),
-      projectId: formatGuid(buffer.slice(8, 24)),
+      // fileSourceId: dv.getUint16(4, true),
+      // globalEncoding: dv.getUint16(6, true),
+      // projectId: formatGuid(buffer.slice(8, 24)),
       majorVersion,
       minorVersion,
-      systemIdentifier: Binary.toCString(buffer.slice(26, 58)),
-      generatingSoftware: Binary.toCString(buffer.slice(58, 90)),
-      fileCreationDayOfYear: dv.getUint16(90, true),
-      fileCreationYear: dv.getUint16(92, true),
+      // systemIdentifier: Binary.toCString(buffer.slice(26, 58)),
+      // generatingSoftware: Binary.toCString(buffer.slice(58, 90)),
+      // fileCreationDayOfYear: dv.getUint16(90, true),
+      // fileCreationYear: dv.getUint16(92, true),
       headerLength: dv.getUint16(94, true),
-      pointDataOffset: dv.getUint32(96, true),
-      vlrCount: dv.getUint32(100, true),
+      // pointDataOffset: dv.getUint32(96, true),
+      // vlrCount: dv.getUint32(100, true),
       pointDataRecordFormat: dv.getUint8(104) & 0b1111,
-      pointDataRecordLength: dv.getUint16(105, true),
+      // pointDataRecordLength: dv.getUint16(105, true),
       legacyPointCount: dv.getUint32(107, true),
       legacyPointCountByReturn: parseLegacyNumberOfPointsByReturn(
         buffer.slice(111, 131),
       ),
-      scale: parsePoint(buffer.slice(131, 155)),
-      offset: parsePoint(buffer.slice(155, 179)),
-      min: [
-        dv.getFloat64(187, true),
-        dv.getFloat64(203, true),
-        dv.getFloat64(219, true),
-      ],
-      max: [
-        dv.getFloat64(179, true),
-        dv.getFloat64(195, true),
-        dv.getFloat64(211, true),
-      ],
+      // scale: parsePoint(buffer.slice(131, 155)),
+      // offset: parsePoint(buffer.slice(155, 179)),
+      // min: [
+      //   dv.getFloat64(187, true),
+      //   dv.getFloat64(203, true),
+      //   dv.getFloat64(219, true),
+      // ],
+      // max: [
+      //   dv.getFloat64(179, true),
+      //   dv.getFloat64(195, true),
+      //   dv.getFloat64(211, true),
+      // ],
       pointCount: parseBigInt(getBigUint64(dv, 247, true)),
       pointCountByReturn: parseNumberOfPointsByReturn(buffer.slice(255, 375)),
-      waveformDataOffset: parseBigInt(getBigUint64(dv, 227, true)),
-      evlrOffset: parseBigInt(getBigUint64(dv, 235, true)),
-      evlrCount: dv.getUint32(243, true),
+      // waveformDataOffset: parseBigInt(getBigUint64(dv, 227, true)),
+      // evlrOffset: parseBigInt(getBigUint64(dv, 235, true)),
+      // evlrCount: dv.getUint32(243, true),
     }
     return invokeAllChecks({ source: header, suite: fullHeaderSuite })
   },
 }
 
-export const fullHeaderSuite: Check.Suite<FullHeader> = {
+export const fullHeaderSuite: Check.Suite<RelevantHeader> = {
   fileSignature: ({ fileSignature }) =>
     complexCheck(
       fileSignature,
@@ -89,9 +101,9 @@ export const fullHeaderSuite: Check.Suite<FullHeader> = {
     ),
   majorVersion: ({ majorVersion }) =>
     complexCheck(majorVersion, 1, false, `(1) Major Version: ${majorVersion}`),
-  minorVersion: ({ minorVersion }) =>
+  'minorVersion-manualParse': ({ minorVersion }) =>
     complexCheck(minorVersion, 4, false, `(4) Minor Version: ${minorVersion}`),
-  headerLength: ({ headerLength }) =>
+  'headerLength-manualParse': ({ headerLength }) =>
     complexCheck(
       headerLength,
       (n) => n >= Las.Constants.minHeaderLength,
@@ -107,10 +119,35 @@ export const fullHeaderSuite: Check.Suite<FullHeader> = {
         (pointCount < UINT32_MAX && legacyPointCount === pointCount) ||
         legacyPointCount === 0,
     ),
-  legacyNumberOfPointsByReturn: ({ legacyPointCountByReturn }) =>
-    legacyPointCountByReturn.some((num) => num !== 0)
-      ? Statuses.success
-      : Statuses.failure,
+  legacyNumberOfPointsByReturn: ({
+    pointDataRecordFormat,
+    pointCount,
+    legacyPointCount,
+    legacyPointCountByReturn,
+  }) =>
+    complexCheck(
+      {
+        pointDataRecordFormat,
+        pointCount,
+        legacyPointCount,
+        legacyPointCountByReturn,
+      },
+      ({
+        pointDataRecordFormat,
+        pointCount,
+        legacyPointCount,
+        legacyPointCountByReturn,
+      }) =>
+        ([6, 7, 8, 9, 10].includes(pointDataRecordFormat) &&
+          legacyPointCountByReturn.every((n) => n === 0)) ||
+        (pointCount < UINT32_MAX &&
+          pointCount === legacyPointCount &&
+          legacyPointCountByReturn.reduce((p, c) => p + c, 0) === pointCount) ||
+        legacyPointCountByReturn.reduce((p, c) => p + c, 0) ===
+          legacyPointCount,
+      true,
+      `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
+    ),
 }
 
 export default header

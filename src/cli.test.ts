@@ -1,5 +1,5 @@
 import copcc, { fs } from './cli'
-import { shallowScan, deepScan } from './report'
+import generateReport from 'report'
 import { ellipsoidFiles } from 'test'
 import { Report } from 'types'
 
@@ -12,7 +12,7 @@ afterAll(() => jest.restoreAllMocks())
 
 // ========== TESTS ==========
 test('cli shallow', async () => {
-  const expectedScan = expectScan(await shallowScan(filename))
+  const expectedScan = expectScan(await generateReport(filename, {}))
 
   await validateGoodScan([filename], expectedScan)
   await validateGoodScan([filename, '-o', outputPath], expectedScan)
@@ -21,7 +21,9 @@ test('cli shallow', async () => {
 jest.setTimeout(20000)
 test('cli deep', async () => {
   jest.setTimeout(20000)
-  const expectedScan = expectScan(await deepScan(filename))
+  const expectedScan = expectScan(
+    await generateReport(filename, { deep: true }),
+  )
 
   await validateGoodScan([filename, '--deep'], expectedScan)
   await validateGoodScan([filename, '-d', '--output', outputPath], expectedScan)
@@ -58,10 +60,14 @@ test('cli errors', async () => {
 
 test('cli named-reports', async () => {
   jest.setTimeout(10000)
-  const expectedShallow = expectScan(await shallowScan(filename, reportName))
+  const expectedShallow = expectScan(
+    await generateReport(filename, { name: reportName }),
+  )
   await validateGoodScan([filename, '--name', reportName], expectedShallow)
 
-  const expectedDeep = expectScan(await deepScan(filename, reportName))
+  const expectedDeep = expectScan(
+    await generateReport(filename, { name: reportName, deep: true }),
+  )
   await validateGoodScan([filename, '-d', `--name=${reportName}`], expectedDeep)
 })
 

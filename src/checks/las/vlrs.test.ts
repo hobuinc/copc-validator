@@ -1,9 +1,7 @@
 import { getLasItems } from 'test'
-import vlrSuite from 'checks/vlrs'
+import vlrSuite from './vlrs'
 import { getCheckIds, invokeAllChecks, splitChecks } from 'checks'
 import { difference } from 'lodash'
-
-// TESTING src/checks/vlrs.ts WITH LAS DATA
 
 const items = getLasItems()
 

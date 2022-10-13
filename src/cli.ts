@@ -1,5 +1,5 @@
 import minimist from 'minimist'
-import { shallowScan, deepScan } from './report'
+import { generateReport } from 'report'
 import { writeFileSync } from 'fs'
 // import * as fs from 'fs'
 import { resolve } from 'path'
@@ -38,24 +38,24 @@ export const copcc = async (argv: string[]) => {
       name: 'n',
     },
   })
-  const { _: files, deep, output, name } = args
+  const { _: files, deep, output, name: givenName } = args
 
   // VALIDATE ARGS
   if (files.length < 1)
     throw new Error('Must provide at least one (1) file to be validated')
+
+  const name = givenName || files[0]
   // currently accepts more than one file as an arg because it'd be easy enough
   // to loop over the files array and attempt multiple scans. We'd just need a
   // better solution for output (either --outputDir or force parse --output as
   // as directory if multiple files are supplied, or something else)
   // I'm currently doing neither and only reading the first file in the array
 
-  // deep, output, and name don't need validated because undefined is used in context
+  // deep & output don't need validated because undefined/false is used in context
 
   // RUN SCAN
   const start = performance.now()
-  const report = deep
-    ? await deepScan(files[0], name)
-    : await shallowScan(files[0], name)
+  const report = await generateReport(files[0], { name, deep })
   const end = performance.now()
   // Using performance.now() to print the time after the report, for debugging convienence
 

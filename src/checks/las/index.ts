@@ -1,8 +1,10 @@
 import { Getter, Las } from 'copc'
 import headerSuite from './header'
-import vlrSuite from 'checks/vlrs'
+import vlrSuite from 'checks/las/vlrs'
 import { Check } from 'types'
 import { invokeAllChecks } from 'checks'
+
+export * from './vlrs'
 
 // TODO: Rewrite LAS checks/write more LAS checks that allow validating the
 // Las 1.4 spec instead of just checking against the COPC spec

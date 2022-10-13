@@ -1,65 +1,35 @@
 import { invokeAllChecks, Statuses } from 'checks'
 import { Copc, Getter, Hierarchy, Point } from 'copc'
 import { Check } from 'types'
-import {
-  copcWithGetter,
-  // enhancedHierarchyNodes,
-  // enhancedWithRootPoint,
-  // getNodePoint,
-} from './common'
-import { isEqual, map, reduce } from 'lodash'
 
-export const shallowNodeScan: Check.Suite<copcWithGetter> = {
-  readRootPoints: async ({ get, copc }) => {
-    try {
-      const { nodes } = await Copc.loadHierarchyPage(
-        get,
-        copc.info.rootHierarchyPage,
-      )
-      // TODO: Handle more than one page
-      const points = await getNodePoint(get, copc, nodes)
-      const pd = enhancedHierarchyNodes(nodes, points)
-      return invokeAllChecks({ source: { copc, pd }, suite: pointData })
-    } catch (error) {
-      return [
-        {
-          id: 'pointData-NestedSuite',
-          status: 'fail',
-          info: (error as Error).message,
-        },
-      ]
-    }
-  },
-}
-
-export default shallowNodeScan
-
-// ========== POINT DATA CHECKS ==========
-
+/**
+ * Check.Suite that works with either a shallowNodeMap or deepNodeMap,
+ * used in src/checks/copc/nodes.ts
+ */
 export const pointData: Check.Suite<{
   copc: Copc
-  pd: shallowHierarchy //enhancedWithRootPoint<any>
+  nodeMap: enhancedNodeMap
 }> = {
-  rgb: ({ copc, pd }) =>
-    checkRgb(pd, copc.header.pointDataRecordFormat as 6 | 7 | 8),
-  rgbi: ({ copc, pd }) =>
-    checkRgbi(pd, copc.header.pointDataRecordFormat as 6 | 7 | 8),
+  rgb: ({ copc: { header }, nodeMap }) =>
+    checkRgb(nodeMap, header.pointDataRecordFormat as 6 | 7 | 8),
+  rgbi: ({ copc: { header }, nodeMap }) =>
+    checkRgbi(nodeMap, header.pointDataRecordFormat as 6 | 7 | 8),
   xyz: ({
     copc: {
       header: { min, max },
       info: { cube },
     },
-    pd,
-  }) => checkXyz(pd, min, max, cube),
+    nodeMap,
+  }) => checkXyz(nodeMap, min, max, cube),
   gpsTime: ({
     copc: {
       info: { gpsTimeRange },
     },
-    pd,
-  }) => checkGpsTime(pd, gpsTimeRange),
-  returns: ({ pd }) => {
-    const badPoints = getBadPoints(
-      pd,
+    nodeMap,
+  }) => checkGpsTime(nodeMap, gpsTimeRange),
+  returns: ({ nodeMap }) => {
+    const badPoints = getBadNodes(
+      nodeMap,
       (d) =>
         typeof d.ReturnNumber === 'undefined' ||
         typeof d.NumberOfReturns === 'undefined' ||
@@ -72,52 +42,50 @@ export const pointData: Check.Suite<{
       : Statuses.success
   },
 }
-
-// ========== CHECKS ==========
-const checkRgb = (points: shallowHierarchy, pdrf: 6 | 7 | 8): Check.Status => {
-  const pointData = reduceDimensions(points, ['Red', 'Green', 'Blue'])
+// ========== POINT DATA CHECKS ==========
+const checkRgb = (nodeMap: enhancedNodeMap, pdrf: 6 | 7 | 8): Check.Status => {
   if (pdrf === 6) {
-    const badRootPoints = getReducedBadPoints(pointData, (d) => !isEqual(d, {}))
-    return badRootPoints.length > 0
-      ? Statuses.failureWithInfo(
-          `(PDRF: 6) RGB data found at: ${badRootPoints.join(', ')}`,
-        )
+    const badNodes = getBadNodes(
+      nodeMap,
+      (d) =>
+        typeof d.Red !== 'undefined' ||
+        typeof d.Green !== 'undefined' ||
+        typeof d.Blue !== 'undefined',
+    )
+    return badNodes.length > 0
+      ? Statuses.failureWithInfo(`(PDRF: 6) RGB data found at: [ ${badNodes} ]`)
       : { status: 'pass' }
   }
-  // else
-  const badRootPoints = getReducedBadPoints(
-    pointData,
-    (d) => isEqual(d, {}) || isEqual(d, { Red: 0, Green: 0, Blue: 0 }),
+  const badNodes = getBadNodes(
+    nodeMap,
+    (d) =>
+      typeof d.Red === 'undefined' ||
+      typeof d.Green === 'undefined' ||
+      typeof d.Blue === 'undefined' ||
+      (d.Red === 0 && d.Green === 0 && d.Blue === 0),
   )
-  return badRootPoints.length > 0
+  return badNodes.length > 0
     ? Statuses.warningWithInfo(
-        `(PDRF: ${pdrf}) Unutilized RGB data found at: [ ${badRootPoints.join(
-          ', ',
-        )} ]`,
+        `(PDRF: ${pdrf}) Unutilized RGB data found at: [ ${badNodes} ]`,
       )
     : Statuses.success
 }
 
-const checkRgbi = (
-  pointData: shallowHierarchy, //enhancedWithRootPoint<T>,
-  pdrf: 6 | 7 | 8,
-): Check.Status => {
+const checkRgbi = (nodeMap: enhancedNodeMap, pdrf: 6 | 7 | 8): Check.Status => {
   const hasRgb = pdrf !== 6
   if (hasRgb) {
-    const badPoints = getBadPoints(
-      pointData,
+    const badPoints = getBadNodes(
+      nodeMap,
       (d) =>
         typeof d.Red === 'undefined' ||
         typeof d.Green === 'undefined' ||
         typeof d.Blue === 'undefined',
     )
     if (badPoints.length > 0)
-      return Statuses.failureWithInfo(
-        `Invalid RGB data at: [ ${badPoints.join(', ')} ]`,
-      )
+      return Statuses.failureWithInfo(`Invalid RGB data at: [ ${badPoints} ]`)
   }
-  const warnPoints = getBadPoints(
-    pointData,
+  const warnPoints = getBadNodes(
+    nodeMap,
     hasRgb
       ? (d) =>
           d.Red! <= 255 &&
@@ -125,8 +93,9 @@ const checkRgbi = (
           d.Blue! <= 255 &&
           d.Intensity! <= 255
       : (d) => d.Intensity! <= 255,
+    true,
   )
-  return warnPoints.length === Object.entries(pointData).length
+  return warnPoints.length === Object.entries(nodeMap).length
     ? Statuses.warningWithInfo(
         `Points appear to contain 8-bit ${
           hasRgb ? 'RGBI' : 'Intensity'
@@ -135,16 +104,16 @@ const checkRgbi = (
     : Statuses.success
 }
 
-// TODO: XYZ within node cube (based on D-X-Y-Z key)
+type Cube = [number, number, number, number, number, number]
+// TODO: XYZ within node bounds (D-X-Y-Z)
 const checkXyz = (
-  pointData: shallowHierarchy,
+  nodeMap: enhancedNodeMap,
   [xMin, yMin, zMin]: Point,
   [xMax, yMax, zMax]: Point,
-  cube: [number, number, number, number, number, number],
-): Check.Status => {
-  const [xMinCube, yMinCube, zMinCube, xMaxCube, yMaxCube, zMaxCube] = cube
-  const badPoints = getBadPoints(
-    pointData,
+  [xMinCube, yMinCube, zMinCube, xMaxCube, yMaxCube, zMaxCube]: Cube,
+) => {
+  const badNodes = getBadNodes(
+    nodeMap,
     (d) =>
       typeof d.X === 'undefined' ||
       typeof d.Y === 'undefined' ||
@@ -162,18 +131,18 @@ const checkXyz = (
       d.Z > zMax ||
       d.Z > zMaxCube,
   )
-  return badPoints.length > 0
-    ? Statuses.failureWithInfo(`X, Y, or Z out of bounds: [ ${badPoints} ]`)
+  return badNodes.length > 0
+    ? Statuses.failureWithInfo(`X, Y, or Z out of bounds: [${badNodes}]`)
     : Statuses.success
 }
 
 type gpsTimeRange = [number, number]
-const checkGpsTime = (
-  pointData: shallowHierarchy,
+export const checkGpsTime = (
+  nodeMap: enhancedNodeMap,
   [min, max]: gpsTimeRange,
 ): Check.Status => {
-  const badPoints = getBadPoints(
-    pointData,
+  const badPoints = getBadNodes(
+    nodeMap,
     (d) =>
       typeof d.GpsTime === 'undefined' || d.GpsTime < min || d.GpsTime > max,
   )
@@ -182,123 +151,113 @@ const checkGpsTime = (
     : Statuses.success
 }
 
-// ========== UTILS ==========
+// ========== UTILITIES ==========
+
+// Uses one `pointChecker` function and runs it on either `root` or on every object
+// present in `points` (using `.some()`). Should simplify multiple checks that look
+// for bad data on as many points that are provided (e.g. scanning XYZ or RBG values)
 /**
- * Function to check the output of `reduceDimensions()` for points that go against
- * the COPC spec. A `true` returned by this function is considered a Point Data
- * Record that violates the COPC specification.
+ * Takes an `enhancedNodeMap` (result of readHierarchyNodes()) and checks the points
+ * of each node with a provided `pointChecker` function. Returns the Keys of any
+ * Node that violates the spec.
+ * @param {enhancedNodeMap} map `shallowNodeMap` or `deepNodeMap` from readHierarchyNodes()
+ * @param {pointChecker} check Function that checks one point (`Record<string, number>`)
+ * and returns `true` if that point violates the spec being checked
+ * @param {boolean} every If `true`, changes the way `deepNodeMap`s are checked
+ * (from `map.points.some((d) => check(d))` to `map.points.every((d) => check(d))`)
+ * @returns {string[]} Array of Node Keys that violate the given `check` function
  */
-export type pointChecker = (data: Record<string, number | undefined>) => boolean
-/**
- * Utility function to iterate over enhanced point data and find
- * points violating the COPC specificiations.
- *
- * @param pd Form: ```{
- *   'D-X-Y-Z': {
- *     root: {
- *       [dimension: string]: number
- *     }
- *   }
- * }```
- * @param {pointChecker} check Function to check the dimensions of enhanced point data
- * for points that go against the COPC spec. A `true` returned by this function is
- * considered a Point Data Record that violates the COPC specification.
- * @returns {string[]} Array of nodes that return `true` given the `check` function
- */
-export const getBadPoints = (
-  pd: shallowHierarchy,
+export const getBadNodes = (
+  map: Record<
+    string,
+    Hierarchy.Node &
+      ({ root: Record<string, number> } | { points: Record<string, number>[] })
+  >,
   check: pointChecker,
+  every: boolean = false,
 ): string[] =>
-  Object.entries(pd).reduce<string[]>((prev, [node, { root }]) => {
-    try {
-      // try {} wrapper in case check() fails. Considered a point failure
-      if (check(root)) return [...prev, node]
-    } catch (e) {
-      return [...prev, node]
-    }
-    return [...prev]
-  }, [])
-
-export const getReducedBadPoints = (
-  pd: reducedPointData,
-  check: pointChecker,
-): string[] =>
-  Object.entries(pd).reduce<string[]>((prev, curr) => {
-    const [node, data] = curr
-    try {
-      // try {} wrapper in case check() fails. Considered a point failure
-      if (check(data)) return [...prev, node]
-    } catch (e) {
-      return [...prev, node]
-    }
-    return [...prev]
-  }, [])
-
-export type reducedPointData = Record<
-  string,
-  Record<string, number | undefined>
->
-/**
- * Utility function to trim dimensions from an enhanced hierarchy page node
- * @param points Hierarchy.Node.Map (or similar object) enhanced with Root Point data,
- * meaning it contains the object `root: {[dimension]: number}`
- * @param dimensions Array of dimension names to keep in the `points` object
- * @returns copy of `points`, without Hierarchy data, with `root`'s properties
- * matching the `dimensions` array flattened onto the top level
- */
-export const reduceDimensions = (
-  points: shallowHierarchy,
-  dimensions: readonly string[],
-): Record<string, Record<typeof dimensions[number], number>> =>
-  reduce(
-    points,
-    (prev, curr, path) => ({
-      ...prev,
-      [path]: Object.fromEntries(
-        dimensions
-          .map<[string, number]>((d) => [d, curr.root[d]])
-          .filter(([_dim, value]) => value !== undefined),
-      ),
-    }),
-    {},
-  )
-
-export type NodePoint = {
-  key: string
-  root: Record<string, number>
-}
-export const getNodePoint = async (
-  get: Getter,
-  copc: Copc,
-  nodes: Hierarchy.Node.Map,
-): Promise<NodePoint[]> =>
-  await Promise.all(
-    map(nodes, async (node, key) => {
-      const view = await Copc.loadPointDataView(get, copc, node!)
-
-      const dimensions = Object.keys(view.dimensions)
-      const getters = dimensions.map(view.getter)
-      const getDimensions = (index: number): Record<string, number> =>
-        getters.reduce(
-          (prev, curr, i) => ({ ...prev, [dimensions[i]]: curr(index) }),
-          {},
+  Object.entries(map).reduce<string[]>(
+    (
+      prev,
+      [key, { pointCount, pointDataOffset, pointDataLength, ...data }],
+    ) => {
+      try {
+        if (
+          'root' in data
+            ? check(data.root)
+            : every
+            ? data.points.every((d) => check(d))
+            : data.points.some((d) => check(d))
         )
-      return { key, root: getDimensions(0) }
-    }),
+          return [...prev, key]
+      } catch (e) {
+        return [...prev, key]
+      }
+      return [...prev]
+    },
+    [],
   )
 
-export type shallowHierarchy = Record<
+// ========== DEPRECATED ==========
+
+// My first stab at a single function for both deep and shallow scans, but this
+// doesn't actually help much since you'd need to check the types ahead of time
+// and discriminate the `check` function. So I replaced it with the above function,
+// that uses a single `check` with either check(map.root) or map.points.some(check())
+// export function getBadNodesDiscriminated<D extends enhancedNodeMap>(
+//   map: D,
+//   check: D extends shallowNodeMap ? pointChecker : multiPointChecker,
+// ): string[]
+// export function getBadNodesDiscriminated(
+//   map: shallowNodeMap | deepNodeMap,
+//   check: pointChecker | multiPointChecker,
+// ) {
+//   return Object.entries(map).reduce<string[]>(
+//     enhancedNodeMap.isShallowMap(map) // following casts allowed thanks to function declaration
+//       ? shallowCheckReduce(check as pointChecker)
+//       : deepCheckReduce(check as multiPointChecker),
+//     [],
+//   )
+// }
+// const shallowCheckReduce =
+//   (check: pointChecker) =>
+//   (prev: string[], [key, { root }]: [string, shallowNodeScan]) => {
+//     try {
+//       if (check(root)) return [...prev, key]
+//     } catch (e) {
+//       return [...prev, key]
+//     }
+//     return [...prev]
+//   }
+// const deepCheckReduce =
+//   (check: multiPointChecker) =>
+//   (prev: string[], [key, { points }]: [string, deepNodeScan]) => {
+//     try {
+//       if (check(points)) return [...prev, key]
+//     } catch (e) {
+//       return [...prev, key]
+//     }
+//     return [...prev]
+//   }
+
+// =========== TYPES ===========
+export type shallowNodeMap = Record<
   string,
   Hierarchy.Node & { root: Record<string, number> }
 >
-export const enhancedHierarchyNodes = (
-  nodes: Hierarchy.Node.Map,
-  points: NodePoint[],
-): shallowHierarchy =>
-  points.reduce(
-    (prev, { key, root }) => ({
-      ...prev,
-      [key]: { ...nodes[key], root },
-    }),
-    {},
-  )
+export type deepNodeMap = Record<
+  string,
+  Hierarchy.Node & { points: Record<string, number>[] }
+>
+export type enhancedNodeMap = shallowNodeMap | deepNodeMap
+const isDeepMap = (d: enhancedNodeMap): d is deepNodeMap =>
+  'points' in Object.values(d)[0] //Object.keys(Object.values(d)[0]).includes('points')
+const isShallowMap = (d: enhancedNodeMap): d is shallowNodeMap =>
+  'root' in Object.values(d)[0] //Object.keys().includes('root')
+export const enhancedNodeMap = {
+  isDeepMap,
+  isShallowMap,
+}
+
+export type pointChecker = (d: Record<string, number>) => boolean
+export type multiPointChecker = (d: Record<string, number>[]) => boolean

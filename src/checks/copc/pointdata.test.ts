@@ -1,42 +1,66 @@
 import { invokeAllChecks, findCheck } from 'checks'
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
-import shallowNodeScan, {
+import {
   pointData,
-  reduceDimensions,
-  getBadPoints,
-  getReducedBadPoints,
+  // getBadNodesDiscriminated,
+  shallowNodeMap,
+  deepNodeMap,
+  enhancedNodeMap,
   pointChecker,
-  enhancedHierarchyNodes,
-  getNodePoint,
-  shallowHierarchy,
+  multiPointChecker,
+  getBadNodes,
 } from './pointdata'
 import { omit, reduce } from 'lodash'
+import { readHierarchyNodes, scanNodes } from './nodes'
 
 const items = getCopcItems()
 
-test('shallowNodeScan all-pass', async () => {
-  const { get, copc } = await items
-  const checks = await invokeAllChecks({
-    source: { get, copc },
-    suite: shallowNodeScan,
-  })
-  checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
-})
+test('getBadNodes', async () => {
+  const { get, copc, nodes } = await items
+  const {
+    info: {
+      gpsTimeRange: [gpsMin, gpsMax],
+    },
+  } = copc
+  const shallowMap = await readHierarchyNodes(get, copc, nodes, false)
+  const deepMap = await readHierarchyNodes(get, copc, nodes, true)
+  const rootCheck: pointChecker = (d) =>
+    typeof d.GpsTime === 'undefined' || d.GpsTime < gpsMin || d.GpsTime > gpsMax
+  // const pointsCheck: multiPointChecker = (d) =>
+  //   d.some(
+  //     (p) =>
+  //       typeof p.GpsTime === 'undefined' ||
+  //       p.GpsTime < gpsMin ||
+  //       p.GpsTime > gpsMax,
+  //   )
+  // Discriminated is likely no longer necessary, but it may be useful for more
+  // complex deep scan checks, so I won't delete it yet
+  // const shallowNoNodes = getBadNodesDiscriminated(shallowMap, rootCheck)
+  // const deepNoNodesOld = getBadNodesDiscriminated(deepMap, pointsCheck)
+  const shallowNoNodes = getBadNodes(shallowMap, rootCheck)
+  const deepNoNodes = getBadNodes(deepMap, rootCheck)
 
-test('shallowNodeScan failures', async () => {
-  const checks = await invokeAllChecks({
-    source: { get: Getter.create(ellipsoidFiles.laz14), copc: {} as Copc },
-    suite: shallowNodeScan,
-  })
-  checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
+  expect(shallowNoNodes).toEqual([]) // ellipsoid.copc.laz data should be good
+  expect(deepNoNodes).toEqual(shallowNoNodes) // checks should be equivalent
+
+  const badCheck: pointChecker = (d) => {
+    throw new Error('Fake bad check')
+  }
+  const shallowBadNodes = getBadNodes(shallowMap, badCheck)
+  const deepBadNodes = getBadNodes(deepMap, badCheck)
+
+  const allNodes = Object.keys(nodes)
+
+  expect(shallowBadNodes).toEqual(allNodes)
+  expect(deepBadNodes).toEqual(allNodes)
 })
 
 test('pd all-pass', async () => {
   const { get, copc, nodes } = await items
-  const pd = enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, nodes))
+  const nodeMap = await readHierarchyNodes(get, copc, nodes, false)
   const checks = await invokeAllChecks({
-    source: { copc, pd },
+    source: { copc, nodeMap },
     suite: pointData,
   })
   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
@@ -52,9 +76,9 @@ test('pd pdrf=6', async () => {
       pointDataRecordFormat: 6,
     },
   }
-  const pd = enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, nodes))
-  const nonRgbPd: shallowHierarchy = reduce(
-    pd,
+  const nodeMap = await readHierarchyNodes(get, copc, nodes, false)
+  const nonRgbPd: shallowNodeMap = reduce(
+    nodeMap,
     (prev, curr, path) => ({
       ...prev,
       [path]: {
@@ -67,7 +91,7 @@ test('pd pdrf=6', async () => {
     {},
   )
   const checks = await invokeAllChecks({
-    source: { copc: pdrf6Copc, pd: nonRgbPd },
+    source: { copc: pdrf6Copc, nodeMap: nonRgbPd },
     suite: pointData,
   })
   // all-pass with known-good Copc file turned into pdrf=6 version
@@ -79,10 +103,7 @@ test('pd pdrf=6', async () => {
     copc: oldCopc,
     nodes: oldNodes,
   } = await getCopcItems(ellipsoidFiles.oldCopc)
-  const oldPd = enhancedHierarchyNodes(
-    oldNodes,
-    await getNodePoint(oldGet, oldCopc, oldNodes),
-  )
+  const oldNodeMap = await readHierarchyNodes(oldGet, oldCopc, oldNodes, false)
   const badOldCopc = {
     ...oldCopc,
     header: {
@@ -91,7 +112,7 @@ test('pd pdrf=6', async () => {
     },
   }
   const oldNonRgbChecks = await invokeAllChecks({
-    source: { copc: badOldCopc, pd: oldPd },
+    source: { copc: badOldCopc, nodeMap: oldNodeMap },
     suite: pointData,
   })
   // check for pdrf=6 failures with outdated Copc file
@@ -104,15 +125,15 @@ test('pd pdrf=6', async () => {
 
 test('pd failures', async () => {
   const { get, copc, nodes } = await items
-  const pd = enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, nodes))
+  const pd = await readHierarchyNodes(get, copc, nodes, false)
   // Creating point data with no dimensions to ensure complete failure of the suite
-  const badPd: shallowHierarchy = reduce(
+  const badNodeMap: shallowNodeMap = reduce(
     pd,
     (prev, curr, path) => ({ ...prev, [path]: { ...curr, root: {} } }),
     {},
   )
   const checks = await invokeAllChecks({
-    source: { copc, pd: badPd },
+    source: { copc, nodeMap: badNodeMap },
     suite: pointData,
   })
   checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
@@ -124,105 +145,16 @@ test('pd failures', async () => {
   } = await getCopcItems(ellipsoidFiles.oldCopc)
   // the original ellipsoid.copc.laz file had bad RGB and gpsTime data, so I'm
   // testing for those checks here
-  const oldPd = enhancedHierarchyNodes(
-    oldNodes,
-    await getNodePoint(oldGet, oldCopc, oldNodes),
-  )
+  const oldNodeMap = await readHierarchyNodes(oldGet, oldCopc, oldNodes, false)
   const oldChecks = await invokeAllChecks({
-    source: { copc: oldCopc, pd: oldPd },
+    source: { copc: oldCopc, nodeMap: oldNodeMap },
     suite: pointData,
   })
   expect(findCheck(oldChecks, 'gpsTime')).toHaveProperty('status', 'fail')
   expect(findCheck(oldChecks, 'rgbi')).toHaveProperty('status', 'warn')
 })
 
-test('pd utilities', async () => {
-  const { get, copc, nodes } = await items
-  const pd = enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, nodes))
-
-  // If no dimensions can be found on pd.root, reduceDimensions() returns `{}`
-  const emptyDimensionTests = [[], ['NonExistentDimension']]
-  emptyDimensionTests.forEach((dim) => {
-    const reducedPd = reduceDimensions(pd, dim)
-    // console.log(reducedPd)
-    for (const path in reducedPd) {
-      expect(reducedPd[path]).toEqual({})
-    }
-  })
-
-  // If some of the dimensions can be found, they will be returned by reduceDimensions
-  const reducedPd = reduceDimensions(pd, [
-    'X',
-    'Y',
-    'Z',
-    'NonExistentDimension',
-  ])
-  for (const path in reducedPd) {
-    expect(nodes[path]).toBeDefined()
-    expect(reducedPd[path]).toEqual({
-      X: pd[path].root.X,
-      Y: pd[path].root.Y,
-      Z: pd[path].root.Z,
-    })
-  }
-
-  const badCheck: pointChecker = (d) => {
-    throw new Error('Bad Check')
-  }
-  const badPoints = getBadPoints(pd, badCheck)
-  const badReducedPoints = getReducedBadPoints(reducedPd, badCheck)
-  const allNodes = Object.keys(nodes)
-  expect(badPoints).toEqual(allNodes)
-  expect(badReducedPoints).toEqual(allNodes)
-  expect(
-    getBadPoints(pd, (d) => d.X! !== 0 || d.Y! !== 0 || d.Z! !== 0),
-  ).toEqual(allNodes)
-})
-
-test('getNodePoint', async () => {
-  const { get, copc, nodes } = await items
-  const nodePoint = await getNodePoint(get, copc, nodes)
-  // length matches the original `nodes` object
-  expect(nodePoint).toHaveLength(Object.entries(nodes).length)
-  // each `path` corresponds to a valid node in the nodes map
-  nodePoint.forEach((node) => expect(nodes[node.key]).toBeDefined())
-
-  // The following statements cause a memory leak, so... don't pass invalid Copc
-  // data (Getter or Copc object) to the getNodePoint() function.
-  // Confirm the data is valid by passing through Copc.create() and .loadPointDataView()
-
-  /* await expect(
-    getNodePoint(Getter.create(ellipsoidFiles.laz14), copc, nodes),
-  ).rejects.toThrow() */
-  /* await expect(getNodePoint(get, {} as Copc, nodes)).rejects.toThrow() */
-
-  // However, the nodes data can be messed up:
-  expect(await getNodePoint(get, copc, {})).toEqual([])
-})
-
 test.todo('other pointData tests')
-
-// I realized reduceDimensions wasn't actually *doing* anything internally for
-// the point-data.ts check functions, and I used this test to confirm that calling
-// it was actually detrimental to overall performance. Can still be useful for logging
-// and for isEqual() object checks so I won't remove the old functions (yet), plus
-// I figured this test may be interesting to see/replicate
-// Interestingly, the results are not entirely consistent; this test randomly fails
-test('getBadPoints performance test', async () => {
-  const { get, copc, nodes } = await items
-  const pd = enhancedHierarchyNodes(nodes, await getNodePoint(get, copc, nodes))
-  const check: pointChecker = (d) =>
-    typeof d.X === 'undefined' ||
-    typeof d.Y === 'undefined' ||
-    typeof d.Z === 'undefined'
-  const { f, g } = averagePerformance(
-    () => getReducedBadPoints(reduceDimensions(pd, ['X', 'Y', 'Z']), check),
-    () => getBadPoints(pd, check),
-    10,
-  )
-
-  expect(f).toBeGreaterThan(g)
-})
 
 const comparePerformance = (
   f: () => unknown,

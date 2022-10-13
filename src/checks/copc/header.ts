@@ -10,6 +10,7 @@ import {
 import {
   basicCheck,
   formatGuid,
+  fullHeaderSuite,
   invokeAllChecks,
   parseLegacyNumberOfPointsByReturn,
   parseNumberOfPointsByReturn,
@@ -20,9 +21,9 @@ import { Check } from 'types'
 
 export const header: Check.Suite<Copc> = {
   // This check is redundant with Copc.create()
-  fileSignature: (c) => basicCheck(c.header.fileSignature, 'LASF'),
+  // fileSignature: (c) => basicCheck(c.header.fileSignature, 'LASF'),
   // This check is redundant with Copc.create()
-  majorVersion: (c) => basicCheck(c.header.majorVersion, 1),
+  // majorVersion: (c) => basicCheck(c.header.majorVersion, 1),
   // This check is not redundant with Copc.create() since it currently allows minorVersion === 2
   minorVersion: (c) => basicCheck(c.header.minorVersion, 4),
   headerLength: (c) =>
@@ -63,7 +64,10 @@ export const headerGetter: Check.Suite<Getter> = {
           info: `Invalid version (only Las 1.4 supported): ${majorVersion}.${minorVersion}`,
         },
       ]
-    const header: FullHeader = {
+    const header: Las.Header & {
+      legacyPointCount: number
+      legacyPointCountByReturn: number[]
+    } = {
       fileSignature,
       fileSourceId: dv.getUint16(4, true),
       globalEncoding: dv.getUint16(6, true),
@@ -105,22 +109,24 @@ export const headerGetter: Check.Suite<Getter> = {
   },
 }
 
-type FullHeader = Las.Header & {
-  legacyPointCount: number
-  legacyPointCountByReturn: number[]
-}
-const fullHeaderSuite: Check.Suite<FullHeader> = {
-  legacyPointCount: ({ pointCount, legacyPointCount }) =>
-    basicCheck(
-      { pointCount, legacyPointCount },
-      (n) =>
-        (pointCount < UINT32_MAX && legacyPointCount === pointCount) ||
-        legacyPointCount === 0,
-    ),
-  legacyNumberOfPointsByReturn: ({ legacyPointCountByReturn }) =>
-    legacyPointCountByReturn.some((num) => num !== 0)
-      ? Statuses.success
-      : Statuses.failure,
-}
+// type FullHeader = Las.Header & {
+//   legacyPointCount: number
+//   legacyPointCountByReturn: number[]
+// }
+// const fullHeaderSuite: Check.Suite<FullHeader> = {
+//   legacyPointCount: ({ pointDataRecordFormat, pointCount, legacyPointCount }) =>
+//     basicCheck(
+//       { pointDataRecordFormat, pointCount, legacyPointCount },
+//       ({ pointDataRecordFormat, pointCount, legacyPointCount }) =>
+//         ([6, 7, 8, 9, 10].includes(pointDataRecordFormat) &&
+//           legacyPointCount === 0) ||
+//         (pointCount < UINT32_MAX && legacyPointCount === pointCount) ||
+//         legacyPointCount === 0,
+//     ),
+//   legacyNumberOfPointsByReturn: ({ legacyPointCountByReturn }) =>
+//     legacyPointCountByReturn.some((num) => num !== 0)
+//       ? Statuses.success
+//       : Statuses.failure,
+// }
 
-const UINT32_MAX = 4_294_967_295
+// const UINT32_MAX = 4_294_967_295

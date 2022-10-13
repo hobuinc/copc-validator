@@ -47,6 +47,10 @@ export declare namespace Report {
     type Failed = scan & { filetype: 'Unknown' }
   }
   export type Options = {
+    name?: string
+    deep?: boolean
+  }
+  export type old_Options = {
     name: string
     type: Scans.types
   }
