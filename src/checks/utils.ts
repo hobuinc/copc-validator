@@ -129,7 +129,7 @@ export const vlrCheck = (
   required: boolean = true,
   finalCheck?: (vlr: Las.Vlr) => boolean,
   info?: string,
-) => {
+): Check.Status => {
   const vlrName = `${userId}-${recordId}`
   const vlr = Las.Vlr.find(vlrs, userId, recordId)
   if (!vlr)
@@ -173,6 +173,9 @@ const checkPromise = async (
   try {
     // If the Check.Function or Check.NestedSuite Errors for any reason, we
     // will give the Error.message as the info
+    // I believe the effect of using Promise.all in invokeAllChecks() and the
+    // try..catch here is that all Check.Functions will be called, no matter if
+    // any fail along the way (`failfast` behavior of Promise.all is avoided)
     const r = await f(source)
     if (Array.isArray(r)) return r
     return [{ id, ...r }]

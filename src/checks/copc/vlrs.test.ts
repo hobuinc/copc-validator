@@ -2,7 +2,7 @@ import { getCopcItems } from 'test'
 import { invokeAllChecks } from 'checks'
 import { vlrSuite } from 'checks/las'
 
-// TESTING src/checks/vlrs.ts WITH COPC DATA
+// TESTING src/checks/las/vlrs.ts WITH COPC DATA
 
 const items = getCopcItems()
 

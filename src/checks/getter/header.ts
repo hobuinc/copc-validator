@@ -6,7 +6,7 @@ import lasHeaderSuite from 'checks/las/header'
 export const header: Check.Suite<{
   get: Getter
   buffer: Binary
-  dv: DataView
+  // dv: DataView
 }> = {
   tryLasParse: async ({ buffer, get }) => {
     try {
@@ -83,7 +83,7 @@ export const manualHeaderSuite: Check.Suite<{ buffer: Binary; dv: DataView }> =
         `(>=375) Header Length: ${headerLength}`,
       )
     },
-    legacyPointCount: ({ dv, buffer }) => {
+    legacyPointCount: ({ dv }) => {
       const pointDataRecordFormat = dv.getUint8(104) & 0b1111
       const legacyPointCount = dv.getUint32(107, true)
       const pointCount = parseBigInt(getBigUint64(dv, 247, true))
@@ -107,9 +107,9 @@ export const manualHeaderSuite: Check.Suite<{ buffer: Binary; dv: DataView }> =
         buffer.slice(111, 131),
       )
       const pointCount = parseBigInt(getBigUint64(dv, 247, true))
-      const pointCountByReturn = parseNumberOfPointsByReturn(
-        buffer.slice(255, 375),
-      )
+      // const pointCountByReturn = parseNumberOfPointsByReturn(
+      //   buffer.slice(255, 375),
+      // )
       const param = {
         pdrf: pointDataRecordFormat,
         pc: pointCount,
@@ -126,6 +126,7 @@ export const manualHeaderSuite: Check.Suite<{ buffer: Binary; dv: DataView }> =
           lpcr.reduce((p, c) => p + c, 0) === lpc,
         true,
         `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
+        `PointDataRecordFormat: ${pointDataRecordFormat}`,
       )
     },
   }

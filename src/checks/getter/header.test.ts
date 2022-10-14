@@ -1,4 +1,4 @@
-import { Getter } from 'copc'
+import { Binary, Getter, Las } from 'copc'
 import { getLasItems, ellipsoidFiles } from 'test'
 import {
   invokeAllChecks,
@@ -8,13 +8,12 @@ import {
 } from 'checks'
 import headerSuite, {
   formatGuid,
-  manualHeaderSuite,
-  manualHeaderParse,
-  // fullHeaderSuite,
   parsePoint,
-  // FullHeader,
+  manualHeaderParse,
+  manualHeaderSuite,
 } from './header'
 import lasHeaderSuite from 'checks/las/header'
+import { difference } from 'lodash'
 
 const get = Getter.create(ellipsoidFiles.laz14)
 const fakeGet = Getter.create(ellipsoidFiles.fake)
@@ -59,11 +58,35 @@ test('getter header failure', async () => {
   checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
 })
 
+test('manualHeaderSuite null-data', async () => {
+  const buffer = new Uint8Array(Las.Constants.minHeaderLength)
+  const dv = Binary.toDataView(buffer)
+  const checks = await invokeAllChecks({
+    source: { buffer, dv },
+    suite: manualHeaderSuite,
+  })
+
+  const expectedPassed = ['legacyPointCount', 'legacyPointCountByReturn']
+  const expectedFailed = difference(
+    Object.keys(manualHeaderSuite),
+    expectedPassed,
+  )
+
+  const [passed, failed] = splitChecks(checks)
+
+  expect(getCheckIds(passed)).toEqual(expectedPassed)
+  expect(getCheckIds(failed)).toEqual(expectedFailed)
+})
+
 test('getter header branch-coverage', async () => {
   expect(() => {
     formatGuid(new Uint8Array(15))
   }).toThrow('Invalid GUID buffer length')
+  expect(formatGuid(new Uint8Array(16))).toEqual(
+    '00000000-0000-0000-0000000000000000',
+  )
   expect(() => {
     parsePoint(new Uint8Array(25))
   }).toThrow('Invalid tuple buffer length')
+  expect(parsePoint(new Uint8Array(24))).toEqual([0, 0, 0])
 })

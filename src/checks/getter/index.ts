@@ -9,13 +9,13 @@ export * from './header'
 
 export const GetterSuite: Check.Suite<Getter> = {
   decode: async (get) => {
-    const { buffer, info, dv } = await getterToHeader(get)
+    const { buffer, info } = await getterToHeader(get)
     // using a NestedSuite to call other NestedSuites that check Las.Header.parse()
     // and Las.Vlr.walk() for why and where they (may have) failed
     return invokeAllChecks([
       // checks for why Las.Header.parse() may have failed
       {
-        source: { get, buffer, dv },
+        source: { get, buffer },
         suite: headerSuite,
       },
       // checks for why Las.Vlr.walk() may have failed

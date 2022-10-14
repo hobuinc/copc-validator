@@ -7,11 +7,11 @@ import { Check } from 'types'
 
 // If Check.Suite<Las.Header> is being called from generateReport(), then both
 // Las.Header.parse() and Las.Vlr.walk() succeeded. This is actually fairly unlikely,
-// as those two functions hold like 75% of Copc.create()'s exit paths. So I might
-// actually want to restructure a bit...
+// as those two functions hold like 75% of Copc.create()'s exit paths.
 
-// But the GetterSuite does call back to checks/las/header.ts and vlrs.ts if their
-// respective Las.*.parse() functions work, so I'm not sure how to rearrange these
+// This Suite is used by checks/copc/header.ts to confirm the Las.Header
+// values adhear to the COPC spec. It likely won't be called from generateReport()
+// once I fully implement LAS spec validation
 export const headerSuite: Check.Suite<Las.Header> = {
   minorVersion: ({ minorVersion }) => basicCheck(minorVersion, 4),
   pointDataRecordFormat: ({ pointDataRecordFormat }) =>

@@ -23,17 +23,7 @@ test('getBadNodes', async () => {
   const deepMap = await readHierarchyNodes(get, copc, nodes, true)
   const rootCheck: pointChecker = (d) =>
     typeof d.GpsTime === 'undefined' || d.GpsTime < gpsMin || d.GpsTime > gpsMax
-  // const pointsCheck: multiPointChecker = (d) =>
-  //   d.some(
-  //     (p) =>
-  //       typeof p.GpsTime === 'undefined' ||
-  //       p.GpsTime < gpsMin ||
-  //       p.GpsTime > gpsMax,
-  //   )
-  // Discriminated is likely no longer necessary, but it may be useful for more
-  // complex deep scan checks, so I won't delete it yet
-  // const shallowNoNodes = getBadNodesDiscriminated(shallowMap, rootCheck)
-  // const deepNoNodesOld = getBadNodesDiscriminated(deepMap, pointsCheck)
+
   const shallowNoNodes = getBadNodes(shallowMap, rootCheck)
   const deepNoNodes = getBadNodes(deepMap, rootCheck)
 
