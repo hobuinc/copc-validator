@@ -3,7 +3,9 @@ import headerSuite from './header'
 import vlrSuite from 'checks/las/vlrs'
 import { Check } from 'types'
 import { invokeAllChecks } from 'checks'
+import { copcHeaderSuite } from '../getter'
 
+export * from './header'
 export * from './vlrs'
 
 // TODO: Rewrite LAS checks/write more LAS checks that allow validating the
@@ -16,9 +18,10 @@ export const LasSuite: Check.Suite<{
   header: Las.Header
   vlrs: Las.Vlr[]
 }> = {
-  lasParse: async ({ header, vlrs }) =>
+  lasParse: async ({ get, header, vlrs }) =>
     invokeAllChecks([
       { source: header, suite: headerSuite },
+      { source: get, suite: copcHeaderSuite },
       { source: { header, vlrs }, suite: vlrSuite },
     ]),
 }

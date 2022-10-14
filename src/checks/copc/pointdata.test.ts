@@ -3,16 +3,12 @@ import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
 import {
   pointData,
-  // getBadNodesDiscriminated,
   shallowNodeMap,
-  deepNodeMap,
-  enhancedNodeMap,
   pointChecker,
-  multiPointChecker,
   getBadNodes,
 } from './pointdata'
 import { omit, reduce } from 'lodash'
-import { readHierarchyNodes, scanNodes } from './nodes'
+import { readHierarchyNodes } from './nodes'
 
 const items = getCopcItems()
 

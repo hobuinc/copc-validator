@@ -1,4 +1,4 @@
-import { buildCopcSuite, GetterSuite, invokeAllChecks, LasSuite } from 'checks'
+import { CopcSuite, GetterSuite, invokeAllChecks, LasSuite } from 'checks'
 import { Copc, Getter, Las } from 'copc'
 import { Check, Report } from 'types'
 import { isEqual, omit } from 'lodash'
@@ -42,7 +42,7 @@ export const generateReport = async (
 
     const checks = await invokeAllChecks({
       source: { get, copc },
-      suite: buildCopcSuite(deep),
+      suite: CopcSuite(deep),
     })
 
     return {

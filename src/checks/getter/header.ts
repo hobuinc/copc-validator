@@ -8,149 +8,136 @@ export const header: Check.Suite<{
   buffer: Binary
   dv: DataView
 }> = {
-  tryLasParse: async ({ buffer, dv }) => {
+  tryLasParse: async ({ buffer, get }) => {
     try {
       const header = Las.Header.parse(buffer)
       // If Las.Header.parse() didn't throw the error, we can reuse the lasHeaderSuite checks
       return invokeAllChecks({ source: header, suite: lasHeaderSuite })
     } catch (error) {
-      return invokeAllChecks({ source: { buffer, dv }, suite: manualParse })
+      return invokeAllChecks({
+        source: get,
+        suite: manualHeaderParse(),
+      })
     }
   },
 }
 
-// This is currently a mess and doesn't work very well, but I'll get back to it
-export type RelevantHeader = Pick<
-  Las.Header,
-  | 'majorVersion'
-  | 'minorVersion'
-  | 'headerLength'
-  | 'pointDataRecordFormat'
-  | 'pointCount'
-  | 'pointCountByReturn'
-> & {
-  fileSignature: string
-  legacyPointCount: number
-  legacyPointCountByReturn: number[]
-}
-export const manualParse: Check.Suite<{ buffer: Binary; dv: DataView }> = {
-  manualLasParse: async ({ buffer, dv }) => {
+export default header
+
+export const manualHeaderParse = (
+  headerSuite: Check.Suite<{
+    buffer: Binary
+    dv: DataView
+  }> = manualHeaderSuite,
+): Check.Suite<Getter> => ({
+  manualHeaderParse: async (get) => {
+    const buffer = await get(0, Las.Constants.minHeaderLength)
+    const dv = Binary.toDataView(buffer)
     if (buffer.byteLength < Las.Constants.minHeaderLength)
       return [
         {
-          id: 'header-get.parse',
+          id: 'manualHeaderParse',
           status: 'fail',
           info: `Invalid header: must be at least ${Las.Constants.minHeaderLength} bytes`,
         },
       ]
-    const fileSignature = Binary.toCString(buffer.slice(0, 4))
-    const majorVersion = dv.getUint8(24)
-    const minorVersion = dv.getUint8(25)
-    // was erroring on tests with parseBigInt() so I trimmed down as much as I could,
-    // but I couldn't find a file that would fail Las.Header.parse() but would not error
-    // on my manualParse, so I'm just manually testing fullHeaderSuite
-    const header: RelevantHeader = {
-      fileSignature,
-      // fileSourceId: dv.getUint16(4, true),
-      // globalEncoding: dv.getUint16(6, true),
-      // projectId: formatGuid(buffer.slice(8, 24)),
-      majorVersion,
-      minorVersion,
-      // systemIdentifier: Binary.toCString(buffer.slice(26, 58)),
-      // generatingSoftware: Binary.toCString(buffer.slice(58, 90)),
-      // fileCreationDayOfYear: dv.getUint16(90, true),
-      // fileCreationYear: dv.getUint16(92, true),
-      headerLength: dv.getUint16(94, true),
-      // pointDataOffset: dv.getUint32(96, true),
-      // vlrCount: dv.getUint32(100, true),
-      pointDataRecordFormat: dv.getUint8(104) & 0b1111,
-      // pointDataRecordLength: dv.getUint16(105, true),
-      legacyPointCount: dv.getUint32(107, true),
-      legacyPointCountByReturn: parseLegacyNumberOfPointsByReturn(
-        buffer.slice(111, 131),
-      ),
-      // scale: parsePoint(buffer.slice(131, 155)),
-      // offset: parsePoint(buffer.slice(155, 179)),
-      // min: [
-      //   dv.getFloat64(187, true),
-      //   dv.getFloat64(203, true),
-      //   dv.getFloat64(219, true),
-      // ],
-      // max: [
-      //   dv.getFloat64(179, true),
-      //   dv.getFloat64(195, true),
-      //   dv.getFloat64(211, true),
-      // ],
-      pointCount: parseBigInt(getBigUint64(dv, 247, true)),
-      pointCountByReturn: parseNumberOfPointsByReturn(buffer.slice(255, 375)),
-      // waveformDataOffset: parseBigInt(getBigUint64(dv, 227, true)),
-      // evlrOffset: parseBigInt(getBigUint64(dv, 235, true)),
-      // evlrCount: dv.getUint32(243, true),
-    }
-    return invokeAllChecks({ source: header, suite: fullHeaderSuite })
+    return invokeAllChecks({ source: { buffer, dv }, suite: headerSuite })
   },
+})
+
+export const manualHeaderSuite: Check.Suite<{ buffer: Binary; dv: DataView }> =
+  {
+    fileSignature: ({ buffer }) => {
+      const fileSignature = Binary.toCString(buffer.slice(0, 4))
+      return complexCheck(
+        fileSignature,
+        'LASF',
+        false,
+        `('LASF') File Signature: '${fileSignature}'`,
+      )
+    },
+    majorVersion: ({ dv }) => {
+      const majorVersion = dv.getUint8(24)
+      return complexCheck(
+        majorVersion,
+        1,
+        false,
+        `(1) Major Version: ${majorVersion}`,
+      )
+    },
+    minorVersion: ({ dv }) => {
+      const minorVersion = dv.getUint8(25)
+      return complexCheck(
+        minorVersion,
+        4,
+        false,
+        `(4) Minor Version: ${minorVersion}`,
+      )
+    },
+    headerLength: ({ dv }) => {
+      const headerLength = dv.getUint16(94, true)
+      return complexCheck(
+        headerLength,
+        (n) => n === Las.Constants.minHeaderLength,
+        false,
+        `(>=375) Header Length: ${headerLength}`,
+      )
+    },
+    legacyPointCount: ({ dv, buffer }) => {
+      const pointDataRecordFormat = dv.getUint8(104) & 0b1111
+      const legacyPointCount = dv.getUint32(107, true)
+      const pointCount = parseBigInt(getBigUint64(dv, 247, true))
+      const param = {
+        pdrf: pointDataRecordFormat,
+        pc: pointCount,
+        lpc: legacyPointCount,
+      }
+      return basicCheck(
+        param,
+        ({ pdrf, pc, lpc }) =>
+          ([6, 7, 8, 9, 10].includes(pdrf) && lpc === 0) ||
+          (pc < UINT32_MAX && lpc === pc) ||
+          lpc === 0,
+      )
+    },
+    legacyPointCountByReturn: ({ dv, buffer }) => {
+      const pointDataRecordFormat = dv.getUint8(104) & 0b1111
+      const legacyPointCount = dv.getUint32(107, true)
+      const legacyPointCountByReturn = parseLegacyNumberOfPointsByReturn(
+        buffer.slice(111, 131),
+      )
+      const pointCount = parseBigInt(getBigUint64(dv, 247, true))
+      const pointCountByReturn = parseNumberOfPointsByReturn(
+        buffer.slice(255, 375),
+      )
+      const param = {
+        pdrf: pointDataRecordFormat,
+        pc: pointCount,
+        lpc: legacyPointCount,
+        lpcr: legacyPointCountByReturn,
+      }
+      return complexCheck(
+        param,
+        ({ pdrf, pc, lpc, lpcr }) =>
+          ([6, 7, 8, 9, 10].includes(pdrf) && lpcr.every((n) => n === 0)) ||
+          (pc < UINT32_MAX &&
+            pc === lpc &&
+            lpcr.reduce((p, c) => p + c, 0) === pc) ||
+          lpcr.reduce((p, c) => p + c, 0) === lpc,
+        true,
+        `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
+      )
+    },
+  }
+
+// I tried doing this in checks/copc/header.ts but the imports don't read properly?
+const { legacyPointCount, legacyPointCountByReturn } = manualHeaderSuite
+const copcHeaderChecks: Check.Suite<{ buffer: Binary; dv: DataView }> = {
+  legacyPointCount,
+  legacyPointCountByReturn,
 }
 
-export const fullHeaderSuite: Check.Suite<RelevantHeader> = {
-  fileSignature: ({ fileSignature }) =>
-    complexCheck(
-      fileSignature,
-      'LASF',
-      false,
-      `('LASF') File Signature: '${fileSignature}'`,
-    ),
-  majorVersion: ({ majorVersion }) =>
-    complexCheck(majorVersion, 1, false, `(1) Major Version: ${majorVersion}`),
-  'minorVersion-manualParse': ({ minorVersion }) =>
-    complexCheck(minorVersion, 4, false, `(4) Minor Version: ${minorVersion}`),
-  'headerLength-manualParse': ({ headerLength }) =>
-    complexCheck(
-      headerLength,
-      (n) => n >= Las.Constants.minHeaderLength,
-      false,
-      `(>=375) Header Length: ${headerLength}`,
-    ),
-  legacyPointCount: ({ pointDataRecordFormat, pointCount, legacyPointCount }) =>
-    basicCheck(
-      { pointDataRecordFormat, pointCount, legacyPointCount },
-      ({ pointDataRecordFormat, pointCount, legacyPointCount }) =>
-        ([6, 7, 8, 9, 10].includes(pointDataRecordFormat) &&
-          legacyPointCount === 0) ||
-        (pointCount < UINT32_MAX && legacyPointCount === pointCount) ||
-        legacyPointCount === 0,
-    ),
-  legacyNumberOfPointsByReturn: ({
-    pointDataRecordFormat,
-    pointCount,
-    legacyPointCount,
-    legacyPointCountByReturn,
-  }) =>
-    complexCheck(
-      {
-        pointDataRecordFormat,
-        pointCount,
-        legacyPointCount,
-        legacyPointCountByReturn,
-      },
-      ({
-        pointDataRecordFormat,
-        pointCount,
-        legacyPointCount,
-        legacyPointCountByReturn,
-      }) =>
-        ([6, 7, 8, 9, 10].includes(pointDataRecordFormat) &&
-          legacyPointCountByReturn.every((n) => n === 0)) ||
-        (pointCount < UINT32_MAX &&
-          pointCount === legacyPointCount &&
-          legacyPointCountByReturn.reduce((p, c) => p + c, 0) === pointCount) ||
-        legacyPointCountByReturn.reduce((p, c) => p + c, 0) ===
-          legacyPointCount,
-      true,
-      `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
-    ),
-}
-
-export default header
+export const copcHeaderSuite = manualHeaderParse(copcHeaderChecks)
 
 // =========== LAS HEADER UTILS ==========
 export function parseNumberOfPointsByReturn(buffer: Binary): number[] {
@@ -201,3 +188,55 @@ export function formatGuid(buffer: Binary): string {
 }
 
 const UINT32_MAX = 4_294_967_295
+
+/* 
+      I found the better way of parsing the header but I'm leaving this code here
+      until I'm done testing header variables, so I know where everything should be
+
+    const fileSignature = Binary.toCString(buffer.slice(0, 4))
+    const majorVersion = dv.getUint8(24)
+    const minorVersion = dv.getUint8(25)
+    // if parseBigInt() or anything else throws errors, it will be caught by
+    // invokeAllChecks as `{ id: 'manualHeaderParse', status: 'fail' }`
+    const header: FullHeader = {
+      fileSignature,
+      fileSourceId: dv.getUint16(4, true),
+      globalEncoding: dv.getUint16(6, true),
+      projectId: formatGuid(buffer.slice(8, 24)),
+      majorVersion,
+      minorVersion,
+      systemIdentifier: Binary.toCString(buffer.slice(26, 58)),
+      generatingSoftware: Binary.toCString(buffer.slice(58, 90)),
+      fileCreationDayOfYear: dv.getUint16(90, true),
+      fileCreationYear: dv.getUint16(92, true),
+      headerLength: dv.getUint16(94, true),
+      pointDataOffset: dv.getUint32(96, true),
+      vlrCount: dv.getUint32(100, true),
+      pointDataRecordFormat: dv.getUint8(104) & 0b1111,
+      pointDataRecordLength: dv.getUint16(105, true),
+      legacyPointCount: dv.getUint32(107, true),
+      legacyPointCountByReturn: parseLegacyNumberOfPointsByReturn(
+        buffer.slice(111, 131),
+      ),
+      scale: parsePoint(buffer.slice(131, 155)),
+      offset: parsePoint(buffer.slice(155, 179)),
+      min: [
+        dv.getFloat64(187, true),
+        dv.getFloat64(203, true),
+        dv.getFloat64(219, true),
+      ],
+      max: [
+        dv.getFloat64(179, true),
+        dv.getFloat64(195, true),
+        dv.getFloat64(211, true),
+      ],
+      pointCount: parseBigInt(getBigUint64(dv, 247, true)),
+      pointCountByReturn: parseNumberOfPointsByReturn(buffer.slice(255, 375)),
+      waveformDataOffset: parseBigInt(getBigUint64(dv, 227, true)),
+      evlrOffset: parseBigInt(getBigUint64(dv, 235, true)),
+      evlrCount: dv.getUint32(243, true),
+    }
+    // I may not want to parse the entire header at once, as that limits the amount
+    // of information I can learn about where and why a given Header is bad
+    return invokeAllChecks({ source: header, suite: headerSuite })
+    */

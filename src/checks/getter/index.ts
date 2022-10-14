@@ -4,6 +4,7 @@ import { Check } from 'types'
 import headerSuite from './header'
 import vlrSuite from './vlrs'
 
+// doesn't seem to export buildHeaderParseSuite or copcHeaderSuite ¯\_(ツ)_/¯
 export * from './header'
 
 export const GetterSuite: Check.Suite<Getter> = {
@@ -26,6 +27,7 @@ export const GetterSuite: Check.Suite<Getter> = {
   },
 }
 
+// Need info to run VLR tests, so I might as well steal the buffer and DataView
 export const getterToHeader = async (get: Getter) => {
   const buffer = await get(0, Las.Constants.minHeaderLength)
   const dv = Binary.toDataView(buffer)

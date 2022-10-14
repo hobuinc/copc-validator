@@ -1,4 +1,4 @@
-import { buildCopcSuite } from '.'
+import { CopcSuite } from '.'
 import { findCheck, getCheckIds, invokeAllChecks, splitChecks } from 'checks'
 import { ellipsoidFiles, getCopcItems } from 'test'
 
@@ -8,14 +8,14 @@ test('buildCopcSuite shallow all-pass', async () => {
   const { get, copc } = await items
   const checks = await invokeAllChecks({
     source: { get, copc },
-    suite: buildCopcSuite(), //default parameters
+    suite: CopcSuite(), //default parameters
   })
   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
 })
 
 test('buildCopcSuite shallow oldCopc', async () => {
   const { get, copc } = await getCopcItems(ellipsoidFiles.oldCopc)
-  const suite = buildCopcSuite(false)
+  const suite = CopcSuite(false)
   const checks = await invokeAllChecks({
     source: { get, copc },
     suite,
@@ -23,23 +23,19 @@ test('buildCopcSuite shallow oldCopc', async () => {
   const expectedFailed = ['rgbi', 'gpsTime']
   const expectedPassed = [
     'minorVersion',
-    'headerLength',
     'pointDataRecordFormat',
+    'headerLength',
     'pointCountByReturn',
     'vlrCount',
     'evlrCount',
     'copc-info',
     'copc-hierarchy',
     'laszip-encoded',
-    'fileSignature',
-    'majorVersion',
-    'minorVersion-manualParse',
-    'headerLength-manualParse',
     'legacyPointCount',
-    'legacyNumberOfPointsByReturn',
+    'legacyPointCountByReturn',
     'rgb',
     'xyz',
-    'returns',
+    'returnNumber',
   ]
 
   const [passed, failed] = splitChecks(checks)

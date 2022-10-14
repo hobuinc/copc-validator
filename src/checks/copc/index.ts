@@ -1,16 +1,19 @@
 import { Check } from 'types'
-import header, { headerGetter } from './header'
+import header from './header'
 import vlrSuite from 'checks/las/vlrs'
 import { Copc, Getter } from 'copc'
 import { invokeAllChecks } from 'checks'
+// reads copcHeaderSuite as {} if imported from 'checks'
+import { copcHeaderSuite } from '../getter'
 import nodeScanSuite from './nodes'
+import { copcWithGetter } from './common'
 
 const copcSuite: Check.Suite<Copc> = { ...header, ...vlrSuite }
-const getterSuite: Check.Suite<Getter> = { ...headerGetter }
+const getterSuite: Check.Suite<Getter> = { ...copcHeaderSuite }
 
-export const buildCopcSuite = (
+export const CopcSuite = (
   deep: boolean = false,
-): Check.Suite<{ get: Getter; copc: Copc }> => ({
+): Check.Suite<copcWithGetter> => ({
   suites: async ({ get, copc }) =>
     invokeAllChecks([
       { source: copc, suite: copcSuite },
@@ -18,3 +21,6 @@ export const buildCopcSuite = (
       { source: { get, copc, deep }, suite: nodeScanSuite },
     ]),
 })
+
+// export shallow scan by default
+export default CopcSuite()

@@ -11,7 +11,7 @@ import { deepNodeMap, pointData, shallowNodeMap } from './pointdata'
  * `deep` parameter provided
  */
 export const nodeScanSuite: Check.Suite<nodeScanParams> = {
-  readNodes: async ({ get, copc, deep }) => {
+  pointDataNS: async ({ get, copc, deep }) => {
     try {
       const { nodes } = await Copc.loadHierarchyPage(
         get,
@@ -20,12 +20,12 @@ export const nodeScanSuite: Check.Suite<nodeScanParams> = {
       // TODO: Handle more than one page
       const nodeMap = await readHierarchyNodes(get, copc, nodes, deep)
       return invokeAllChecks({ source: { copc, nodeMap }, suite: pointData })
-    } catch (error) {
+    } catch (e) {
       return [
         {
           id: `${deep ? 'deep.' : ''}pointData-NestedSuite`,
           status: 'fail',
-          info: (error as Error).message,
+          info: (e as Error).message,
         },
       ]
     }
