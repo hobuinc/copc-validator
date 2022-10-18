@@ -1,4 +1,8 @@
 import { Copc, Getter, Hierarchy, Point } from 'copc'
 
 export type copcWithGetter = { get: Getter; copc: Copc }
-export type nodeScanParams = copcWithGetter & { deep: boolean }
+export type baseData = copcWithGetter & { filename: string }
+export type nodeScanParams = baseData & {
+  deep: boolean
+  maxThreads?: number
+}

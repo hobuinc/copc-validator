@@ -1,5 +1,5 @@
-import { Check } from 'types'
-import { flatMapDeep, map, flattenDeep } from 'lodash'
+import { Check, Pool } from 'types'
+import { flatMapDeep, map, flattenDeep, reduce } from 'lodash'
 import { Las } from 'copc'
 
 // ========== CHECK WRITING ==========
@@ -11,6 +11,7 @@ export const Statuses = {
   failureWithInfo: (info: string) => ({ status: 'fail', info } as Check.Status),
   warningWithInfo: (info: string) => ({ status: 'warn', info } as Check.Status),
 }
+type SuiteWithSource = Check.SuiteWithSource<any>
 
 /**
  * Utility function to convert simple boolean logic and basic functions
@@ -87,7 +88,7 @@ export const invokeAllChecks = async (
           map(suites.suite, (f, id) => checkPromise(suites.source, f, id)),
         ),
       )
-type SuiteWithSource<T = any> = { source: T; suite: Check.Suite<T> }
+// type SuiteWithSource<T = any> = { source: T; suite: Check.Suite<T> }
 // I need to do further testing to ensure the above function is performance optimal
 
 // ========== CHECK TESTING ==========
@@ -167,9 +168,6 @@ const checkPromise = async (
   f: Check.Function<unknown>,
   id: string,
 ): Promise<Check[]> => {
-  // I feel like awaiting on f() here kills a lot of performance with the async checks,
-  // but I need more testing to be sure. Maybe it has no affect and I've made this all
-  // more complicated on myself than it needed to be ¯\_(ツ)_/¯
   try {
     // If the Check.Function or Check.NestedSuite Errors for any reason, we
     // will give the Error.message as the info

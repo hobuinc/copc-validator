@@ -36,9 +36,10 @@ export const copcc = async (argv: string[]) => {
       output: 'o',
       deep: 'd',
       name: 'n',
+      threads: 't',
     },
   })
-  const { _: files, deep, output, name: givenName } = args
+  const { _: files, deep, output, name: givenName, threads } = args
 
   // VALIDATE ARGS
   if (files.length < 1)
@@ -55,7 +56,8 @@ export const copcc = async (argv: string[]) => {
 
   // RUN SCAN
   const start = performance.now()
-  const report = await generateReport(files[0], { name, deep })
+  const file = files[0]
+  const report = await generateReport(file, { name, deep, maxThreads: threads })
   const end = performance.now()
   // Using performance.now() to print the time after the report, for debugging convienence
 
@@ -87,4 +89,6 @@ type ExpectedArgv = {
   o?: string //alias
   name?: string
   n?: string //alias
+  threads?: number
+  t?: number //alias
 }

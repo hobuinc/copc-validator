@@ -11,6 +11,10 @@ export declare namespace Check {
     type Sync<T> = (s: T) => Check.Status
     type Async<T> = (s: T) => Promise<Check.Status>
     type NestedSuite<T> = (s: T) => Promise<Check[]>
+    // enables suite (s: T) => {T->S, return invokeAllChecks({source: S, suite})}
+    // but this structure becomes useless (I think) if we want to use a promise pool
+    // so I need to restructure Nested Suites to be able to see each check function
+    // individually, then I can call them in a promise pool with the same source
   }
   export type Function<T> =
     | Function.Sync<T>
@@ -24,13 +28,48 @@ export declare namespace Check {
    * Usage: Invoke all functions in Suite, wait for Async check functions
    *  to return, then combine all results into a Check array
    */
-  export type Suite<T> = Record<string, Function<T>>
+  export type Suite<T> = { [id: string]: Function<T> }
+  export type SuiteWithSource<T> = { source: T; suite: Suite<T> }
 
   export type Check = Status & {
     id: string
   }
 }
 export type Check = Check.Check
+
+// export type CopcSuites = [
+//   { source: Copc; suite: Suite<Copc> },
+//   { source: Getter; suite: Suite<Getter> },
+//   { source: copcSuiteParams; suite: Suite<copcSuiteParams> },
+// ]
+
+// Currently, all plain Check.Suites are actually fully syncronous, and all
+// NestedSuites are asyncronous. I should be able to simplify things off that fact,
+// but I believe the way that Suites are invoked needs to be drastically changed.
+
+// I could simplify by requiring NestedSuites to use the Getter directly as the
+// only parameter (plus deep where required), but I'm not sure if that would actually
+// solve the problem(s)
+
+// I think separating NestedSuites from Suites (by taking it out of Check.Function)
+// and turning it into its own Asyncronous Function type is the way to go
+export declare namespace Pool {
+  namespace Suite {
+    type withSource<T> = { source: T; suite: Suite<T> }
+    namespace Nested {
+      type Sync = (...s: any[]) => withSource<any>[]
+      type Async = (source: any) => Promise<withSource<any>[]>
+    }
+    type Nested = Nested.Async //| Nested.Sync
+    type Collection = {
+      source: any
+      nest: Nested
+    }[]
+  }
+  export type Suite<T> = {
+    [id: string]: Check.Function.Sync<T> //| Check.Function.Async<T>
+  }
+}
 
 export declare namespace Report {
   namespace Scans {
@@ -49,6 +88,7 @@ export declare namespace Report {
   export type Options = {
     name?: string
     deep?: boolean
+    maxThreads?: number
   }
   export type old_Options = {
     name: string

@@ -29,6 +29,7 @@
   "dependencies": {
     "copc": "^0.0.4",
     "lodash": "^4.17.21",
-    "minimist": "^1.2.6"
+    "minimist": "^1.2.6",
+    "piscina": "^3.2.0"
   }
 }

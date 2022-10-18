@@ -1,6 +1,12 @@
-import { CopcSuite, GetterSuite, invokeAllChecks, LasSuite } from 'checks'
+import {
+  // CopcCollection,
+  CopcSuite,
+  GetterSuite,
+  invokeAllChecks,
+  LasSuite,
+} from 'checks'
 import { Copc, Getter, Las } from 'copc'
-import { Check, Report } from 'types'
+import { Check, Pool, Report } from 'types'
 import { isEqual, omit } from 'lodash'
 import { copcWithGetter } from 'checks/copc/common'
 
@@ -21,7 +27,7 @@ import { copcWithGetter } from 'checks/copc/common'
  */
 export const generateReport = async (
   source: string,
-  { name = source, deep = false }: Report.Options,
+  { name = source, deep = false, maxThreads }: Report.Options,
 ): Promise<Report> => {
   const type = deep ? 'deep' : 'shallow'
   const start = new Date()
@@ -41,9 +47,19 @@ export const generateReport = async (
     // need to perform additional checks to confirm
 
     const checks = await invokeAllChecks({
-      source: { get, copc },
+      source: { get, copc, filename: source, maxThreads },
       suite: CopcSuite(deep),
     })
+
+    // const checks = await poolAllChecks(CopcCollection(get, copc, deep))
+
+    // const checks = await poolAllChecks([
+    //   {
+    //     source: { get, copc },
+    //     suite: CopcSuite(deep) as Pool.Suite<{ get: Getter; copc: Copc }>,
+    //   },
+    // ])
+    // const checks = await poolAllChecks(await CopcSuite_new({ get, copc, deep }))
 
     return {
       name,
