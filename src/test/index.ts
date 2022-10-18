@@ -23,19 +23,21 @@ export const ellipsoidFiles = {
  * @returns {Promise<{get: Getter, copc: Copc, nodes: Hierarchy.Node.Map}>} `{ get, copc, nodes }`
  */
 export const getCopcItems = async (
-  get: string | Getter = ellipsoidFiles.copc,
-): Promise<{ get: Getter; copc: Copc; nodes: Hierarchy.Node.Map }> => ({
-  get: Getter.create(get),
-  copc: await Copc.create(get),
-  nodes: (
-    await Copc.loadHierarchyPage(
-      get,
-      (
-        await Copc.create(get)
-      ).info.rootHierarchyPage,
-    )
-  ).nodes,
-})
+  file: string = ellipsoidFiles.copc,
+): Promise<{
+  filepath: string
+  get: Getter
+  copc: Copc
+  nodes: Hierarchy.Node.Map
+}> => {
+  const get = Getter.create(file)
+  const copc = await Copc.create(get)
+  const { nodes } = await Copc.loadHierarchyPage(
+    get,
+    copc.info.rootHierarchyPage,
+  )
+  return { filepath: file, get, copc, nodes }
+}
 
 export const getLasItems = async (
   getter: string | Getter = ellipsoidFiles.laz14,

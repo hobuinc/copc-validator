@@ -9,27 +9,31 @@ export declare namespace Check {
 
   namespace Function {
     type Sync<T> = (s: T) => Check.Status
+    /* DEPRECATED
     type Async<T> = (s: T) => Promise<Check.Status>
-    type NestedSuite<T> = (s: T) => Promise<Check[]>
-    // enables suite (s: T) => {T->S, return invokeAllChecks({source: S, suite})}
-    // but this structure becomes useless (I think) if we want to use a promise pool
-    // so I need to restructure Nested Suites to be able to see each check function
-    // individually, then I can call them in a promise pool with the same source
+    type NestedSuite<T> = (s: T) => Promise<Check[]> */
   }
-  export type Function<T> =
-    | Function.Sync<T>
-    | Function.Async<T>
-    | Function.NestedSuite<T>
+  // Syncronous check function
+  export type Function<T> = Function.Sync<T> // | Function.Async<T> | Function.NestedSuite<T>
 
-  /**
-   * Suite: Group of check functions that run on a shared source.
-   * Prevents unnecessary repeat Getter fetch calls (http).
-   *
-   * Usage: Invoke all functions in Suite, wait for Async check functions
-   *  to return, then combine all results into a Check array
-   */
+  namespace Suite {
+    // The actual object type that gets used by invokeCollection
+    export type withSource<T> = { source: T; suite: Suite<T> }
+    // Nested Suites have been replaced with any function that returns the following
+    export type Nested<T> = Promise<withSource<T>>
+    // Top-Level Suites (Copc, Las, Getter) have been replaced with Collections
+    export type Collection = (withSource<any> | Nested<any>)[]
+    // a.k.a Arrays of Suite.withSource<any> (or Promises)
+  }
+  // Suite: Record of Syncronous Functions that all run on the same `source`, and
+  // each return a `Check.Status` object. The `id` of a Function in a Suite is the
+  // `id` that should be assigned to turn the `Check.Status` into a `Check.Check`
   export type Suite<T> = { [id: string]: Function<T> }
-  export type SuiteWithSource<T> = { source: T; suite: Suite<T> }
+
+  // Terminology - `Sourcer`: An Asyncronous Function that returns a `Suite.Nested`
+  // object. Replaces `Function.NestedSuite` to simplify Suites and should be more
+  // performant with PromisePools
+  // TODO: Handle `Sourcer` errors more gracefully
 
   export type Check = Status & {
     id: string
@@ -37,46 +41,11 @@ export declare namespace Check {
 }
 export type Check = Check.Check
 
-// export type CopcSuites = [
-//   { source: Copc; suite: Suite<Copc> },
-//   { source: Getter; suite: Suite<Getter> },
-//   { source: copcSuiteParams; suite: Suite<copcSuiteParams> },
-// ]
-
-// Currently, all plain Check.Suites are actually fully syncronous, and all
-// NestedSuites are asyncronous. I should be able to simplify things off that fact,
-// but I believe the way that Suites are invoked needs to be drastically changed.
-
-// I could simplify by requiring NestedSuites to use the Getter directly as the
-// only parameter (plus deep where required), but I'm not sure if that would actually
-// solve the problem(s)
-
-// I think separating NestedSuites from Suites (by taking it out of Check.Function)
-// and turning it into its own Asyncronous Function type is the way to go
-export declare namespace Pool {
-  namespace Suite {
-    type withSource<T> = { source: T; suite: Suite<T> }
-    namespace Nested {
-      type Sync = (...s: any[]) => withSource<any>[]
-      type Async = (source: any) => Promise<withSource<any>[]>
-    }
-    type Nested = Nested.Async //| Nested.Sync
-    type Collection = {
-      source: any
-      nest: Nested
-    }[]
-  }
-  export type Suite<T> = {
-    [id: string]: Check.Function.Sync<T> //| Check.Function.Async<T>
-  }
-}
-
 export declare namespace Report {
   namespace Scans {
     type types = 'shallow' | 'deep' | 'custom'
     type scan = {
       type: types
-      //result: 'valid' | 'invalid' | 'NA'
       start: Date
       end: Date
       time: number

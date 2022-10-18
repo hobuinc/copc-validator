@@ -1,25 +1,27 @@
-import { CopcSuite } from '.'
-import { findCheck, getCheckIds, invokeAllChecks, splitChecks } from 'checks'
+// import { CopcSuite } from '.'
+import {
+  findCheck,
+  getCheckIds,
+  invokeAllChecks,
+  invokeCollection,
+  splitChecks,
+  CopcCollection,
+} from 'checks'
 import { ellipsoidFiles, getCopcItems } from 'test'
 
 const items = getCopcItems()
 
 test('buildCopcSuite shallow all-pass', async () => {
-  const { get, copc } = await items
-  const checks = await invokeAllChecks({
-    source: { get, copc },
-    suite: CopcSuite(), //default parameters
-  })
+  const { filepath, get, copc } = await items
+  const checks = await invokeCollection(CopcCollection(filepath, get, copc))
   checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
 })
 
 test('buildCopcSuite shallow oldCopc', async () => {
-  const { get, copc } = await getCopcItems(ellipsoidFiles.oldCopc)
-  const suite = CopcSuite(false)
-  const checks = await invokeAllChecks({
-    source: { get, copc },
-    suite,
-  })
+  const { filepath, get, copc } = await getCopcItems(ellipsoidFiles.oldCopc)
+  const checks = await invokeCollection(
+    CopcCollection(filepath, get, copc, false),
+  )
   const expectedFailed = ['rgbi', 'gpsTime']
   const expectedPassed = [
     'minorVersion',

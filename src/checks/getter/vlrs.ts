@@ -1,25 +1,21 @@
-import { invokeAllChecks } from 'checks'
-import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
+import { Getter, Las } from 'copc'
 import { Check } from 'types'
 import vlrSuite from 'checks/las/vlrs'
 
-export const vlrs: Check.Suite<{ get: Getter; info: Las.Vlr.OffsetInfo }> = {
-  vlrWalkTest: async ({ get, info }) => {
-    // I believe the try{}catch{} around this suite wasn't accomplishing anything
-    // due to the try{}catch{} inside the checkPromise function (src/utils.ts), but
-    // I'll test further to be sure before I work more on this
-
-    // try {
+export const vlrs = async (
+  get: Getter,
+  info: Las.Vlr.OffsetInfo,
+): Check.Suite.Nested<{
+  header: Las.Vlr.OffsetInfo
+  vlrs: Las.Vlr[]
+}> => {
+  try {
     const vlrs = await Las.Vlr.walk(get, info)
-    // If Las.Vlr.walk() succeeds, we can pass the Vlr[] object to the other Vlr suite
-    return invokeAllChecks({
-      source: { header: info, vlrs },
-      suite: vlrSuite,
-    })
-    // } catch (error) {
-    // Try to manually find where and why Las.Vlr.walk() failed
-    // }
-  },
+    return { source: { header: info, vlrs }, suite: vlrSuite }
+  } catch (error) {
+    throw error
+    // TODO: Check VLR data manually for possible errors
+  }
 }
 
 export default vlrs

@@ -1,7 +1,6 @@
 import minimist from 'minimist'
 import { generateReport } from 'report'
 import { writeFileSync } from 'fs'
-// import * as fs from 'fs'
 import { resolve } from 'path'
 
 export const fs = { writeFileSync }

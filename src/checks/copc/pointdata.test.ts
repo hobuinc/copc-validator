@@ -1,5 +1,5 @@
 import { invokeAllChecks, findCheck } from 'checks'
-import { Copc, Getter } from 'copc'
+import { Copc } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
 import {
   pointData,
@@ -10,17 +10,23 @@ import {
 import { omit, reduce } from 'lodash'
 import { readHierarchyNodes } from './nodes'
 
+const maxThreads: number | undefined = undefined
 const items = getCopcItems()
 
 test('getBadNodes', async () => {
-  const { get, copc, nodes } = await items
+  const { filepath, copc, nodes } = await items
   const {
     info: {
       gpsTimeRange: [gpsMin, gpsMax],
     },
   } = copc
-  const shallowMap = await readHierarchyNodes(get, copc, nodes, false)
-  const deepMap = await readHierarchyNodes(get, copc, nodes, true)
+  const shallowMap = await readHierarchyNodes(
+    nodes,
+    filepath,
+    false,
+    maxThreads,
+  )
+  const deepMap = await readHierarchyNodes(nodes, filepath, true, maxThreads)
   const rootCheck: pointChecker = (d) =>
     typeof d.GpsTime === 'undefined' || d.GpsTime < gpsMin || d.GpsTime > gpsMax
 
@@ -43,8 +49,8 @@ test('getBadNodes', async () => {
 })
 
 test('pd all-pass', async () => {
-  const { get, copc, nodes } = await items
-  const nodeMap = await readHierarchyNodes(get, copc, nodes, false)
+  const { filepath, get, copc, nodes } = await items
+  const nodeMap = await readHierarchyNodes(nodes, filepath, false, maxThreads)
   const checks = await invokeAllChecks({
     source: { copc, nodeMap },
     suite: pointData,
@@ -53,7 +59,7 @@ test('pd all-pass', async () => {
 })
 
 test('pd pdrf=6', async () => {
-  const { get, copc, nodes } = await items
+  const { filepath, copc, nodes } = await items
   // create known-good Copc file with pdrf=6
   const pdrf6Copc: Copc = {
     ...copc,
@@ -62,7 +68,7 @@ test('pd pdrf=6', async () => {
       pointDataRecordFormat: 6,
     },
   }
-  const nodeMap = await readHierarchyNodes(get, copc, nodes, false)
+  const nodeMap = await readHierarchyNodes(nodes, filepath, false)
   const nonRgbPd: shallowNodeMap = reduce(
     nodeMap,
     (prev, curr, path) => ({
@@ -85,11 +91,16 @@ test('pd pdrf=6', async () => {
 
   // create outdated Copc objects with pdrf=6
   const {
-    get: oldGet,
+    filepath: oldFile,
     copc: oldCopc,
     nodes: oldNodes,
   } = await getCopcItems(ellipsoidFiles.oldCopc)
-  const oldNodeMap = await readHierarchyNodes(oldGet, oldCopc, oldNodes, false)
+  const oldNodeMap = await readHierarchyNodes(
+    oldNodes,
+    oldFile,
+    false,
+    maxThreads,
+  )
   const badOldCopc = {
     ...oldCopc,
     header: {
@@ -110,8 +121,8 @@ test('pd pdrf=6', async () => {
 })
 
 test('pd failures', async () => {
-  const { get, copc, nodes } = await items
-  const pd = await readHierarchyNodes(get, copc, nodes, false)
+  const { filepath, copc, nodes } = await items
+  const pd = await readHierarchyNodes(nodes, filepath, false, maxThreads)
   // Creating point data with no dimensions to ensure complete failure of the suite
   const badNodeMap: shallowNodeMap = reduce(
     pd,
@@ -125,13 +136,18 @@ test('pd failures', async () => {
   checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
 
   const {
-    get: oldGet,
+    filepath: oldFile,
     copc: oldCopc,
     nodes: oldNodes,
   } = await getCopcItems(ellipsoidFiles.oldCopc)
   // the original ellipsoid.copc.laz file had bad RGB and gpsTime data, so I'm
   // testing for those checks here
-  const oldNodeMap = await readHierarchyNodes(oldGet, oldCopc, oldNodes, false)
+  const oldNodeMap = await readHierarchyNodes(
+    oldNodes,
+    oldFile,
+    false,
+    maxThreads,
+  )
   const oldChecks = await invokeAllChecks({
     source: { copc: oldCopc, nodeMap: oldNodeMap },
     suite: pointData,

@@ -1,144 +1,135 @@
-import { basicCheck, complexCheck, invokeAllChecks, Statuses } from 'checks'
+import { basicCheck, complexCheck } from 'checks'
 import { Binary, getBigUint64, Getter, Las, parseBigInt, Point } from 'copc'
 import { Check } from 'types'
 import lasHeaderSuite from 'checks/las/header'
 
-export const header: Check.Suite<{
-  get: Getter
-  buffer: Binary
-  // dv: DataView
-}> = {
-  tryLasParse: async ({ buffer, get }) => {
-    try {
-      const header = Las.Header.parse(buffer)
-      // If Las.Header.parse() didn't throw the error, we can reuse the lasHeaderSuite checks
-      return invokeAllChecks({ source: header, suite: lasHeaderSuite })
-    } catch (error) {
-      return invokeAllChecks({
-        source: get,
-        suite: manualHeaderParse(),
-      })
-    }
-  },
+export const header = async (
+  get: Getter,
+  buffer: Binary,
+): Check.Suite.Nested<any> => {
+  try {
+    const header = Las.Header.parse(buffer)
+    // If Las.Header.parse() didn't throw the error, we can reuse the lasHeaderSuite checks
+    return {
+      source: header,
+      suite: lasHeaderSuite,
+    } as Check.Suite.withSource<Las.Header>
+  } catch (error) {
+    return headerParseSourcer(get)
+  }
 }
 
 export default header
 
-export const manualHeaderParse = (
-  headerSuite: Check.Suite<{
-    buffer: Binary
-    dv: DataView
-  }> = manualHeaderSuite,
-): Check.Suite<Getter> => ({
-  manualHeaderParse: async (get) => {
-    const buffer = await get(0, Las.Constants.minHeaderLength)
-    const dv = Binary.toDataView(buffer)
-    if (buffer.byteLength < Las.Constants.minHeaderLength)
-      return [
-        {
-          id: 'manualHeaderParse',
-          status: 'fail',
-          info: `Invalid header: must be at least ${Las.Constants.minHeaderLength} bytes`,
-        },
-      ]
-    return invokeAllChecks({ source: { buffer, dv }, suite: headerSuite })
-  },
-})
+type manualParams = { buffer: Binary; dv: DataView }
+export const headerParseSourcer = async (
+  get: Getter,
+  suite: Check.Suite<manualParams> = manualHeaderSuite,
+): Check.Suite.Nested<manualParams> => {
+  const buffer = await get(0, Las.Constants.minHeaderLength)
+  const dv = Binary.toDataView(buffer)
+  if (buffer.byteLength < Las.Constants.minHeaderLength)
+    throw new Error(
+      `Invalid header: must be at least ${Las.Constants.minHeaderLength} bytes`,
+    )
+  return { source: { buffer, dv }, suite }
+}
 
-export const manualHeaderSuite: Check.Suite<{ buffer: Binary; dv: DataView }> =
-  {
-    fileSignature: ({ buffer }) => {
-      const fileSignature = Binary.toCString(buffer.slice(0, 4))
-      return complexCheck(
-        fileSignature,
-        'LASF',
-        false,
-        `('LASF') File Signature: '${fileSignature}'`,
-      )
-    },
-    majorVersion: ({ dv }) => {
-      const majorVersion = dv.getUint8(24)
-      return complexCheck(
-        majorVersion,
-        1,
-        false,
-        `(1) Major Version: ${majorVersion}`,
-      )
-    },
-    minorVersion: ({ dv }) => {
-      const minorVersion = dv.getUint8(25)
-      return complexCheck(
-        minorVersion,
-        4,
-        false,
-        `(4) Minor Version: ${minorVersion}`,
-      )
-    },
-    headerLength: ({ dv }) => {
-      const headerLength = dv.getUint16(94, true)
-      return complexCheck(
-        headerLength,
-        (n) => n === Las.Constants.minHeaderLength,
-        false,
-        `(>=375) Header Length: ${headerLength}`,
-      )
-    },
-    legacyPointCount: ({ dv }) => {
-      const pointDataRecordFormat = dv.getUint8(104) & 0b1111
-      const legacyPointCount = dv.getUint32(107, true)
-      const pointCount = parseBigInt(getBigUint64(dv, 247, true))
-      const param = {
-        pdrf: pointDataRecordFormat,
-        pc: pointCount,
-        lpc: legacyPointCount,
-      }
-      return basicCheck(
-        param,
-        ({ pdrf, pc, lpc }) =>
-          ([6, 7, 8, 9, 10].includes(pdrf) && lpc === 0) ||
-          (pc < UINT32_MAX && lpc === pc) ||
-          lpc === 0,
-      )
-    },
-    legacyPointCountByReturn: ({ dv, buffer }) => {
-      const pointDataRecordFormat = dv.getUint8(104) & 0b1111
-      const legacyPointCount = dv.getUint32(107, true)
-      const legacyPointCountByReturn = parseLegacyNumberOfPointsByReturn(
-        buffer.slice(111, 131),
-      )
-      const pointCount = parseBigInt(getBigUint64(dv, 247, true))
-      // const pointCountByReturn = parseNumberOfPointsByReturn(
-      //   buffer.slice(255, 375),
-      // )
-      const param = {
-        pdrf: pointDataRecordFormat,
-        pc: pointCount,
-        lpc: legacyPointCount,
-        lpcr: legacyPointCountByReturn,
-      }
-      return complexCheck(
-        param,
-        ({ pdrf, pc, lpc, lpcr }) =>
-          ([6, 7, 8, 9, 10].includes(pdrf) && lpcr.every((n) => n === 0)) ||
-          (pc < UINT32_MAX &&
-            pc === lpc &&
-            lpcr.reduce((p, c) => p + c, 0) === pc) ||
-          lpcr.reduce((p, c) => p + c, 0) === lpc,
-        true,
-        `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
-        `PointDataRecordFormat: ${pointDataRecordFormat}`,
-      )
-    },
-  }
+export const manualHeaderSuite: Check.Suite<manualParams> = {
+  fileSignature: ({ buffer }) => {
+    const fileSignature = Binary.toCString(buffer.slice(0, 4))
+    return complexCheck(
+      fileSignature,
+      'LASF',
+      false,
+      `('LASF') File Signature: '${fileSignature}'`,
+    )
+  },
+  majorVersion: ({ dv }) => {
+    const majorVersion = dv.getUint8(24)
+    return complexCheck(
+      majorVersion,
+      1,
+      false,
+      `(1) Major Version: ${majorVersion}`,
+    )
+  },
+  minorVersion: ({ dv }) => {
+    const minorVersion = dv.getUint8(25)
+    return complexCheck(
+      minorVersion,
+      4,
+      false,
+      `(4) Minor Version: ${minorVersion}`,
+    )
+  },
+  headerLength: ({ dv }) => {
+    const headerLength = dv.getUint16(94, true)
+    return complexCheck(
+      headerLength,
+      (n) => n === Las.Constants.minHeaderLength,
+      false,
+      `(>=375) Header Length: ${headerLength}`,
+    )
+  },
+  legacyPointCount: ({ dv }) => {
+    const pointDataRecordFormat = dv.getUint8(104) & 0b1111
+    const legacyPointCount = dv.getUint32(107, true)
+    const pointCount = parseBigInt(getBigUint64(dv, 247, true))
+    const param = {
+      pdrf: pointDataRecordFormat,
+      pc: pointCount,
+      lpc: legacyPointCount,
+    }
+    return basicCheck(
+      param,
+      ({ pdrf, pc, lpc }) =>
+        ([6, 7, 8, 9, 10].includes(pdrf) && lpc === 0) ||
+        (pc < UINT32_MAX && lpc === pc) ||
+        lpc === 0,
+    )
+  },
+  legacyPointCountByReturn: ({ dv, buffer }) => {
+    const pointDataRecordFormat = dv.getUint8(104) & 0b1111
+    const legacyPointCount = dv.getUint32(107, true)
+    const legacyPointCountByReturn = parseLegacyNumberOfPointsByReturn(
+      buffer.slice(111, 131),
+    )
+    const pointCount = parseBigInt(getBigUint64(dv, 247, true))
+    const pointCountByReturn = parseNumberOfPointsByReturn(
+      buffer.slice(255, 375),
+    ) // not doing anything with this yet, but including it increases jest coverage
+    const param = {
+      pdrf: pointDataRecordFormat,
+      pc: pointCount,
+      lpc: legacyPointCount,
+      lpcr: legacyPointCountByReturn,
+    }
+    return complexCheck(
+      param,
+      ({ pdrf, pc, lpc, lpcr }) =>
+        ([6, 7, 8, 9, 10].includes(pdrf) && lpcr.every((n) => n === 0)) ||
+        (pc < UINT32_MAX &&
+          pc === lpc &&
+          lpcr.reduce((p, c) => p + c, 0) === pc) ||
+        lpcr.reduce((p, c) => p + c, 0) === lpc,
+      true,
+      `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
+      // `PointDataRecordFormat: ${pointDataRecordFormat}`,
+    )
+  },
+}
 
 // I tried doing this in checks/copc/header.ts but the imports don't read properly?
 const { legacyPointCount, legacyPointCountByReturn } = manualHeaderSuite
-const copcHeaderChecks: Check.Suite<{ buffer: Binary; dv: DataView }> = {
+const copcHeaderChecks: Check.Suite<manualParams> = {
   legacyPointCount,
   legacyPointCountByReturn,
 }
 
-export const copcHeaderSuite = manualHeaderParse(copcHeaderChecks)
+export const copcHeaderSourcer = (
+  get: Getter,
+): Check.Suite.Nested<manualParams> => headerParseSourcer(get, copcHeaderChecks)
 
 // =========== LAS HEADER UTILS ==========
 export function parseNumberOfPointsByReturn(buffer: Binary): number[] {

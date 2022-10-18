@@ -6,10 +6,9 @@ import {
   splitChecks,
   getCheckIds,
 } from 'checks'
-import headerSuite, {
+import headerSourcer, {
   formatGuid,
   parsePoint,
-  manualHeaderParse,
   manualHeaderSuite,
 } from './header'
 import lasHeaderSuite from 'checks/las/header'
@@ -17,15 +16,12 @@ import { difference } from 'lodash'
 
 const get = Getter.create(ellipsoidFiles.laz14)
 const fakeGet = Getter.create(ellipsoidFiles.fake)
-const badGet = Getter.create(ellipsoidFiles.badCopc)
+// const badGet = Getter.create(ellipsoidFiles.badCopc)
 const thisGet = Getter.create(__filename)
 
 test('getter header all-expected', async () => {
   const { buffer, dv } = await getterToHeader(get)
-  const checks = await invokeAllChecks({
-    source: { get, buffer, dv },
-    suite: headerSuite,
-  })
+  const checks = await invokeAllChecks(await headerSourcer(get, buffer))
   const { header } = await getLasItems()
   expect(checks).toEqual(
     await invokeAllChecks({ source: header, suite: lasHeaderSuite }),
@@ -34,26 +30,24 @@ test('getter header all-expected', async () => {
 
 test('getter header fake-copc', async () => {
   const { buffer, dv } = await getterToHeader(fakeGet)
-  const checks = await invokeAllChecks({
-    source: { get: fakeGet, buffer, dv },
-    suite: headerSuite,
-  })
 
-  expect(checks).toEqual([
-    {
-      id: 'manualHeaderParse',
-      info: 'Invalid header: must be at least 375 bytes',
-      status: 'fail',
-    },
-  ])
+  await expect(headerSourcer(fakeGet, buffer)).rejects.toThrow(
+    'Invalid header: must be at least 375 bytes',
+  )
+  // const checks = await invokeAllChecks(await headerSourcer(fakeGet, buffer))
+
+  // expect(checks).toEqual([
+  //   {
+  //     id: 'manualHeaderParse',
+  //     info: 'Invalid header: must be at least 375 bytes',
+  //     status: 'fail',
+  //   },
+  // ])
 })
 
 test('getter header failure', async () => {
   const { buffer, dv } = await getterToHeader(thisGet)
-  const checks = await invokeAllChecks({
-    source: { get: thisGet, buffer, dv },
-    suite: headerSuite,
-  })
+  const checks = await invokeAllChecks(await headerSourcer(thisGet, buffer))
 
   checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
 })

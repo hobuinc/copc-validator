@@ -1,30 +1,16 @@
-import { basicCheck, invokeAllChecks } from 'checks'
-import { Binary, getBigUint64, Getter, Las, parseBigInt, Point } from 'copc'
+import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
 import { Check } from 'types'
-import headerSuite from './header'
-import vlrSuite from './vlrs'
+import header from './header'
+import vlrs from './vlrs'
 
 // doesn't seem to export buildHeaderParseSuite or copcHeaderSuite ¯\_(ツ)_/¯
 export * from './header'
 
-export const GetterSuite: Check.Suite<Getter> = {
-  decode: async (get) => {
-    const { buffer, info } = await getterToHeader(get)
-    // using a NestedSuite to call other NestedSuites that check Las.Header.parse()
-    // and Las.Vlr.walk() for why and where they (may have) failed
-    return invokeAllChecks([
-      // checks for why Las.Header.parse() may have failed
-      {
-        source: { get, buffer },
-        suite: headerSuite,
-      },
-      // checks for why Las.Vlr.walk() may have failed
-      {
-        source: { get, info },
-        suite: vlrSuite,
-      },
-    ])
-  },
+export const GetterCollection = async (
+  get: Getter,
+): Promise<Check.Suite.Collection> => {
+  const { buffer, info } = await getterToHeader(get)
+  return [header(get, buffer), vlrs(get, info)]
 }
 
 // Need info to run VLR tests, so I might as well steal the buffer and DataView

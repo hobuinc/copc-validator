@@ -1,15 +1,13 @@
 import { Statuses } from 'checks'
-import { Bounds, Copc, Hierarchy, Key, Point } from 'copc'
+import { Bounds, Copc, Hierarchy, Key } from 'copc'
 import { Check } from 'types'
 
+export type pointDataParams = { copc: Copc; nodeMap: enhancedNodeMap }
 /**
  * Check.Suite that works with either a shallowNodeMap or deepNodeMap,
  * used in src/checks/copc/nodes.ts
  */
-export const pointData: Check.Suite<{
-  copc: Copc
-  nodeMap: enhancedNodeMap
-}> = {
+export const pointData: Check.Suite<pointDataParams> = {
   rgb: ({ copc: { header }, nodeMap }) =>
     checkRgb(nodeMap, header.pointDataRecordFormat as 6 | 7 | 8),
   rgbi: ({ copc: { header }, nodeMap }) =>
@@ -107,7 +105,6 @@ const checkRgbi = (nodeMap: enhancedNodeMap, pdrf: 6 | 7 | 8): Check.Status => {
 }
 
 const checkBounds = (nodeMap: getBadNodesMap, bounds: Bounds) => {
-  // const allNodes = Object.keys(nodeMap)
   const check = (key: string, data: Record<string, number>) => {
     const [minx, miny, minz, maxx, maxy, maxz] = Bounds.stepTo(
       bounds,

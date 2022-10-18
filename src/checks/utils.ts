@@ -1,6 +1,7 @@
-import { Check, Pool } from 'types'
-import { flatMapDeep, map, flattenDeep, reduce } from 'lodash'
+import { Check } from 'types'
+import { flatMapDeep, map } from 'lodash'
 import { Las } from 'copc'
+import { PromisePool } from '@supercharge/promise-pool'
 
 // ========== CHECK WRITING ==========
 export const Statuses = {
@@ -11,7 +12,7 @@ export const Statuses = {
   failureWithInfo: (info: string) => ({ status: 'fail', info } as Check.Status),
   warningWithInfo: (info: string) => ({ status: 'warn', info } as Check.Status),
 }
-type SuiteWithSource = Check.SuiteWithSource<any>
+type SuiteWithSource = Check.Suite.withSource<any>
 
 /**
  * Utility function to convert simple boolean logic and basic functions
@@ -76,20 +77,36 @@ export const invokeAllChecks = async (
   suites: SuiteWithSource | SuiteWithSource[],
 ): Promise<Check[]> =>
   Array.isArray(suites)
-    ? flattenDeep(
+    ? (
         await Promise.all(
-          flatMapDeep(suites, ({ source, suite }) =>
-            map(suite, (f, id) => checkPromise(source, f, id)),
+          flatMapDeep(
+            suites,
+            ({ source, suite }) =>
+              map(suite, (f, id) => performCheck(source, f, id)), //checkPromise(source, f, id)),
           ),
-        ),
-      )
-    : flattenDeep(
+        )
+      ).flat()
+    : (
         await Promise.all(
-          map(suites.suite, (f, id) => checkPromise(suites.source, f, id)),
-        ),
-      )
-// type SuiteWithSource<T = any> = { source: T; suite: Check.Suite<T> }
+          map(suites.suite, (f, id) => performCheck(suites.source, f, id)), //checkPromise(suites.source, f, id)),
+        )
+      ).flat()
+
 // I need to do further testing to ensure the above function is performance optimal
+
+export const invokeCollection = async (
+  collection: Promise<Check.Suite.Collection> | Check.Suite.Collection,
+): Promise<Check[]> =>
+  (
+    await PromisePool.for(await collection)
+      .withConcurrency(200)
+      .process(async (suiteWSource) => {
+        const { suite, source } = await suiteWSource
+        return Object.entries(suite).map(([id, f]) =>
+          performCheck(source, f, id),
+        )
+      })
+  ).results.flat()
 
 // ========== CHECK TESTING ==========
 export const findCheck = (checks: Check[], id: string) =>
@@ -163,23 +180,20 @@ export const removeVlr = (vlrs: Las.Vlr[], userId: string, recordId: number) =>
   )
 
 // ========== check/util.ts UTILITIES ==========
-const checkPromise = async (
+const performCheck = (
   source: unknown,
   f: Check.Function<unknown>,
   id: string,
-): Promise<Check[]> => {
+): Check => {
+  let result: Check.Status
+  // console.time(id)
   try {
-    // If the Check.Function or Check.NestedSuite Errors for any reason, we
-    // will give the Error.message as the info
-    // I believe the effect of using Promise.all in invokeAllChecks() and the
-    // try..catch here is that all Check.Functions will be called, no matter if
-    // any fail along the way (`failfast` behavior of Promise.all is avoided)
-    const r = await f(source)
-    if (Array.isArray(r)) return r
-    return [{ id, ...r }]
+    result = f(source)
   } catch (e) {
-    return [{ id, status: 'fail', info: (e as Error).message }]
+    result = { status: 'fail', info: (e as Error).message }
   }
+  // console.timeEnd(id)
+  return { id, ...result }
 }
 
 const booleanFn = <T>(check: T | T[] | ((v: T) => boolean)) => {

@@ -1,4 +1,4 @@
-import { Copc, Getter, Hierarchy, Point } from 'copc'
+import { Copc, Getter } from 'copc'
 
 export type copcWithGetter = { get: Getter; copc: Copc }
 export type baseData = copcWithGetter & { filename: string }

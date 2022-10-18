@@ -1,14 +1,12 @@
 import {
-  // CopcCollection,
-  CopcSuite,
-  GetterSuite,
-  invokeAllChecks,
-  LasSuite,
+  CopcCollection,
+  GetterCollection,
+  invokeCollection,
+  LasCollection,
 } from 'checks'
 import { Copc, Getter, Las } from 'copc'
-import { Check, Pool, Report } from 'types'
+import { Report } from 'types'
 import { isEqual, omit } from 'lodash'
-import { copcWithGetter } from 'checks/copc/common'
 
 /**
  * Main function for scanning a given file. Attempts to use `copc.js` parse functions
@@ -46,20 +44,9 @@ export const generateReport = async (
     // Copc.create() passed, probably valid COPC
     // need to perform additional checks to confirm
 
-    const checks = await invokeAllChecks({
-      source: { get, copc, filename: source, maxThreads },
-      suite: CopcSuite(deep),
-    })
-
-    // const checks = await poolAllChecks(CopcCollection(get, copc, deep))
-
-    // const checks = await poolAllChecks([
-    //   {
-    //     source: { get, copc },
-    //     suite: CopcSuite(deep) as Pool.Suite<{ get: Getter; copc: Copc }>,
-    //   },
-    // ])
-    // const checks = await poolAllChecks(await CopcSuite_new({ get, copc, deep }))
+    const checks = await invokeCollection(
+      CopcCollection(source, get, copc, deep, maxThreads),
+    ) // no need to await CopcCollection since invokeCollection allows promises
 
     return {
       name,
@@ -74,6 +61,7 @@ export const generateReport = async (
       copc,
     }
   } catch (copcError) {
+    //throw copcError
     // Copc.create() failed, definitely not valid COPC...
     // Check file with Las functions to determine why Copc.create() failed
     // TODO: if Error is 'no such file or directory', no need to attempt LasParse
@@ -91,10 +79,7 @@ export const generateReport = async (
       //   - vlrHeaderLength !== 54
       //   - evlrHeaderLength !== 60
       //   - Corrupt/bad binary data
-      const checks = await invokeAllChecks({
-        source: { get, header, vlrs },
-        suite: LasSuite,
-      })
+      const checks = await invokeCollection(LasCollection(get, header, vlrs))
       return {
         name,
         scan: {
@@ -117,10 +102,7 @@ export const generateReport = async (
 
       // Should only need to check for the possibilities above (lines 58 & 64),
       // otherwise the Las suite would be running instead
-      const checks = await invokeAllChecks({
-        source: get,
-        suite: GetterSuite,
-      })
+      const checks = await invokeCollection(GetterCollection(get))
       // TODO: Figure out a way to test this function (need specific bad file)
       const errors = (() =>
         isEqual(

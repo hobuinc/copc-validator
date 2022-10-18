@@ -1,17 +1,8 @@
-// export default async ({ dims, count }) =>
-//   Array.from(new Array(count), (_v, i) => dims(i))
 const { Getter, Copc } = require('copc')
-const { map } = require('lodash')
 
-module.exports = async ({ filename, node, deep }) => {
-  const get = Getter.create(filename)
+module.exports = async ({ filepath, node, deep }) => {
+  const get = Getter.create(filepath)
   const copc = await Copc.create(get)
-  // const { nodes } = await Copc.loadHierarchyPage(
-  //   get,
-  //   copc.info.rootHierarchyPage,
-  // )
-  // const node = nodes[key]
-  // if (!node) throw new Error(`Invalid key: ${key}`)
   const view = await Copc.loadPointDataView(get, copc, node)
   const dimensions = Object.keys(view.dimensions)
   const getDimensions = (idx) =>
