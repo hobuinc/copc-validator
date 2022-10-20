@@ -9,12 +9,12 @@ export declare namespace Check {
 
   namespace Function {
     type Sync<T> = (s: T) => Check.Status
-    /* DEPRECATED
     type Async<T> = (s: T) => Promise<Check.Status>
+    /* DEPRECATED
     type NestedSuite<T> = (s: T) => Promise<Check[]> */
   }
   // Syncronous check function
-  export type Function<T> = Function.Sync<T> // | Function.Async<T> | Function.NestedSuite<T>
+  export type Function<T> = Function.Sync<T> | Function.Async<T> //| Function.NestedSuite<T>
 
   namespace Suite {
     // The actual object type that gets used by invokeCollection
@@ -58,10 +58,7 @@ export declare namespace Report {
     name?: string
     deep?: boolean
     maxThreads?: number
-  }
-  export type old_Options = {
-    name: string
-    type: Scans.types
+    mini?: boolean
   }
   type Base = {
     name: string
@@ -69,15 +66,15 @@ export declare namespace Report {
   }
   type SuccessCopc = Base & {
     scan: Scans.SuccessCopc
-    copc: Copc
+    copc?: Copc
   }
   type SuccessLas = Base & {
     scan: Scans.SuccessLas
-    las: {
+    las?: {
       header: Las.Header
       vlrs: Las.Vlr[]
     }
-    copcError: Error
+    copcError: unknown // Error
   }
   type Success = SuccessCopc | SuccessLas
   type Failure = Base & {

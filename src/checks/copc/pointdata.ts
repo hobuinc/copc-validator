@@ -1,5 +1,5 @@
 import { Statuses } from 'checks'
-import { Bounds, Copc, Hierarchy, Key } from 'copc'
+import { Bounds, Copc, Hierarchy, Key, Point } from 'copc'
 import { Check } from 'types'
 
 export type pointDataParams = { copc: Copc; nodeMap: enhancedNodeMap }
@@ -14,25 +14,13 @@ export const pointData: Check.Suite<pointDataParams> = {
     checkRgbi(nodeMap, header.pointDataRecordFormat as 6 | 7 | 8),
   xyz: ({
     copc: {
-      // header: {
-      //   min: [minx, miny, minz],
-      //   max: [maxx, maxy, maxz],
-      // },
+      header: { min, max },
       info: { cube },
     },
     nodeMap,
   }) => {
-    // if (
-    //   cube[0] < minx ||
-    //   cube[1] < miny ||
-    //   cube[2] < minz ||
-    //   cube[3] > maxx ||
-    //   cube[4] > maxy ||
-    //   cube[5] > maxz
-    // )
-    //   return Statuses.failureWithInfo('COPC cube outside of LAS bounds')
-    // the above statement caused failures, so I think I slightly misunderstood
-    return checkBounds(nodeMap, cube)
+    const bound = createBounds(cube, min, max)
+    return checkBounds(nodeMap, bound)
   },
   gpsTime: ({
     copc: {
@@ -200,6 +188,27 @@ export const getBadNodes = (
     }
     return [...prev]
   }, [])
+
+const min = Math.min
+const max = Math.max
+const createBounds = (
+  [lX, lY, lZ, uX, uY, uZ]: Bounds,
+  [minX, minY, minZ]: Point,
+  [maxX, maxY, maxZ]: Point,
+): Bounds => [
+  min(lX, minX),
+  min(lY, minY),
+  min(lZ, minZ),
+  max(uX, maxX),
+  max(uY, maxY),
+  max(uZ, maxZ),
+  // max(lX, minX),
+  // max(lY, minY),
+  // max(lZ, minZ),
+  // min(uX, maxX),
+  // min(uY, maxY),
+  // min(uZ, maxZ),
+]
 
 // =========== TYPES ===========
 // My version(s) of Hierarchy.Node.Map with point data tacked on

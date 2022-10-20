@@ -5,6 +5,7 @@ import {
   getterToHeader,
   splitChecks,
   getCheckIds,
+  findCheck,
 } from 'checks'
 import headerSourcer, {
   formatGuid,
@@ -14,9 +15,9 @@ import headerSourcer, {
 import lasHeaderSuite from 'checks/las/header'
 import { difference } from 'lodash'
 
+const copcGet = Getter.create(ellipsoidFiles.copc)
 const get = Getter.create(ellipsoidFiles.laz14)
 const fakeGet = Getter.create(ellipsoidFiles.fake)
-// const badGet = Getter.create(ellipsoidFiles.badCopc)
 const thisGet = Getter.create(__filename)
 
 test('getter header all-expected', async () => {
@@ -83,4 +84,16 @@ test('getter header branch-coverage', async () => {
     parsePoint(new Uint8Array(25))
   }).toThrow('Invalid tuple buffer length')
   expect(parsePoint(new Uint8Array(24))).toEqual([0, 0, 0])
+
+  const buffer = await copcGet(0, Las.Constants.minHeaderLength)
+  const dv = Binary.toDataView(buffer)
+  dv.setBigInt64(247, BigInt(4_294_967_296))
+  const checks = await invokeAllChecks({
+    source: { buffer, dv },
+    suite: manualHeaderSuite,
+  })
+  expect(findCheck(checks, 'legacyPointCountByReturn')).toHaveProperty(
+    'status',
+    'pass',
+  )
 })

@@ -1,16 +1,17 @@
 import { Binary, getBigUint64, Getter, Las, parseBigInt } from 'copc'
 import { Check } from 'types'
 import header from './header'
-import vlrs from './vlrs'
+import vlrSourcer from './vlrs'
 
 // doesn't seem to export buildHeaderParseSuite or copcHeaderSuite ¯\_(ツ)_/¯
 export * from './header'
+export * from './vlrs'
 
 export const GetterCollection = async (
   get: Getter,
 ): Promise<Check.Suite.Collection> => {
   const { buffer, info } = await getterToHeader(get)
-  return [header(get, buffer), vlrs(get, info)]
+  return [header(get, buffer), vlrSourcer(get, info)]
 }
 
 // Need info to run VLR tests, so I might as well steal the buffer and DataView

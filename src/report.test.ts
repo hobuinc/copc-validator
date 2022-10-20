@@ -19,9 +19,9 @@ test('shallow COPC', async () => {
 
   if (!Report.isCopc(shallow))
     throw new Error('generateReport() created the wrong Report.filetype')
-  expect(shallow.copc.header).toEqual(copc.header)
-  expect(shallow.copc.vlrs).toEqual(copc.vlrs)
-  expect(shallow.copc.info).toEqual(copc.info)
+  expect(shallow.copc!.header).toEqual(copc.header)
+  expect(shallow.copc!.vlrs).toEqual(copc.vlrs)
+  expect(shallow.copc!.info).toEqual(copc.info)
   expect(shallow.scan.start <= shallow.scan.end).toBe(true)
 
   const reportName = 'report'
@@ -40,8 +40,8 @@ test('shallow LAS', async () => {
   expect(shallow.scan.filetype).toEqual('LAS')
   if (!Report.isLas(shallow))
     throw new Error('generateReport() created the wrong Report.filetype')
-  expect(shallow.las.header).toEqual(header)
-  expect(shallow.las.vlrs).toEqual(vlrs)
+  expect(shallow.las!.header).toEqual(header)
+  expect(shallow.las!.vlrs).toEqual(vlrs)
 })
 
 test('shallow Unknown', async () => {
@@ -75,9 +75,9 @@ test('deep COPC', async () => {
 
   if (!Report.isCopc(deep))
     throw new Error('generateReport() created the wrong Report.filetype')
-  expect(deep.copc.header).toEqual(copc.header)
-  expect(deep.copc.vlrs).toEqual(copc.vlrs)
-  expect(deep.copc.info).toEqual(copc.info)
+  expect(deep.copc!.header).toEqual(copc.header)
+  expect(deep.copc!.vlrs).toEqual(copc.vlrs)
+  expect(deep.copc!.info).toEqual(copc.info)
   expect(deep.scan.start <= deep.scan.end).toBe(true)
 
   const reportName = 'report'
@@ -100,8 +100,8 @@ test('deep LAS', async () => {
   expect(deep.scan.type).toEqual('deep')
   if (!Report.isLas(deep))
     throw new Error('generateReport() created the wrong Report.filetype')
-  expect(deep.las.header).toEqual(header)
-  expect(deep.las.vlrs).toEqual(vlrs)
+  expect(deep.las!.header).toEqual(header)
+  expect(deep.las!.vlrs).toEqual(vlrs)
 })
 
 test('deep Unknown', async () => {

@@ -25,7 +25,7 @@ import { isEqual, omit } from 'lodash'
  */
 export const generateReport = async (
   source: string,
-  { name = source, deep = false, maxThreads }: Report.Options,
+  { name = source, deep = false, maxThreads, mini = false }: Report.Options,
 ): Promise<Report> => {
   const type = deep ? 'deep' : 'shallow'
   const start = new Date()
@@ -58,7 +58,7 @@ export const generateReport = async (
         time: performance.now() - startTime,
       },
       checks,
-      copc,
+      copc: mini ? undefined : copc,
     }
   } catch (copcError) {
     //throw copcError
@@ -80,6 +80,7 @@ export const generateReport = async (
       //   - evlrHeaderLength !== 60
       //   - Corrupt/bad binary data
       const checks = await invokeCollection(LasCollection(get, header, vlrs))
+
       return {
         name,
         scan: {
@@ -90,11 +91,8 @@ export const generateReport = async (
           time: performance.now() - startTime,
         },
         checks,
-        las: {
-          header,
-          vlrs,
-        },
-        copcError: copcError as Error,
+        las: mini ? undefined : { header, vlrs },
+        copcError: copcError,
       }
     } catch (lasError) {
       // Las.* functions failed, try poking around manually with the Getter

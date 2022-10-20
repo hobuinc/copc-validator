@@ -38,39 +38,35 @@ export const headerParseSourcer = async (
 export const manualHeaderSuite: Check.Suite<manualParams> = {
   fileSignature: ({ buffer }) => {
     const fileSignature = Binary.toCString(buffer.slice(0, 4))
-    return complexCheck(
-      fileSignature,
-      'LASF',
-      false,
-      `('LASF') File Signature: '${fileSignature}'`,
-    )
+    return complexCheck({
+      source: fileSignature,
+      checker: 'LASF',
+      infoOnFailure: `('LASF') File Signature: '${fileSignature}'`,
+    })
   },
   majorVersion: ({ dv }) => {
     const majorVersion = dv.getUint8(24)
-    return complexCheck(
-      majorVersion,
-      1,
-      false,
-      `(1) Major Version: ${majorVersion}`,
-    )
+    return complexCheck({
+      source: majorVersion,
+      checker: 1,
+      infoOnFailure: `(1) Major Version: ${majorVersion}`,
+    })
   },
   minorVersion: ({ dv }) => {
     const minorVersion = dv.getUint8(25)
-    return complexCheck(
-      minorVersion,
-      4,
-      false,
-      `(4) Minor Version: ${minorVersion}`,
-    )
+    return complexCheck({
+      source: minorVersion,
+      checker: 4,
+      infoOnFailure: `(4) Minor Version: ${minorVersion}`,
+    })
   },
   headerLength: ({ dv }) => {
     const headerLength = dv.getUint16(94, true)
-    return complexCheck(
-      headerLength,
-      (n) => n === Las.Constants.minHeaderLength,
-      false,
-      `(>=375) Header Length: ${headerLength}`,
-    )
+    return complexCheck({
+      source: headerLength,
+      checker: (n) => n === Las.Constants.minHeaderLength,
+      infoOnFailure: `(>=375) Header Length: ${headerLength}`,
+    })
   },
   legacyPointCount: ({ dv }) => {
     const pointDataRecordFormat = dv.getUint8(104) & 0b1111
@@ -105,18 +101,22 @@ export const manualHeaderSuite: Check.Suite<manualParams> = {
       lpc: legacyPointCount,
       lpcr: legacyPointCountByReturn,
     }
-    return complexCheck(
-      param,
-      ({ pdrf, pc, lpc, lpcr }) =>
+    return complexCheck({
+      source: {
+        pdrf: pointDataRecordFormat,
+        pc: pointCount,
+        lpc: legacyPointCount,
+        lpcr: legacyPointCountByReturn,
+      },
+      checker: ({ pdrf, pc, lpc, lpcr }) =>
         ([6, 7, 8, 9, 10].includes(pdrf) && lpcr.every((n) => n === 0)) ||
         (pc < UINT32_MAX &&
           pc === lpc &&
           lpcr.reduce((p, c) => p + c, 0) === pc) ||
         lpcr.reduce((p, c) => p + c, 0) === lpc,
-      true,
-      `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
-      // `PointDataRecordFormat: ${pointDataRecordFormat}`,
-    )
+      infoOnFailure: `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
+      warning: true,
+    })
   },
 }
 
@@ -188,8 +188,6 @@ const UINT32_MAX = 4_294_967_295
     const fileSignature = Binary.toCString(buffer.slice(0, 4))
     const majorVersion = dv.getUint8(24)
     const minorVersion = dv.getUint8(25)
-    // if parseBigInt() or anything else throws errors, it will be caught by
-    // invokeAllChecks as `{ id: 'manualHeaderParse', status: 'fail' }`
     const header: FullHeader = {
       fileSignature,
       fileSourceId: dv.getUint16(4, true),

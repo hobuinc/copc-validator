@@ -7,7 +7,7 @@ export const fs = { writeFileSync }
 
 /** CLI Usage:
  * ```
- * copcc {--deep} {--output: string} {--name: string} [files...]
+ * copcc {--deep} {--mini} {--name: string} {--output: string} {--threads: number} [file]
  * ```
  *
  * `deep` | `d`: Runs a Deep Scan, checking every point in a PDR (if valid copc/las) for
@@ -18,10 +18,16 @@ export const fs = { writeFileSync }
  *
  * `name` | `n`: Name for the report.    *Optional - uses filename if omitted*
  *
+ * `threads` | `t`: Max Thread count to pass to Piscina, for scanning nodes (checks/copc/nodes.ts)
+ *                                       *Optional - based on CPU if omitted*
+ *
+ * `mini` | `m`: Outputs a minified version of the report without Copc/Las data (checks & scan only)
+ *                                       *Optional - included extended copc.js data if omitted*
+ *
  * TODO: `las`: Skip attempting to validate as COPC and just validate the LAS specs
  *                                       *Optional - attempts Copc first if omitted*
  *
- * `files...`: A list of file(s) to run the validation checks against  *Required >= 1*
+ * `file`: A file path (local or URL) to run the validation checks against  *Required*
  */
 export const copcc = async (argv: string[]) => {
   if (argv === undefined || argv.length < 1)
@@ -29,34 +35,50 @@ export const copcc = async (argv: string[]) => {
 
   // PARSE ARGS
   const args = minimist<ExpectedArgv>(argv, {
-    boolean: ['deep'],
+    boolean: ['deep', 'mini', 'help'],
     string: ['output', 'name'],
     alias: {
       output: 'o',
       deep: 'd',
       name: 'n',
       threads: 't',
+      mini: 'm',
+      help: 'h',
     },
   })
-  const { _: files, deep, output, name: givenName, threads } = args
+  const {
+    help,
+    _: [file, ...rest],
+    deep,
+    output,
+    name: givenName,
+    threads,
+    mini,
+  } = args
+
+  if (help) {
+    // process.stdout.write(helpString)
+    process.stdout.write(writeHelp)
+    return
+  }
 
   // VALIDATE ARGS
-  if (files.length < 1)
-    throw new Error('Must provide at least one (1) file to be validated')
+  if (!file) throw new Error('Must provide a filepath to be validated')
+  if (rest.length > 0)
+    throw new Error('Too many arguments (filepaths) provided')
 
-  const name = givenName || files[0]
-  // currently accepts more than one file as an arg because it'd be easy enough
-  // to loop over the files array and attempt multiple scans. We'd just need a
-  // better solution for output (either --outputDir or force parse --output as
-  // as directory if multiple files are supplied, or something else)
-  // I'm currently doing neither and only reading the first file in the array
+  const name = givenName || file
 
   // deep & output don't need validated because undefined/false is used in context
 
   // RUN SCAN
   const start = performance.now()
-  const file = files[0]
-  const report = await generateReport(file, { name, deep, maxThreads: threads })
+  const report = await generateReport(file, {
+    name,
+    deep,
+    maxThreads: threads,
+    mini,
+  })
   const end = performance.now()
   // Using performance.now() to print the time after the report, for debugging convienence
 
@@ -82,8 +104,12 @@ export default copcc
 
 type ExpectedArgv = {
   _: string[]
+  help: boolean
+  h: boolean //alias
   deep: boolean
   d: boolean //alias
+  mini: boolean
+  m: boolean //alias
   output?: string
   o?: string //alias
   name?: string
@@ -91,3 +117,62 @@ type ExpectedArgv = {
   threads?: number
   t?: number //alias
 }
+
+type flag = { flag: string; description: string; default?: string }
+const flags: flag[] = [
+  {
+    flag: '-n, --name',
+    description: 'Title for report output',
+    default: '<path>',
+  },
+  {
+    flag: '-o, --output',
+    description: 'Path to write report as JSON file',
+    default: 'stdout',
+  },
+  {
+    flag: '-m, --mini',
+    description: 'Omit extended COPC/LAS info from report',
+    default: 'false',
+  },
+  {
+    flag: '-d, --deep',
+    description: 'Scan all (versus root) points of each node',
+    default: 'false',
+  },
+  {
+    flag: '-t, --threads',
+    description: 'Max thread count for scanning Hierarchy Nodes',
+    default: 'CPU-based',
+  },
+  { flag: '-h, --help', description: 'Output this help information' },
+]
+
+const space = (n: number) => Array(n > 0 ? n + 1 : 1).join(' ')
+export const writeHelp = ((f: flag[]) => {
+  const columns = process.stdout.columns > 180 ? 180 : process.stdout.columns
+  let header = `
+   Usage: copcc [options] <path>   
+
+   Scans a COPC/LAS file to verify the data matches the filetype specifications.
+
+   Options:${space(columns - 26)}*all optional*
+
+`
+  const longestDefault: number = f.reduce((prev, curr) => {
+    if (curr.default && curr.default.length > prev) return curr.default.length
+    return prev
+  }, 0)
+
+  // option line:
+  // ( ) = hardcoded space      [ ] = variable space
+  //(   )-x, --xxx[     ]blah blah blah description[     ](default: )[]xxxxx( )
+  // 3 + flag.length + X + description.length + Y + 9 + Z + default.length + 1 = 180 columns
+  f.forEach(({ flag, description, default: d }) => {
+    const row = `   ${flag}${space(17 - flag.length)}${description} ${space(
+      columns - 40 - description.length,
+    )}${d ? `default: ${space(longestDefault - d.length)}${d}` : ''} `
+    header += row + '\n'
+  })
+  return header
+})(flags)

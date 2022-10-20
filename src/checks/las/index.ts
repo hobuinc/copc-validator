@@ -3,7 +3,7 @@ import headerSuite from './header'
 import vlrSuite from 'checks/las/vlrs'
 import { Check } from 'types'
 import { invokeAllChecks } from 'checks'
-import { copcHeaderSourcer } from '../getter'
+import { copcHeaderSourcer, vlrParseSourcer } from '../getter'
 
 export * from './header'
 export * from './vlrs'
@@ -19,6 +19,7 @@ export const LasCollection = async (
   vlrs: Las.Vlr[],
 ): Promise<Check.Suite.Collection> => [
   { source: header, suite: headerSuite },
-  { source: vlrs, suite: vlrSuite },
+  { source: { header, vlrs }, suite: vlrSuite },
   copcHeaderSourcer(get),
+  vlrParseSourcer(get),
 ]

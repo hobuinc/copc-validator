@@ -7,12 +7,11 @@ import { Check } from 'types'
 export const headerSuite: Check.Suite<Las.Header> = {
   minorVersion: ({ minorVersion }) => basicCheck(minorVersion, 4),
   pointDataRecordFormat: ({ pointDataRecordFormat }) =>
-    complexCheck(
-      pointDataRecordFormat,
-      [6, 7, 8],
-      false,
-      `Point Data Record Format (should be 6, 7, or 8): ${pointDataRecordFormat}`,
-    ),
+    complexCheck({
+      source: pointDataRecordFormat,
+      checker: [6, 7, 8],
+      infoOnFailure: `(6,7,8) Point Data Record Format: ${pointDataRecordFormat}`,
+    }),
   headerLength: ({ headerLength }) =>
     basicCheck(headerLength, Las.Constants.minHeaderLength),
   pointCountByReturn: ({ pointCount, pointCountByReturn }) =>

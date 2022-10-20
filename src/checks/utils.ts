@@ -34,16 +34,23 @@ export const basicCheck = <T>(
   info,
 })
 
+type complexParams<T> = {
+  source: T
+  checker: T | T[] | ((s: T) => boolean)
+  warning?: boolean
+  infoOnFailure?: string
+  infoOnSuccess?: string
+}
 // Cleaner output than basicCheck since undefined `info` does not get added to
 // the resulting object, plus allows for warnings and differing info messages
 // based on the check status
-export const complexCheck = <T>(
-  source: T,
-  checker: T | T[] | ((s: T) => boolean),
+export const complexCheck = <T>({
+  source,
+  checker,
   warning = false,
-  infoOnFailure?: string,
-  infoOnSuccess?: string,
-): Check.Status => {
+  infoOnFailure,
+  infoOnSuccess,
+}: complexParams<T>): Check.Status => {
   if (booleanFn(checker)(source))
     return infoOnSuccess
       ? Statuses.successWithInfo(infoOnSuccess)
@@ -92,106 +99,59 @@ export const invokeAllChecks = async (
         )
       ).flat()
 
-// I need to do further testing to ensure the above function is performance optimal
-
+/**
+ * Utility to replace invokeAllChecks within generateReport() for more optimal
+ * performance. Minimizes `await`ing between Check.Functions and Check.Suites
+ * by throwing each into a Promise Pool
+ * @param collection Array of `Check.Suite.withSource` objects (or Promises)
+ * @returns Promise<Check[]> Array of all Checks completed
+ */
 export const invokeCollection = async (
   collection: Promise<Check.Suite.Collection> | Check.Suite.Collection,
 ): Promise<Check[]> =>
-  (
-    await PromisePool.for(await collection)
-      .withConcurrency(200)
-      .process(async (suiteWSource) => {
-        const { suite, source } = await suiteWSource
-        return Object.entries(suite).map(([id, f]) =>
-          performCheck(source, f, id),
-        )
-      })
-  ).results.flat()
-
-// ========== CHECK TESTING ==========
-export const findCheck = (checks: Check[], id: string) =>
-  checks.find((c) => c.id === id)
-
-export const splitChecks = (
-  checks: Check[],
-  isValid: (c: Check) => boolean = (c) => c.status === 'pass',
-): [Check[], Check[]] =>
-  checks.reduce<[Check[], Check[]]>(
-    ([pass, fail], check) =>
-      isValid(check) ? [[...pass, check], fail] : [pass, [...fail, check]],
-    [[], []],
+  Promise.all(
+    (
+      await PromisePool.for(await collection)
+        .withConcurrency(200)
+        .process(async (suiteWSource, i) => {
+          try {
+            const { suite, source } = await suiteWSource
+            return Object.entries(suite).map(([id, f]) =>
+              performCheck(source, f, id),
+            )
+          } catch (error) {
+            return {
+              id: `Sourcer ${i}: Failed to read source`,
+              status: 'fail',
+              info: (error as Error).message,
+            } as Check
+          }
+        })
+    ).results.flat(),
   )
 
-export const getCheckIds = (checks: Check[]): string[] =>
-  checks.reduce<string[]>((prev, curr) => [...prev, curr.id], [])
-
-// ========== check/vlrs.ts UTILITIES ==========
-
-/**
- * Utility function that takes care of basic VLR checking such as 'does it exist'
- * and 'does only one exist', with simple options to expand the check a bit
- * @param vlrs `Las.Vlr[]` from `Copc.create()` or `Las.Vlr.walk()`
- * @param userId ASPRS-registered userId for VLR issuer
- * @param recordId Record number indicating VLR type
- * @param required Indicates whether VLR is required (fail if missing), or just
- * recommended (warn if missing)
- * @param finalCheck Function that takes a `Las.Vlr` object and returns a boolean,
- * used to perform additional check(s) on the specified VLR (if found)
- * @param info Optional info string to include with the `finalCheck` output
- * @returns {Check.Status} A single `Check.Status` object
- */
-export const vlrCheck = (
-  vlrs: Las.Vlr[],
-  userId: string,
-  recordId: number,
-  required: boolean = true,
-  finalCheck?: (vlr: Las.Vlr) => boolean,
-  info?: string,
-): Check.Status => {
-  const vlrName = `${userId}-${recordId}`
-  const vlr = Las.Vlr.find(vlrs, userId, recordId)
-  if (!vlr)
-    return required
-      ? Statuses.failureWithInfo(`Failed to find VLR: ${vlrName}`)
-      : Statuses.warningWithInfo(`Failed to find recommended VLR: ${vlrName}`)
-  if (checkVlrDuplicates(vlrs, userId, recordId))
-    return Statuses.failureWithInfo(`Found multiple ${vlrName} VLRs`)
-  return finalCheck ? basicCheck(vlr, finalCheck, info) : Statuses.success
-}
-
-/**
- * Utility to check for duplicates of a given VLR in the `Copc.create()` vlrs
- * array of `Las.Vlr` objects
- * @param vlrs `Las.Vlr[]` from `Copc.create()`
- * @param userId ASPRS-registered userId for the VLR issuer
- * @param recordId Record number indicating the VLR type
- * @returns A boolean representing if the `Las.Vlr[]` contains two VLRs that
- * match the given `userId` & `recordId`
- */
-export const checkVlrDuplicates = (
-  vlrs: Las.Vlr[],
-  userId: string,
-  recordId: number,
-) => !!Las.Vlr.find(removeVlr(vlrs, userId, recordId), userId, recordId)
-
-export const removeVlr = (vlrs: Las.Vlr[], userId: string, recordId: number) =>
-  ((i: number) => vlrs.slice(0, i).concat(vlrs.slice(i + 1)))(
-    vlrs.findIndex((v) => v.userId === userId && v.recordId === recordId),
-  )
+// I need to do further testing to ensure the above functions are performance optimal
 
 // ========== check/util.ts UTILITIES ==========
-const performCheck = (
+const performCheck = async (
   source: unknown,
   f: Check.Function<unknown>,
   id: string,
-): Check => {
-  let result: Check.Status
+): Promise<Check> => {
   // console.time(id)
-  try {
-    result = f(source)
-  } catch (e) {
-    result = { status: 'fail', info: (e as Error).message }
-  }
+  // let result: Check.Status
+  // try {
+  //   result = f(source)
+  // } catch (e) {
+  //   result = { status: 'fail', info: (e as Error).message }
+  // }
+  const result: Check.Status = await (() => {
+    try {
+      return f(source)
+    } catch (e) {
+      return { status: 'fail', info: (e as Error).message }
+    }
+  })()
   // console.timeEnd(id)
   return { id, ...result }
 }
@@ -211,3 +171,19 @@ const arrayCheck =
   <T>(array: T[]) =>
   (variable: T) =>
     array.includes(variable)
+// ========== CHECK TESTING ==========
+export const findCheck = (checks: Check[], id: string) =>
+  checks.find((c) => c.id === id)
+
+export const splitChecks = (
+  checks: Check[],
+  isValid: (c: Check) => boolean = (c) => c.status === 'pass',
+): [Check[], Check[]] =>
+  checks.reduce<[Check[], Check[]]>(
+    ([pass, fail], check) =>
+      isValid(check) ? [[...pass, check], fail] : [pass, [...fail, check]],
+    [[], []],
+  )
+
+export const getCheckIds = (checks: Check[]): string[] =>
+  checks.reduce<string[]>((prev, curr) => [...prev, curr.id], [])

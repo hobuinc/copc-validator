@@ -35,6 +35,7 @@ test('buildCopcSuite shallow oldCopc', async () => {
     'laszip-encoded',
     'legacyPointCount',
     'legacyPointCountByReturn',
+    'wkt',
     'rgb',
     'xyz',
     'returnNumber',

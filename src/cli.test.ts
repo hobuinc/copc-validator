@@ -1,4 +1,4 @@
-import copcc, { fs } from './cli'
+import copcc, { fs, writeHelp } from './cli'
 import generateReport from 'report'
 import { ellipsoidFiles } from 'test'
 import { Report } from 'types'
@@ -18,7 +18,7 @@ test('cli shallow', async () => {
   await validateGoodScan([filename, '-o', outputPath], expectedScan)
 })
 
-jest.setTimeout(20000)
+// jest.setTimeout(20000)
 test('cli deep', async () => {
   jest.setTimeout(20000)
   const expectedScan = expectScan(
@@ -29,13 +29,44 @@ test('cli deep', async () => {
   await validateGoodScan([filename, '-d', '--output', outputPath], expectedScan)
 })
 
+test('cli help', async () => {
+  await copcc(['-h'])
+  expect(mockProcessWrite).toBeCalledTimes(1)
+  expect(mockProcessWrite).toBeCalledWith(writeHelp)
+  mockProcessWrite.mockClear()
+
+  await copcc(['--help'])
+  expect(mockProcessWrite).toBeCalledTimes(1)
+  expect(mockProcessWrite).toBeCalledWith(writeHelp)
+  mockProcessWrite.mockClear()
+
+  await copcc(['-help', filename])
+  expect(mockProcessWrite).toBeCalledTimes(1)
+  expect(mockProcessWrite).toBeCalledWith(writeHelp)
+})
+
+// test('cli mini', async () => {
+//   const expectedScan = expectScan(
+//     await generateReport(filename, { mini: true }),
+//   )
+//   mockProcessWrite.mockClear()
+
+//   await validateGoodScan([filename, '--mini'], expectedScan)
+//   await validateGoodScan([filename, '-m'], expectedScan)
+// })
+
 test('cli errors', async () => {
   // no args provided
   await expect(copcc([])).rejects.toThrow('Not enough argument(s) provided')
 
   // no source file provided
   await expect(copcc(['--deep', '--output', outputPath])).rejects.toThrow(
-    'Must provide at least one (1) file to be validated',
+    'Must provide a filepath to be validated',
+  )
+
+  // multiple filepaths
+  await expect(copcc([filename, ellipsoidFiles.laz14])).rejects.toThrow(
+    'Too many arguments (filepaths) provided',
   )
 
   // silence console.error() in copcc() since we don't currently care about it

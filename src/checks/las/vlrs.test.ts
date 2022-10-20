@@ -1,7 +1,8 @@
-import { getLasItems } from 'test'
-import vlrSuite from './vlrs'
+import { ellipsoidFiles, getLasItems } from 'test'
+import vlrSuite, { checkVlrDuplicates, removeVlr } from './vlrs'
 import { getCheckIds, invokeAllChecks, splitChecks } from 'checks'
 import { difference } from 'lodash'
+import { Copc, Getter } from 'copc'
 
 const items = getLasItems()
 
@@ -44,3 +45,38 @@ test('las vlrs failures', async () => {
 })
 
 test.todo('other las vlrs tests')
+
+test('vlrs utilities', async () => {
+  const get = Getter.create(ellipsoidFiles.copc)
+  const { vlrs } = await Copc.create(get)
+  const vlrsMinusCopcInfo = removeVlr(vlrs, 'copc', 1)
+  expect(vlrsMinusCopcInfo).not.toContainEqual({
+    userId: 'copc',
+    recordId: 1,
+    contentOffset: 429,
+    contentLength: 160,
+    description: 'COPC info VLR',
+    isExtended: false,
+  })
+  expect(vlrsMinusCopcInfo).toContainEqual({
+    userId: 'copc',
+    recordId: 1000,
+    contentOffset: 1184242,
+    contentLength: 160,
+    description: 'EPT Hierarchy',
+    isExtended: true,
+  })
+  expect(checkVlrDuplicates(vlrs, 'copc', 1)).toBe(false)
+  const vlrsPlusDupedCopcInfo = [
+    ...vlrs,
+    {
+      userId: 'copc',
+      recordId: 1,
+      contentOffset: 429,
+      contentLength: 160,
+      description: 'COPC info VLR',
+      isExtended: false,
+    },
+  ]
+  expect(checkVlrDuplicates(vlrsPlusDupedCopcInfo, 'copc', 1)).toBe(true)
+})
