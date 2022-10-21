@@ -1,9 +1,15 @@
+// import {
+//   CopcCollection,
+//   GetterCollection,
+//   invokeCollection,
+//   LasCollection,
+// } from 'checks'
 import {
   CopcCollection,
-  GetterCollection,
-  invokeCollection,
-  LasCollection,
-} from 'checks'
+  LasCopcCollection,
+  FallbackCollection,
+} from 'collections'
+import { invokeCollection } from 'utils'
 import { Copc, Getter, Las } from 'copc'
 import { Report } from 'types'
 import { isEqual, omit } from 'lodash'
@@ -45,7 +51,7 @@ export const generateReport = async (
     // need to perform additional checks to confirm
 
     const checks = await invokeCollection(
-      CopcCollection(source, get, copc, deep, maxThreads),
+      CopcCollection({ filepath: source, get, copc, deep, maxThreads }),
     ) // no need to await CopcCollection since invokeCollection allows promises
 
     return {
@@ -79,7 +85,9 @@ export const generateReport = async (
       //   - vlrHeaderLength !== 54
       //   - evlrHeaderLength !== 60
       //   - Corrupt/bad binary data
-      const checks = await invokeCollection(LasCollection(get, header, vlrs))
+      const checks = await invokeCollection(
+        LasCopcCollection({ get, header, vlrs }),
+      )
 
       return {
         name,
@@ -100,7 +108,7 @@ export const generateReport = async (
 
       // Should only need to check for the possibilities above (lines 58 & 64),
       // otherwise the Las suite would be running instead
-      const checks = await invokeCollection(GetterCollection(get))
+      const checks = await invokeCollection(FallbackCollection(get))
       // TODO: Figure out a way to test this function (need specific bad file)
       const errors = (() =>
         isEqual(

@@ -7,53 +7,93 @@ const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
 const reportName = 'report-name'
 
+const shallowScan = generateReport(filename, {})
+const deepScan = generateReport(filename, { deep: true })
+
 afterEach(() => jest.clearAllMocks())
 afterAll(() => jest.restoreAllMocks())
 
 // ========== TESTS ==========
 test('cli shallow', async () => {
-  const expectedScan = expectScan(await generateReport(filename, {}))
+  const expectedScan = expectScan(await shallowScan) //await generateReport(filename, {}))
 
   await validateGoodScan([filename], expectedScan)
   await validateGoodScan([filename, '-o', outputPath], expectedScan)
+  // shallow scans are fast enough that it's better not to split them
 })
 
-// jest.setTimeout(20000)
+// test('cli shallow file-output', async () => {
+//   const expectedScan = expectScan(await shallowScan) //await generateReport(filename, {}))
+
+//   await validateGoodScan([filename, '-o', outputPath], expectedScan)
+// })
+
 test('cli deep', async () => {
   jest.setTimeout(20000)
   const expectedScan = expectScan(
-    await generateReport(filename, { deep: true }),
+    await deepScan, //await generateReport(filename, { deep: true }),
   )
 
   await validateGoodScan([filename, '--deep'], expectedScan)
+  // await validateGoodScan([filename, '-d', '--output', outputPath], expectedScan)
+})
+
+test('cli deep file-output', async () => {
+  jest.setTimeout(20000)
+  const expectedScan = expectScan(
+    await deepScan, //await generateReport(filename, { deep: true }),
+  )
+
+  // await validateGoodScan([filename, '--deep'], expectedScan)
   await validateGoodScan([filename, '-d', '--output', outputPath], expectedScan)
 })
 
 test('cli help', async () => {
   await copcc(['-h'])
   expect(mockProcessWrite).toBeCalledTimes(1)
-  expect(mockProcessWrite).toBeCalledWith(writeHelp)
+  expect(mockProcessWrite).toBeCalledWith(writeHelp(process.stdout.columns))
   mockProcessWrite.mockClear()
+
+  process.stdout.columns = 100
 
   await copcc(['--help'])
   expect(mockProcessWrite).toBeCalledTimes(1)
-  expect(mockProcessWrite).toBeCalledWith(writeHelp)
+  expect(mockProcessWrite).toBeCalledWith(writeHelp(100))
   mockProcessWrite.mockClear()
+
+  process.stdout.columns = 200
 
   await copcc(['-help', filename])
   expect(mockProcessWrite).toBeCalledTimes(1)
-  expect(mockProcessWrite).toBeCalledWith(writeHelp)
+  expect(mockProcessWrite).toBeCalledWith(writeHelp(200))
+  mockProcessWrite.mockClear()
 })
 
-// test('cli mini', async () => {
-//   const expectedScan = expectScan(
-//     await generateReport(filename, { mini: true }),
-//   )
-//   mockProcessWrite.mockClear()
+test('cli mini', async () => {
+  // const expectedScan = expectScan(
+  //   await generateReport(filename, { mini: true }),
+  // )
+  const {
+    name,
+    scan: { type, filetype },
+    checks,
+  } = await generateReport(filename, { mini: true })
+  const expectedScan = expect.objectContaining({
+    name,
+    checks,
+    scan: {
+      type,
+      filetype,
+      start: expect.any(String),
+      end: expect.any(String),
+      time: expect.any(Number),
+    },
+  })
+  // mockProcessWrite.mockClear()
 
-//   await validateGoodScan([filename, '--mini'], expectedScan)
-//   await validateGoodScan([filename, '-m'], expectedScan)
-// })
+  await validateGoodScan([filename, '--mini'], expectedScan)
+  await validateGoodScan([filename, '-m'], expectedScan)
+})
 
 test('cli errors', async () => {
   // no args provided

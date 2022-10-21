@@ -58,7 +58,7 @@ export const copcc = async (argv: string[]) => {
 
   if (help) {
     // process.stdout.write(helpString)
-    process.stdout.write(writeHelp)
+    process.stdout.write(writeHelp(process.stdout.columns)) //writeHelp)
     return
   }
 
@@ -149,9 +149,10 @@ const flags: flag[] = [
 ]
 
 const space = (n: number) => Array(n > 0 ? n + 1 : 1).join(' ')
-export const writeHelp = ((f: flag[]) => {
-  const columns = process.stdout.columns > 180 ? 180 : process.stdout.columns
-  let header = `
+export const writeHelp = (col: number) => {
+  const columns = col > 180 ? 180 : col
+  console.log(columns)
+  let message = `
    Usage: copcc [options] <path>   
 
    Scans a COPC/LAS file to verify the data matches the filetype specifications.
@@ -159,7 +160,7 @@ export const writeHelp = ((f: flag[]) => {
    Options:${space(columns - 26)}*all optional*
 
 `
-  const longestDefault: number = f.reduce((prev, curr) => {
+  const longestDefault: number = flags.reduce((prev, curr) => {
     if (curr.default && curr.default.length > prev) return curr.default.length
     return prev
   }, 0)
@@ -168,11 +169,11 @@ export const writeHelp = ((f: flag[]) => {
   // ( ) = hardcoded space      [ ] = variable space
   //(   )-x, --xxx[     ]blah blah blah description[     ](default: )[]xxxxx( )
   // 3 + flag.length + X + description.length + Y + 9 + Z + default.length + 1 = 180 columns
-  f.forEach(({ flag, description, default: d }) => {
+  flags.forEach(({ flag, description, default: d }) => {
     const row = `   ${flag}${space(17 - flag.length)}${description} ${space(
       columns - 40 - description.length,
     )}${d ? `default: ${space(longestDefault - d.length)}${d}` : ''} `
-    header += row + '\n'
+    message += row + '\n'
   })
-  return header
-})(flags)
+  return message
+}

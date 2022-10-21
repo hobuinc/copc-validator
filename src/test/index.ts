@@ -1,5 +1,7 @@
 import { Copc, Getter, Hierarchy, Las } from 'copc'
-import { join } from 'path'
+import { join, resolve } from 'path'
+
+export const maxThreads: number | undefined = undefined
 
 export const dirname = __dirname
 const filename = 'ellipsoid.copc.laz'
@@ -36,7 +38,7 @@ export const getCopcItems = async (
     get,
     copc.info.rootHierarchyPage,
   )
-  return { filepath: file, get, copc, nodes }
+  return { filepath: resolve(file), get, copc, nodes }
 }
 
 export const getLasItems = async (
