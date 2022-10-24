@@ -2,7 +2,9 @@ import { difference } from 'lodash'
 import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
 import { Check } from 'types'
 import {
+  allCheckIds,
   checkAll,
+  expectedChecks,
   findCheck,
   getCheckIds,
   invokeCollection,
@@ -14,14 +16,23 @@ const items = getCopcItems()
 
 test('CopcCollection shallow all-pass', async () => {
   const { filepath, get, copc } = await items
-  const checks = await invokeCollection(CopcCollection({ filepath, get, copc }))
-  checkAll(checks)
+  const collection = CopcCollection({ filepath, get, copc })
+  const checks = await invokeCollection(collection)
+
+  const [expectedPassed, expectedFailed] = await expectedChecks({
+    collection,
+    expectedFailed: ['cube within bounds'],
+  })
+  const [passed, failed] = splitChecks(checks)
+
+  expect(getCheckIds(passed)).toEqual(expectedPassed)
+  expect(getCheckIds(failed)).toEqual(expectedFailed)
 })
 
 test('CopcCollection shallow oldCopc', async () => {
   const { filepath, get, copc } = await getCopcItems(ellipsoidFiles.oldCopc)
   const deep = false
-  const collection = await CopcCollection({
+  const collection = CopcCollection({
     filepath,
     get,
     copc,
@@ -31,16 +42,9 @@ test('CopcCollection shallow oldCopc', async () => {
 
   const checks = await invokeCollection(collection)
 
-  const allCheckIds = (
-    await Promise.all(
-      collection.map(async (s) => {
-        const { suite } = await s
-        return Object.keys(suite)
-      }),
-    )
-  ).flat()
-  const expectedFailed = ['rgbi', 'gpsTime']
-  const expectedPassed = difference(allCheckIds, expectedFailed)
+  const checkIds = await allCheckIds(collection)
+  const expectedFailed = ['cube within bounds', 'rgbi', 'gpsTime']
+  const expectedPassed = difference(checkIds, expectedFailed)
 
   const [passed, failed] = splitChecks(checks)
   expect(getCheckIds(passed)).toEqual(expectedPassed)
@@ -51,6 +55,13 @@ test('CopcCollection shallow oldCopc', async () => {
   expect(rgbi).toHaveProperty(
     'info',
     'Points appear to contain 8-bit RGBI. Should be scaled to 16-bit.',
+  )
+
+  const cubeWithinBounds = findCheck(failed, 'cube within bounds')
+  expect(cubeWithinBounds).toHaveProperty('status', 'fail')
+  expect(cubeWithinBounds).toHaveProperty(
+    'info',
+    'COPC cube midpoint outside of Las Bounds: Z',
   )
 
   const gpsTime = findCheck(failed, 'gpsTime')

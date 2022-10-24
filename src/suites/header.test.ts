@@ -6,10 +6,8 @@ import { headerSuite, manualHeaderSuite } from './header'
 const items = getCopcItems()
 
 test('headerSuite all-pass', async () => {
-  const {
-    copc: { header },
-  } = await items
-  const checks = await invokeAllChecks({ source: header, suite: headerSuite })
+  const { copc } = await items
+  const checks = await invokeAllChecks({ source: copc, suite: headerSuite })
   // checks.forEach((check) => expect(check).toHaveProperty('status', 'pass'))
   checkAll(checks)
 })

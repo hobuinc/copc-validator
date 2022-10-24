@@ -1,3 +1,4 @@
+import { difference } from 'lodash'
 import { Check } from 'types'
 
 export const findCheck = (checks: Check[], id: string) =>
@@ -22,3 +23,29 @@ export const checkAll = (checks: Check[], pass: boolean = true) =>
       ? expect(check).toHaveProperty('status', 'pass')
       : expect(check).not.toHaveProperty('status', 'pass'),
   )
+
+export const allCheckIds = async (
+  collection: Promise<Check.Suite.Collection>,
+) =>
+  (
+    await Promise.all(
+      (
+        await collection
+      ).map(async (s) => {
+        const { suite } = await s
+        return Object.keys(suite)
+      }),
+    )
+  ).flat()
+
+type expectedCheckParams = {
+  collection: Promise<Check.Suite.Collection>
+  expectedFailed: string[]
+}
+export const expectedChecks = async ({
+  collection,
+  expectedFailed,
+}: expectedCheckParams): Promise<[string[], string[]]> => {
+  const allIds = await allCheckIds(collection)
+  return [difference(allIds, expectedFailed), expectedFailed]
+}

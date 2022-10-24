@@ -1,4 +1,4 @@
-import { Las, Binary, parseBigInt, getBigUint64 } from 'copc'
+import { Las, Binary, parseBigInt, getBigUint64, Copc } from 'copc'
 import type { Check, manualHeaderParams as manualParams } from 'types'
 import {
   basicCheck,
@@ -8,17 +8,34 @@ import {
   UINT32_MAX,
 } from 'utils'
 
-export const headerSuite: Check.Suite<Las.Header> = {
-  minorVersion: ({ minorVersion }) => basicCheck(minorVersion, 4),
-  pointDataRecordFormat: ({ pointDataRecordFormat }) =>
+// export const headerSuite: Check.Suite<Las.Header> = {
+//   minorVersion: ({ minorVersion }) => basicCheck(minorVersion, 4),
+//   pointDataRecordFormat: ({ pointDataRecordFormat }) =>
+//     complexCheck({
+//       source: pointDataRecordFormat,
+//       checker: [6, 7, 8],
+//       infoOnFailure: `(6,7,8) Point Data Record Format: ${pointDataRecordFormat}`,
+//     }),
+//   headerLength: ({ headerLength }) =>
+//     basicCheck(headerLength, Las.Constants.minHeaderLength),
+//   pointCountByReturn: ({ pointCount, pointCountByReturn }) =>
+//     basicCheck(
+//       pointCountByReturn.reduce((p, c) => p + c, 0),
+//       pointCount,
+//     ),
+// }
+
+export const headerSuite: Check.Suite<{ header: Las.Header }> = {
+  minorVersion: ({ header: { minorVersion } }) => basicCheck(minorVersion, 4),
+  pointDataRecordFormat: ({ header: { pointDataRecordFormat } }) =>
     complexCheck({
       source: pointDataRecordFormat,
       checker: [6, 7, 8],
       infoOnFailure: `(6,7,8) Point Data Record Format: ${pointDataRecordFormat}`,
     }),
-  headerLength: ({ headerLength }) =>
+  headerLength: ({ header: { headerLength } }) =>
     basicCheck(headerLength, Las.Constants.minHeaderLength),
-  pointCountByReturn: ({ pointCount, pointCountByReturn }) =>
+  pointCountByReturn: ({ header: { pointCount, pointCountByReturn } }) =>
     basicCheck(
       pointCountByReturn.reduce((p, c) => p + c, 0),
       pointCount,
