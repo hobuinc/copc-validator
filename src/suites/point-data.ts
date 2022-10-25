@@ -1,4 +1,4 @@
-import { Bounds, Hierarchy, Key, Point } from 'copc'
+import { Bounds, Hierarchy, Key, Step } from 'copc'
 import { Check, pointDataParams, enhancedNodeMap, pointChecker } from 'types'
 import { Statuses } from 'utils'
 
@@ -29,9 +29,11 @@ export const pointDataSuite: Check.Suite<pointDataParams> = {
   }) => checkGpsTime(nodeMap, gpsTimeRange),
   sortedGpsTime: ({ nodeMap }) => checkGpsTimeSorted(nodeMap),
   returnNumber: ({ nodeMap }) => checkReturnNumber(nodeMap),
+  nodesReachable: ({ nodeMap }) => checkNodesReachable(nodeMap),
 }
 
 export default pointDataSuite
+
 // ========== POINT DATA CHECKS ==========
 const checkRgb = (nodeMap: enhancedNodeMap, pdrf: 6 | 7 | 8): Check.Status => {
   if (pdrf === 6) {
@@ -131,7 +133,7 @@ const checkBounds = (nodeMap: getBadNodesMap, bounds: Bounds) => {
 }
 
 type gpsTimeRange = [number, number]
-export const checkGpsTime = (
+const checkGpsTime = (
   nodeMap: enhancedNodeMap,
   [min, max]: gpsTimeRange,
 ): Check.Status => {
@@ -178,6 +180,50 @@ export const checkReturnNumber = (nodeMap: enhancedNodeMap): Check.Status => {
   return badNodes.length > 0
     ? Statuses.failureWithInfo(`Invalid points found at: [ ${badNodes} ]`)
     : Statuses.success
+}
+
+export const checkNodesReachable = (nodeMap: enhancedNodeMap): Check.Status => {
+  const nodes = Object.keys(nodeMap).map((s) => Key.create(s))
+
+  const traverseNodes = (key: Key) => {
+    nodes.splice(
+      nodes.findIndex((k) => Key.compare(key, k) === 0),
+      1,
+    ) // remove key
+
+    if (nodes.length === 0) return // finished traversing
+
+    // build all possible steps from here
+    const possibleChildren = (
+      [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+        [1, 1, 0],
+        [0, 1, 1],
+        [1, 0, 1],
+        [1, 1, 1],
+      ] as Step[]
+    ).map((s) => Key.step(key, s))
+
+    possibleChildren.forEach((k) => {
+      if (nodes.find((l) => Key.compare(k, l) === 0)) {
+        // if a child from here is found, go there next
+        traverseNodes(k)
+      }
+    })
+  }
+
+  // start traversal at 0-0-0-0
+  traverseNodes(nodes[0])
+  if (nodes.length > 0)
+    return Statuses.failureWithInfo(
+      `Unreachable Nodes in Hierarchy: [ ${nodes.map((k) =>
+        Key.toString(k),
+      )} ]`,
+    )
+  return Statuses.success
 }
 
 // ========== UTILITIES ==========

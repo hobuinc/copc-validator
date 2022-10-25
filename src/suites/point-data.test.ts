@@ -17,7 +17,11 @@ import {
   invokeAllChecks,
   splitChecks,
 } from 'utils'
-import pointDataSuite, { getBadNodes } from './point-data'
+import pointDataSuite, {
+  checkGpsTimeSorted,
+  checkNodesReachable,
+  getBadNodes,
+} from './point-data'
 
 const items = getCopcItems()
 
@@ -150,7 +154,7 @@ test('pd failures', async () => {
   )
   const [expectedFailed, expectedPassed] = await expectedChecks({
     collection,
-    expected: ['sortedGpsTime'],
+    expected: ['sortedGpsTime', 'nodesReachable'],
   })
   const [passed, failed] = splitChecks(checks)
   expect(getCheckIds(passed)).toEqual(expectedPassed)
@@ -191,12 +195,34 @@ test('unsortedGpsTime failure', async () => {
       ],
     },
   }
-  const checks = await invokeAllChecks({
-    source: { copc, nodeMap: unsortedNodeMap },
-    suite: pointDataSuite,
+  expect(checkGpsTimeSorted(unsortedNodeMap)).toEqual({
+    status: 'warn',
+    info: 'GpsTime is unsorted: [ 0-0-0-0 ]',
   })
-  expect(findCheck(checks, 'sortedGpsTime')).toHaveProperty(
-    'info',
-    'GpsTime is unsorted: [ 0-0-0-0 ]',
-  )
+  // const checks = await invokeAllChecks({
+  //   source: { copc, nodeMap: unsortedNodeMap },
+  //   suite: pointDataSuite,
+  // })
+  // expect(findCheck(checks, 'sortedGpsTime')).toHaveProperty(
+  //   'info',
+  //   'GpsTime is unsorted: [ 0-0-0-0 ]',
+  // )
+})
+
+test('nodesReachable failure', async () => {
+  const { filepath, nodes } = await items
+  const nodeMap = await readHierarchyNodes(nodes, filepath, true, maxThreads)
+  const badNodeMap: deepNodeMap = {
+    ...nodeMap,
+    '5-0-0-0': {
+      pointCount: 0,
+      pointDataOffset: 0,
+      pointDataLength: 0,
+      points: [],
+    },
+  }
+  expect(checkNodesReachable(badNodeMap)).toEqual({
+    status: 'fail',
+    info: 'Unreachable Nodes in Hierarchy: [ 5-0-0-0 ]',
+  })
 })
