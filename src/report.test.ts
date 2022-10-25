@@ -25,8 +25,25 @@ test('shallow COPC', async () => {
   expect(shallow.scan.start <= shallow.scan.end).toBe(true)
 
   const reportName = 'report'
-  const shallowWithName = await generateReport(copcFile, { name: reportName }) // default `deep`
-  expect(shallowWithName.name).toEqual(reportName)
+  const miniShallowWithName = await generateReport(copcFile, {
+    name: reportName,
+    mini: true,
+  }) // default `deep`
+  expect(miniShallowWithName.name).toEqual(reportName)
+  // testing minified report
+  expect(miniShallowWithName).toMatchObject(
+    expect.objectContaining({
+      ...shallow,
+      name: reportName,
+      copc: undefined,
+      scan: {
+        ...shallow.scan,
+        end: expect.any(Date),
+        start: expect.any(Date),
+        time: expect.any(Number),
+      },
+    }),
+  )
 })
 
 test('shallow LAS', async () => {

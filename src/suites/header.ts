@@ -8,23 +8,12 @@ import {
   UINT32_MAX,
 } from 'utils'
 
-// export const headerSuite: Check.Suite<Las.Header> = {
-//   minorVersion: ({ minorVersion }) => basicCheck(minorVersion, 4),
-//   pointDataRecordFormat: ({ pointDataRecordFormat }) =>
-//     complexCheck({
-//       source: pointDataRecordFormat,
-//       checker: [6, 7, 8],
-//       infoOnFailure: `(6,7,8) Point Data Record Format: ${pointDataRecordFormat}`,
-//     }),
-//   headerLength: ({ headerLength }) =>
-//     basicCheck(headerLength, Las.Constants.minHeaderLength),
-//   pointCountByReturn: ({ pointCount, pointCountByReturn }) =>
-//     basicCheck(
-//       pointCountByReturn.reduce((p, c) => p + c, 0),
-//       pointCount,
-//     ),
-// }
-
+/**
+ * Suite of Check Functions for checking the `copc.header` object to validate
+ * a `copc.laz` file. Each check here only has access to the Las.Header object
+ * so that the test can be reused in the Las and Fallback Collections, in case
+ * `Las.Header.parse()` still succeeds after `Copc.create()` fails
+ */
 export const headerSuite: Check.Suite<{ header: Las.Header }> = {
   minorVersion: ({ header: { minorVersion } }) => basicCheck(minorVersion, 4),
   pointDataRecordFormat: ({ header: { pointDataRecordFormat } }) =>

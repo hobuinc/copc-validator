@@ -19,18 +19,18 @@ export const nodeScan = { isDeepNodeScan /*isShallowNodeScan*/ }
 
 // =========== TYPES ===========
 // My version(s) of Hierarchy.Node.Map with point data tacked on
-type NodeMap<P> = Record<string, Hierarchy.Node & P>
+type NodeMap<P extends object> = Record<string, Hierarchy.Node & P>
 export type shallowNodeMap = NodeMap<{ root: Record<string, number> }>
 export type deepNodeMap = NodeMap<{ points: Record<string, number>[] }>
 export type enhancedNodeMap = shallowNodeMap | deepNodeMap
 // const isDeepMap = (d: enhancedNodeMap): d is deepNodeMap =>
 //   'points' in Object.values(d)[0]
-// const isShallowMap = (d: enhancedNodeMap): d is shallowNodeMap =>
-//   'root' in Object.values(d)[0]
-// export const enhancedNodeMap = {
-//   isDeepMap,
-//   isShallowMap,
-// }
+const isShallowMap = (d: enhancedNodeMap): d is shallowNodeMap =>
+  'root' in Object.values(d)[0]
+export const enhancedNodeMap = {
+  // isDeepMap,
+  isShallowMap,
+}
 
 export type pointChecker = (d: Record<string, number>) => boolean
 // export type multiPointChecker = (d: Record<string, number>[]) => boolean

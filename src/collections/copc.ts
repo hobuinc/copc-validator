@@ -17,15 +17,11 @@ export const CopcCollection = async ({
   deep = false,
   maxThreads,
 }: CopcCollection): Promise<Check.Suite.Collection> => [
-  // { source: copc.header, suite: headerSuite },
-  // { source: copc, suite: vlrSuite },
   { source: copc, suite: copcSuite },
   headerParser(get, copcHeaderSuite),
   vlrParser(get),
   nodeParser({ get, copc, filepath, deep, maxThreads }),
 ]
-
-// export default CopcCollection
 
 const { legacyPointCount, legacyPointCountByReturn } = manualHeaderSuite
 export const copcHeaderSuite: Check.Suite<manualHeaderParams> = {

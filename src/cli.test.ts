@@ -7,7 +7,6 @@ const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
 const reportName = 'report-name'
 
-const shallowScan = generateReport(filename, {})
 const deepScan = generateReport(filename, { deep: true })
 
 afterEach(() => jest.clearAllMocks())
@@ -15,18 +14,12 @@ afterAll(() => jest.restoreAllMocks())
 
 // ========== TESTS ==========
 test('cli shallow', async () => {
-  const expectedScan = expectScan(await shallowScan) //await generateReport(filename, {}))
+  const expectedScan = expectScan(await generateReport(filename, {}))
 
   await validateGoodScan([filename], expectedScan)
   await validateGoodScan([filename, '-o', outputPath], expectedScan)
   // shallow scans are fast enough that it's better not to split them
 })
-
-// test('cli shallow file-output', async () => {
-//   const expectedScan = expectScan(await shallowScan) //await generateReport(filename, {}))
-
-//   await validateGoodScan([filename, '-o', outputPath], expectedScan)
-// })
 
 test('cli deep', async () => {
   jest.setTimeout(20000)
@@ -70,9 +63,6 @@ test('cli help', async () => {
 })
 
 test('cli mini', async () => {
-  // const expectedScan = expectScan(
-  //   await generateReport(filename, { mini: true }),
-  // )
   const {
     name,
     scan: { type, filetype },
@@ -89,7 +79,6 @@ test('cli mini', async () => {
       time: expect.any(Number),
     },
   })
-  // mockProcessWrite.mockClear()
 
   await validateGoodScan([filename, '--mini'], expectedScan)
   await validateGoodScan([filename, '-m'], expectedScan)
@@ -193,7 +182,7 @@ const validateMockParams = (
 
 // ReturnType<typeof expectScan> is actually just `any` which doesn't help much,
 // but I'm using it anyway since it gives the illusion of typing with the reports
-const expectScan = (r: Report.Report) =>
+export const expectScan = (r: Report) =>
   expect.objectContaining({
     ...r,
     scan: {

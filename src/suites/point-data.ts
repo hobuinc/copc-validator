@@ -3,8 +3,10 @@ import { Check, pointDataParams, enhancedNodeMap, pointChecker } from 'types'
 import { Statuses } from 'utils'
 
 /**
- * Check.Suite that works with either a shallowNodeMap or deepNodeMap,
- * used in src/checks/copc/nodes.ts
+ * Suite of Check Functions for checking the Point Data Records of Copc files.
+ * This suite uses the point data in `enhancedNodeMap`s from `src/parsers/nodes`
+ * along with the `Copc` object to ensure the PDR data is valid according to the
+ * COPC specifications and `Copc` object data
  */
 export const pointDataSuite: Check.Suite<pointDataParams> = {
   rgb: ({ copc: { header }, nodeMap }) =>
@@ -13,13 +15,11 @@ export const pointDataSuite: Check.Suite<pointDataParams> = {
     checkRgbi(nodeMap, header.pointDataRecordFormat as 6 | 7 | 8),
   xyz: ({
     copc: {
-      header: { min, max },
       info: { cube },
     },
     nodeMap,
   }) => {
-    const bound = createBounds(cube, min, max)
-    return checkBounds(nodeMap, bound)
+    return checkBounds(nodeMap, cube)
   },
   gpsTime: ({
     copc: {
@@ -27,6 +27,7 @@ export const pointDataSuite: Check.Suite<pointDataParams> = {
     },
     nodeMap,
   }) => checkGpsTime(nodeMap, gpsTimeRange),
+  sortedGpsTime: ({ nodeMap }) => checkGpsTimeSorted(nodeMap),
   returnNumber: ({ nodeMap }) => checkReturnNumber(nodeMap),
 }
 
@@ -125,7 +126,7 @@ const checkBounds = (nodeMap: getBadNodesMap, bounds: Bounds) => {
     [],
   )
   return badNodes.length > 0
-    ? Statuses.failureWithInfo(`Points out of bounds: [${badNodes}]`)
+    ? Statuses.failureWithInfo(`Points out of bounds: [ ${badNodes} ]`)
     : Statuses.success
 }
 
@@ -139,9 +140,31 @@ export const checkGpsTime = (
     (d) =>
       typeof d.GpsTime === 'undefined' || d.GpsTime < min || d.GpsTime > max,
   )
-  return badNodes.length > 0
-    ? Statuses.failureWithInfo(`GpsTime out of bounds: [ ${badNodes} ]`)
-    : Statuses.success
+  if (badNodes.length > 0)
+    return Statuses.failureWithInfo(`GpsTime out of bounds: [ ${badNodes} ]`)
+  return Statuses.success
+}
+
+export const checkGpsTimeSorted = (nodeMap: enhancedNodeMap) => {
+  if (enhancedNodeMap.isShallowMap(nodeMap))
+    return Statuses.successWithInfo(`Run a deep scan for more information`)
+  // cannot use getBadNodes directly since we should redeclare prevGpsTime per node
+  const badNodes = Object.entries(nodeMap).reduce<string[]>(
+    (prev, [key, data]) => {
+      let prevGpsTime: number = 0
+      const check: pointChecker = (d) => {
+        const isBad = d.GpsTime < prevGpsTime
+        prevGpsTime = d.GpsTime
+        return isBad
+      }
+      if (data.points.some(check)) return [...prev, key]
+      return [...prev]
+    },
+    [],
+  )
+  if (badNodes.length > 0)
+    return Statuses.warningWithInfo(`GpsTime is unsorted: [ ${badNodes} ]`)
+  return Statuses.success
 }
 
 export const checkReturnNumber = (nodeMap: enhancedNodeMap): Check.Status => {
@@ -189,27 +212,6 @@ export const getBadNodes = (
     }
     return [...prev]
   }, [])
-
-const min = Math.min
-const max = Math.max
-const createBounds = (
-  [lX, lY, lZ, uX, uY, uZ]: Bounds,
-  [minX, minY, minZ]: Point,
-  [maxX, maxY, maxZ]: Point,
-): Bounds => [
-  min(lX, minX),
-  min(lY, minY),
-  min(lZ, minZ),
-  max(uX, maxX),
-  max(uY, maxY),
-  max(uZ, maxZ),
-  // max(lX, minX),
-  // max(lY, minY),
-  // max(lZ, minZ),
-  // min(uX, maxX),
-  // min(uY, maxY),
-  // min(uZ, maxZ),
-]
 
 // different version of enhancedNodeMap that works better for check functions
 export type getBadNodesMap = Record<

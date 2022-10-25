@@ -3,6 +3,12 @@ import { Check } from 'types'
 import { basicCheck, vlrCheck, Statuses, checkVlrDuplicates } from 'utils'
 import proj4 from '@landrush/proj4'
 
+/**
+ * Suite of Check Function for checking the VLRs retrieved by `Copc.create` or
+ * `Las.Vlr.walk`. Also requires the `Las.Vlr.OffsetInfo` from `copc.header` to
+ * confirm `vlrCount` and `evlrCount`. Used in the Copc Suite and the Las and
+ * Fallback Collections, in case `Las.Vlr.walk` succeeds after `Copc.create` fails
+ */
 export const vlrSuite: Check.Suite<{
   header: Las.Vlr.OffsetInfo
   vlrs: Las.Vlr[]

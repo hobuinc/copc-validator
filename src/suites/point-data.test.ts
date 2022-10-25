@@ -2,8 +2,21 @@ import { Copc } from 'copc'
 import { omit, reduce } from 'lodash'
 import { readHierarchyNodes } from 'parsers/nodes'
 import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
-import { pointChecker, shallowNodeMap } from 'types'
-import { checkAll, findCheck, invokeAllChecks } from 'utils'
+import {
+  Check,
+  deepNodeMap,
+  pointChecker,
+  pointDataParams,
+  shallowNodeMap,
+} from 'types'
+import {
+  checkAll,
+  expectedChecks,
+  findCheck,
+  getCheckIds,
+  invokeAllChecks,
+  splitChecks,
+} from 'utils'
 import pointDataSuite, { getBadNodes } from './point-data'
 
 const items = getCopcItems()
@@ -125,12 +138,23 @@ test('pd failures', async () => {
     (prev, curr, path) => ({ ...prev, [path]: { ...curr, root: {} } }),
     {},
   )
-  const checks = await invokeAllChecks({
-    source: { copc, nodeMap: badNodeMap },
-    suite: pointDataSuite,
+  const collection: Check.Suite.Collection = [
+    {
+      source: { copc, nodeMap: badNodeMap },
+      suite: pointDataSuite,
+    },
+  ]
+
+  const checks = await invokeAllChecks(
+    collection as Check.Suite.withSource<pointDataParams>[],
+  )
+  const [expectedFailed, expectedPassed] = await expectedChecks({
+    collection,
+    expected: ['sortedGpsTime'],
   })
-  checkAll(checks, false)
-  // checks.forEach((check) => expect(check).not.toHaveProperty('status', 'pass'))
+  const [passed, failed] = splitChecks(checks)
+  expect(getCheckIds(passed)).toEqual(expectedPassed)
+  expect(getCheckIds(failed)).toEqual(expectedFailed)
 
   const {
     filepath: oldFile,
@@ -151,4 +175,28 @@ test('pd failures', async () => {
   })
   expect(findCheck(oldChecks, 'gpsTime')).toHaveProperty('status', 'fail')
   expect(findCheck(oldChecks, 'rgbi')).toHaveProperty('status', 'warn')
+})
+
+test('unsortedGpsTime failure', async () => {
+  const { filepath, copc, nodes } = await items
+  const nodeMap = await readHierarchyNodes(nodes, filepath, true, maxThreads)
+  const unsortedNodeMap: deepNodeMap = {
+    ...nodeMap,
+    '0-0-0-0': {
+      ...nodeMap['0-0-0-0'],
+      points: [
+        nodeMap['0-0-0-0'].points[1],
+        nodeMap['0-0-0-0'].points[0],
+        ...nodeMap['0-0-0-0'].points.slice(2),
+      ],
+    },
+  }
+  const checks = await invokeAllChecks({
+    source: { copc, nodeMap: unsortedNodeMap },
+    suite: pointDataSuite,
+  })
+  expect(findCheck(checks, 'sortedGpsTime')).toHaveProperty(
+    'info',
+    'GpsTime is unsorted: [ 0-0-0-0 ]',
+  )
 })

@@ -4,28 +4,29 @@ import { Statuses } from 'utils'
 import headerSuite from './header'
 import vlrSuite from './vlrs'
 
+/**
+ * Suite of Check Function for checking the `Copc` object to validate a `copc.laz`
+ * file. The `headerSuite` and `vlrSuite` Suites are written to use the `Copc`
+ * object as a parameter so that they can be copied here, so this Suite is for
+ * Functions that require other parameters destructured from the `Copc` object
+ */
 export const copcSuite: Check.Suite<Copc> = {
   ...headerSuite,
   ...vlrSuite,
-  'cube within bounds': ({ info: { cube }, header: { min, max } }) => {
-    const mid = Bounds.mid(cube)
-    const withinHeader = mid.map(
-      (p, i) => p > min[i] && p < max[i],
-    ) as pointCheck // true means good point, false means bad point
-    const bad = withinHeader.reduce<number[]>(
-      (prev, bool, idx) => (bool ? [...prev] : [...prev, idx]),
+  'bounds within cube': ({ info: { cube }, header: { min, max } }) => {
+    const badBounds = min.reduce<string[]>(
+      (prev, minValue, idx) =>
+        cube[idx] <= minValue && max[idx] <= cube[idx + 3]
+          ? [...prev]
+          : [...prev, PointIdx[idx]],
       [],
-    ) // turn [bool, bool, bool] into [!bool && 0, !bool && 1, !bool && 2]
-    // e.g.  [true, true, true] => []    [false, true, false] => [0,2]
-    if (bad.length > 0)
+    )
+    if (badBounds.length > 0)
       return Statuses.failureWithInfo(
-        `COPC cube midpoint${
-          bad.length > 1 ? 's' : ''
-        } outside of Las Bounds: ${bad.map((i) => PointIdx[i])}`,
+        `Las bound(s) falls outside of Copc cube: ${badBounds}`,
       )
     return Statuses.success
   },
 }
 
-type pointCheck = [boolean, boolean, boolean]
 const PointIdx = ['X', 'Y', 'Z']

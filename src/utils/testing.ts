@@ -24,8 +24,8 @@ export const checkAll = (checks: Check[], pass: boolean = true) =>
       : expect(check).not.toHaveProperty('status', 'pass'),
   )
 
-export const allCheckIds = async (
-  collection: Promise<Check.Suite.Collection>,
+export const collectionToIds = async (
+  collection: Promise<Check.Suite.Collection> | Check.Suite.Collection,
 ) =>
   (
     await Promise.all(
@@ -39,13 +39,20 @@ export const allCheckIds = async (
   ).flat()
 
 type expectedCheckParams = {
-  collection: Promise<Check.Suite.Collection>
-  expectedFailed: string[]
+  collection: Promise<Check.Suite.Collection> | Check.Suite.Collection
+  expected: string[]
 }
+/**
+ *
+ * @param p
+ * @param p.collection
+ * @param p.expected
+ * @returns `[allIds - expected, expected]`
+ */
 export const expectedChecks = async ({
   collection,
-  expectedFailed,
+  expected,
 }: expectedCheckParams): Promise<[string[], string[]]> => {
-  const allIds = await allCheckIds(collection)
-  return [difference(allIds, expectedFailed), expectedFailed]
+  const allIds = await collectionToIds(collection)
+  return [difference(allIds, expected), expected]
 }
