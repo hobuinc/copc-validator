@@ -7,14 +7,16 @@ const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
 const reportName = 'report-name'
 
-const deepScan = generateReport(filename, { deep: true })
+const deepScan = generateReport({ source: filename, options: { deep: true } })
 
 afterEach(() => jest.clearAllMocks())
 afterAll(() => jest.restoreAllMocks())
 
 // ========== TESTS ==========
 test('cli shallow', async () => {
-  const expectedScan = expectScan(await generateReport(filename, {}))
+  const expectedScan = expectScan(
+    await generateReport({ source: filename, options: {} }),
+  )
 
   await validateGoodScan([filename], expectedScan)
   await validateGoodScan([filename, '-o', outputPath], expectedScan)
@@ -67,7 +69,7 @@ test('cli mini', async () => {
     name,
     scan: { type, filetype },
     checks,
-  } = await generateReport(filename, { mini: true })
+  } = await generateReport({ source: filename, options: { mini: true } })
   const expectedScan = expect.objectContaining({
     name,
     checks,
@@ -121,12 +123,15 @@ test('cli errors', async () => {
 test('cli named-reports', async () => {
   jest.setTimeout(10000)
   const expectedShallow = expectScan(
-    await generateReport(filename, { name: reportName }),
+    await generateReport({ source: filename, options: { name: reportName } }),
   )
   await validateGoodScan([filename, '--name', reportName], expectedShallow)
 
   const expectedDeep = expectScan(
-    await generateReport(filename, { name: reportName, deep: true }),
+    await generateReport({
+      source: filename,
+      options: { name: reportName, deep: true },
+    }),
   )
   await validateGoodScan([filename, '-d', `--name=${reportName}`], expectedDeep)
 })

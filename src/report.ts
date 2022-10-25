@@ -5,7 +5,7 @@ import {
 } from 'collections'
 import { invokeCollection } from 'utils'
 import { Copc, Getter, Las } from 'copc'
-import { Report } from 'types'
+import { Check, generateReportParams, Report } from 'types'
 import { isEqual, omit } from 'lodash'
 
 /**
@@ -23,9 +23,24 @@ import { isEqual, omit } from 'lodash'
  * @returns {Promise<Report>} `Report` object detailing the filetype, checks completed,
  * and some additional information parsed from the file that may be useful
  */
+// export const generateReport = async (
+//   source: string,
+//   { name = source, deep = false, maxThreads, mini = false }: Report.Options,
+// ): Promise<Report> => {
 export const generateReport = async (
-  source: string,
-  { name = source, deep = false, maxThreads, mini = false }: Report.Options,
+  {
+    source,
+    options: { name = source, deep = false, maxThreads, mini = false },
+  }: generateReportParams,
+  collections: {
+    copc: Check.CollectionFn
+    las: Check.CollectionFn
+    fallback: Check.CollectionFn
+  } = {
+    copc: CopcCollection,
+    las: LasCopcCollection,
+    fallback: FallbackCollection,
+  },
 ): Promise<Report> => {
   const type = deep ? 'deep' : 'shallow'
   const start = new Date()
@@ -45,7 +60,13 @@ export const generateReport = async (
     // need to perform additional checks to confirm
 
     const checks = await invokeCollection(
-      CopcCollection({ filepath: source, get, copc, deep, maxThreads }),
+      collections.copc({
+        filepath: source,
+        get,
+        copc,
+        deep,
+        maxThreads,
+      }),
     ) // no need to await CopcCollection since invokeCollection allows promises
 
     return {
@@ -80,7 +101,7 @@ export const generateReport = async (
       //   - evlrHeaderLength !== 60
       //   - Corrupt/bad binary data
       const checks = await invokeCollection(
-        LasCopcCollection({ get, header, vlrs }),
+        collections.las({ get, header, vlrs }),
       )
 
       return {
@@ -102,7 +123,7 @@ export const generateReport = async (
 
       // Should only need to check for the possibilities above (lines 58 & 64),
       // otherwise the Las suite would be running instead
-      const checks = await invokeCollection(FallbackCollection(get))
+      const checks = await invokeCollection(collections.fallback(get))
       // TODO: Figure out a way to test this function (need specific bad file)
       const errors = (() =>
         isEqual(
@@ -128,92 +149,3 @@ export const generateReport = async (
 }
 
 export default generateReport
-
-// Original version of the function before `deep` vs `shallow` was built into
-// the CopcSuite. May still be useful so I'll keep it here
-/*
-export const generateCustomReport = async (
-  source: string,
-  copcSuite: Check.Suite<copcWithGetter>,
-  lasSuite: Check.Suite<{ get: Getter; header: Las.Header; vlrs: Las.Vlr[] }>,
-  getterSuite: Check.Suite<Getter>,
-  { name, type }: Report.old_Options,
-): Promise<Report> => {
-  const start = new Date()
-  const startTime = performance.now()
-  const get = Getter.create(source)
-  try {
-    const copc = await Copc.create(get)
-
-    const checks = await invokeAllChecks({
-      source: { get, copc },
-      suite: copcSuite,
-    })
-
-    return {
-      name,
-      scan: {
-        type,
-        filetype: 'COPC',
-        start,
-        end: new Date(),
-        time: performance.now() - startTime,
-      },
-      checks,
-      copc,
-    }
-  } catch (copcError) {
-    try {
-      const header = Las.Header.parse(
-        await get(0, Las.Constants.minHeaderLength),
-      )
-      const vlrs = await Las.Vlr.walk(get, header)
-      const checks = await invokeAllChecks({
-        source: { get, header, vlrs },
-        suite: lasSuite,
-      })
-      return {
-        name,
-        scan: {
-          type,
-          filetype: 'LAS',
-          // result: resultFromChecks(checks),
-          start,
-          end: new Date(),
-          time: performance.now() - startTime,
-        },
-        checks,
-        las: {
-          header,
-          vlrs,
-        },
-        copcError: copcError as Error,
-      }
-    } catch (lasError) {
-      const checks = await invokeAllChecks({
-        source: get,
-        suite: getterSuite,
-      })
-      const errors = (() =>
-        isEqual(
-          omit(lasError as Error, 'trace'),
-          omit(copcError as Error, 'trace'),
-        )
-          ? { error: copcError as Error }
-          : { error: lasError as Error, copcError: copcError as Error })()
-      return {
-        name,
-        scan: {
-          type,
-          filetype: 'Unknown',
-          start,
-          end: new Date(),
-          time: performance.now() - startTime,
-        },
-        checks,
-        ...errors,
-      }
-    }
-  }
-}
-*/

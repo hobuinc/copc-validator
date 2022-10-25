@@ -31,10 +31,11 @@ export declare namespace Check {
   export type Suite<T> = { [id: string]: Function<T> }
 
   export type Collection = Suite.Collection
-  // Terminology - `Sourcer`: An Asyncronous Function that returns a `Suite.Nested`
-  // object. Replaces `Function.NestedSuite` to simplify Suites and should be more
-  // performant with PromisePools
-  // TODO: Handle `Sourcer` errors more gracefully
+  export type CollectionFn =
+    | ((...args: [any]) => Collection)
+    | ((...args: [any]) => Promise<Collection>)
+
+  // TODO: Handle `Parser` errors more gracefully
 
   export type Check = Status & {
     id: string

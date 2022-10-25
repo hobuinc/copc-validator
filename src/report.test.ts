@@ -8,7 +8,7 @@ const lasItems = getLasItems()
 
 test('shallow COPC', async () => {
   const { copc } = await copcItems
-  const shallow = await generateReport(copcFile, {}) // default parameters
+  const shallow = await generateReport({ source: copcFile, options: {} }) // default options
   expect(Report.isCopc(shallow)).toBe(true)
   // given this check, the throw below should be unnecessary, but TS doesn't understand
   expect(Report.isFail(shallow)).toBe(false)
@@ -25,9 +25,12 @@ test('shallow COPC', async () => {
   expect(shallow.scan.start <= shallow.scan.end).toBe(true)
 
   const reportName = 'report'
-  const miniShallowWithName = await generateReport(copcFile, {
-    name: reportName,
-    mini: true,
+  const miniShallowWithName = await generateReport({
+    source: copcFile,
+    options: {
+      name: reportName,
+      mini: true,
+    },
   }) // default `deep`
   expect(miniShallowWithName.name).toEqual(reportName)
   // testing minified report
@@ -48,7 +51,10 @@ test('shallow COPC', async () => {
 
 test('shallow LAS', async () => {
   const { header, vlrs } = await lasItems
-  const shallow = await generateReport(ellipsoidFiles.laz14, { deep: false }) // default `name`
+  const shallow = await generateReport({
+    source: ellipsoidFiles.laz14,
+    options: { deep: false },
+  }) // default `name`
   expect(Report.isLas(shallow)).toBe(true)
   expect(Report.isCopc(shallow)).toBe(false)
   expect(Report.isFail(shallow)).toBe(false)
@@ -62,9 +68,12 @@ test('shallow LAS', async () => {
 })
 
 test('shallow Unknown', async () => {
-  const shallow = await generateReport(__filename, {
-    name: __filename,
-    deep: false,
+  const shallow = await generateReport({
+    source: __filename,
+    options: {
+      name: __filename,
+      deep: false,
+    },
   }) // default parameters but provided
   expect(Report.isCopc(shallow)).toBe(false)
   expect(Report.isFail(shallow)).toBe(true)
@@ -81,7 +90,10 @@ test('shallow Unknown', async () => {
 
 test('deep COPC', async () => {
   const { copc } = await copcItems
-  const deep = await generateReport(copcFile, { deep: true }) // default parameters
+  const deep = await generateReport({
+    source: copcFile,
+    options: { deep: true },
+  }) // default parameters
   expect(Report.isCopc(deep)).toBe(true)
   // given this check, the throw below should be unnecessary, but TS doesn't understand
   expect(Report.isFail(deep)).toBe(false)
@@ -98,16 +110,22 @@ test('deep COPC', async () => {
   expect(deep.scan.start <= deep.scan.end).toBe(true)
 
   const reportName = 'report'
-  const deepWithName = await generateReport(copcFile, {
-    name: reportName,
-    deep: true,
+  const deepWithName = await generateReport({
+    source: copcFile,
+    options: {
+      name: reportName,
+      deep: true,
+    },
   })
   expect(deepWithName.name).toEqual(reportName)
 })
 
 test('deep LAS', async () => {
   const { header, vlrs } = await lasItems
-  const deep = await generateReport(ellipsoidFiles.laz14, { deep: true }) // default `name`
+  const deep = await generateReport({
+    source: ellipsoidFiles.laz14,
+    options: { deep: true },
+  }) // default `name`
   expect(Report.isLas(deep)).toBe(true)
   expect(Report.isCopc(deep)).toBe(false)
   expect(Report.isFail(deep)).toBe(false)
@@ -122,9 +140,12 @@ test('deep LAS', async () => {
 })
 
 test('deep Unknown', async () => {
-  const deep = await generateReport(ellipsoidFiles.fake, {
-    name: ellipsoidFiles.fake,
-    deep: true,
+  const deep = await generateReport({
+    source: ellipsoidFiles.fake,
+    options: {
+      name: ellipsoidFiles.fake,
+      deep: true,
+    },
   }) // default parameters but provided
   expect(Report.isCopc(deep)).toBe(false)
   expect(Report.isFail(deep)).toBe(true)

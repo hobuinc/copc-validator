@@ -20,6 +20,7 @@ export declare namespace Report {
     maxThreads?: number
     mini?: boolean
   }
+
   type Base = {
     name: string
     checks: Check[]

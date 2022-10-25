@@ -73,11 +73,14 @@ export const copcc = async (argv: string[]) => {
 
   // RUN SCAN
   const start = performance.now()
-  const report = await generateReport(file, {
-    name,
-    deep,
-    maxThreads: threads,
-    mini,
+  const report = await generateReport({
+    source: file,
+    options: {
+      name,
+      deep,
+      maxThreads: threads,
+      mini,
+    },
   })
   const end = performance.now()
   // Using performance.now() to print the time after the report, for debugging convienence
