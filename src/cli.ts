@@ -4,6 +4,7 @@ import { writeFileSync } from 'fs'
 import { resolve } from 'path'
 
 export const fs = { writeFileSync }
+const { version: copcVersion } = require('../package.json')
 
 /** CLI Usage:
  * ```
@@ -35,7 +36,7 @@ export const copcc = async (argv: string[]) => {
 
   // PARSE ARGS
   const args = minimist<ExpectedArgv>(argv, {
-    boolean: ['deep', 'mini', 'help'],
+    boolean: ['deep', 'mini', 'help', 'version'],
     string: ['output', 'name'],
     alias: {
       output: 'o',
@@ -44,10 +45,12 @@ export const copcc = async (argv: string[]) => {
       threads: 't',
       mini: 'm',
       help: 'h',
+      version: 'v',
     },
   })
   const {
     help,
+    version,
     _: [file, ...rest],
     deep,
     output,
@@ -59,6 +62,10 @@ export const copcc = async (argv: string[]) => {
   if (help) {
     // process.stdout.write(helpString)
     process.stdout.write(writeHelp(process.stdout.columns)) //writeHelp)
+    return
+  }
+  if (version) {
+    process.stdout.write(copcVersion + '\n')
     return
   }
 
@@ -109,6 +116,8 @@ type ExpectedArgv = {
   _: string[]
   help: boolean
   h: boolean //alias
+  version: boolean
+  v: boolean //alias
   deep: boolean
   d: boolean //alias
   mini: boolean
@@ -149,6 +158,7 @@ const flags: flag[] = [
     default: 'CPU-based',
   },
   { flag: '-h, --help', description: 'Output this help information' },
+  { flag: '-v, --version', description: 'Output copcc version' },
 ]
 
 const space = (n: number) => Array(n > 0 ? n + 1 : 1).join(' ')

@@ -1,6 +1,7 @@
 const { Getter, Copc } = require('copc')
 
 module.exports = async ({ filepath, node, deep }) => {
+  if (node.pointCount === 0) return deep ? [{}] : {}
   const get = Getter.create(filepath)
   const copc = await Copc.create(get)
   const view = await Copc.loadPointDataView(get, copc, node)

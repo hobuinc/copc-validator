@@ -1,6 +1,6 @@
 import { Copc, Getter } from 'copc'
 import { copcSuite, headerSuite, vlrSuite, manualHeaderSuite } from 'suites'
-import { nodeParser, vlrParser, headerParser } from 'parsers'
+import { nodeParser, vlrParser, headerParser, newNodeParser } from 'parsers'
 import { Check, manualHeaderParams } from 'types'
 
 type CopcCollection = {
@@ -20,7 +20,8 @@ export const CopcCollection = async ({
   { source: copc, suite: copcSuite },
   headerParser(get, copcHeaderSuite),
   vlrParser(get),
-  nodeParser({ get, copc, filepath, deep, maxThreads }),
+  // nodeParser({ get, copc, filepath, deep, maxThreads }),
+  newNodeParser({ get, copc, filepath, deep, maxThreads }),
 ]
 
 const { legacyPointCount, legacyPointCountByReturn } = manualHeaderSuite
