@@ -1,0 +1,7 @@
+#ignore everything
+*
+#include these files
+!package.json
+!lib/**/*
+#except these files
+lib/test/**/*

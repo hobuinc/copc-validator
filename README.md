@@ -3,50 +3,141 @@
 ## Table of Contents
 
 1. [Introduction](#introduction)
-   1. [Usage](#usage)
-   2. [Options](#options)
-      1. [Quick scan](#quick-scan)
-      2. [Full scan](#full-scan)
+   1. [Getting Started](#getting-started)
+2. [Usage](#usage)
+   1. [CLI](#cli)
+      1. [Options](#options)
+   2. [Import](#import)
+      1. [Options](#options-1)
+3. [Scans](#scans)
+   1. [Quick scan](#quick-scan)
+   2. [Full scan](#full-scan)
    3. [Output](#output)
-2. [Details](#details)
+4. [Details](#details)
    1. [Checks](#checks)
-      1. [Suites](#suites)
+      1. [Status & Check Objects](#status--check-objects)
       2. [Functions](#functions)
-      3. [Nested Suites](#nested-suites)
-      4. [All checks](#all-checks)
-   2. [Report schema](#report-schema)
+      3. [Suites](#suites)
+      4. [Parsers](#parsers)
+      5. [Collections](#collections)
+      6. [All checks](#all-checks)
+   2. [Report](#report)
+      1. [Report schema](#report-schema)
+5. [Future Plans](#future-plans)
 
 # Introduction
 
 _**COPC Validator**_ is a library for validating the header and content of a Cloud-Optimized Point Cloud (COPC) LAS file. Extending the `copc.js` library, it accepts either a (relative) file path or COPC url, and runs a series of checks against the values parsed by `copc.js`.
 
-## Usage
+## Getting Started
 
-Currently, _**COPC Validator**_ is mostly written as a library to import into other packages. But eventually this package will have its own fully operational Command-Line Interface (CLI) to validate COPC files locally. That usage will look (something) like:
+1.  Install from `npm`
+
+        npm i -g copcc
+
+    _Global install is recommended_
+
+2.  Scan `copc.laz` file
+
+Examples:
+
+- Default
+
+      copcc ./path/to/example.copc.laz
+
+- Deep scan, output to `<pwd>/output.json`
+
+      copcc --deep path/to/example.copc.laz --output=output.json
+
+- Deep & Minified scan with max threads = 64
+
+      copcc path/to/example.copc.laz -dmt 64
+
+  _for a local install, replace `copcc` with `???`_
+
+# Usage
+
+_**COPC Validator**_ has two main usages: imported as the `generateReport()` function, or via the `copcc` Command-Line Interface (CLI)
+
+## CLI
 
 ```sh
-$ copcc example.copc.laz --full
+copcc [options] <path>
 ```
 
-_The usage and implementation of **COPC Validator** is meant to be as simple as possible. The CLI will only need one file path (or multiple paths?) and will automatically run a `quick` scan by default, or a `full` scan if provided with the `--full` option_
+_The usage and implementation of **COPC Validator** is meant to be as simple as possible. The CLI will only need one file path and will automatically run a `shallow` scan by default, or a `deep` scan if provided with the `--deep` option. All other functionality is completely optional._
 
-## Options
+### Options
 
-_**COPC Validator**_ comes with two scan types, `quick` and `full`
+| Option    | Alias | Description                                                                     |   Type    |  Default  |
+| :-------- | :---: | ------------------------------------------------------------------------------- | :-------: | :-------: |
+| `deep`    |  `d`  | Read all points of each node; Otherwise, read only root point                   | `boolean` |  `false`  |
+| `threads` |  `t`  | Replace Piscina maxThreads with the provided integer                            | `number`  | CPU-based |
+| `name`    |  `n`  | Replace `name` in Report with provided string                                   | `string`  | `<path>`  |
+| `mini`    |  `m`  | Omit Copc or Las from Report, leaving `checks` and `scan` info                  | `boolean` |  `false`  |
+| `ouput`   |  `o`  | Writes the Report out to provided filepath; Otherwise, writes to `stdout`       | `string`  |    N/A    |
+| `help`    |  `h`  | Displays help information for the `copcc` command; Overwrites all other options | `boolean` |    N/A    |
+
+## Import
+
+Add to project:
+
+```sh
+npm i copc-validator
+  # or
+yarn add copc-validator
+```
+
+Import `generateReport()`:
+
+```TypeScript
+import { generateReport } from 'copcc'
+
+// example usage:
+async function printReport() {
+  const report = await generateReport({
+    source: 'path/to/example.copc.laz',
+    options: {} // default options
+  })
+  console.log(report)
+}
+```
+
+### Options
+
+`generateReport` accepts most (not `help` and `output`) of the same options as the CLI through the `options` property of the first parameter:
+
+Example:
+
+```TypeScript
+generateReport({
+  source,
+  options: {
+    name: 'Name for Report output' // default: source
+    mini: true // omit copc/las info from report
+    deep: true // read all points per node
+    maxThreads: 32 // maxThread limit for Piscina (for reading points)
+  }
+})
+```
+
+# Scans
+
+_**COPC Validator**_ comes with two scan types, `shallow` and `deep`
 
 _(see [requirements.md](./requirements.md) for more details)_
 
-### Quick scan
+> The report output supports a `custom` scan type, intended to be used by other developers that may extend the base functionality of _**COPC Validator**_. It is not _currently_ used anywhere in this library.
 
-The `quick` scan checks the LAS Public Header Block and various Variable Length Records (VLRs) to ensure the values adhere to the COPC specificiations ([found here](https://copc.io))
+## Shallow scan
 
-### Full scan
+The `shallow` scan checks the LAS Public Header Block and various Variable Length Records (VLRs) to ensure the values adhere to the COPC specificiations ([found here](https://copc.io))
 
-The `full` scan performs a `quick` scan, then continues to validate the full contents of the Point Data Records (PDRs) and confirms it adheres to the COPC specs AND is valid according to the contents of the Public Header Block and VLRs
+This scan will also check the `root` (first) point of every node (in the COPC Hierarchy) to ensure those points are valid according to the contents of the Las Header and COPC Info VLR
 
-### Custom scan
+## Deep scan
 
-The report output supports a `custom` scan type, intended to be used by other developers that may extend the base functionality of _**COPC Validator**_. It is not _currently_ used anywhere in this library.
+The `deep` scan performs the same checks as a `shallow` scan, but scans every point of each node rather than just the root point, in order to validate the full contents of the Point Data Records (PDRs) against the COPC specs and Header info
 
 ## Output
 
@@ -54,106 +145,197 @@ _**COPC Validator**_ outputs a JSON report according to the [Report Schema](#rep
 
 # Details
 
-<!-- NPM package with command-line functionality to check local files and generate JSON (and PDF?) reports, as well as in-browser capability to validate dropped/selected files and download a PDF report -->
-
 ## Checks
 
-All checks are located in `src/checks`, separated by their filetype (`copc` or `las`) and Suite source
+A `Check` ultimately refers to the Object created by calling a `Check.Function` with `performCheck()`, which uses the `Check.Suite` property name to build the returned `Check.Status` into a complete `Check.Check`. This already feels like a bit much, without even mentioning `Check.Parser`s or `Check.Collection`s, so we'll break it down piece-by-piece here
 
-### Suites
-
-Checks are grouped into Suites that share a common source, such as the `Copc` object. This limits the number of `Getter` calls needed, and should eliminate most (if not all) repeat calls for sections of a Copc file. The `id` of a check is the property name for the Function in the Suite.
-
-### Functions
-
-Check functions maintain the following properties:
-
-- Syncronous or Asyncronous
-- Output: `{ status: 'pass' | 'fail' | 'warn', info?: unknown }` _(or a Promise)_
-- Pure function
-
-TypeScript:
+Pseudo-TypeScript:
 
 ```TypeScript
 namespace Check {
   type Status = {
     status: 'pass' | 'fail' | 'warn'
-    info?: unknown
+    info?: string
   }
+  type Check = Status & { id: string }
+
   type Function<T> =
     | (c: T) => Status
     | (c: T) => Promise<Status>
-  type Check = Status & {id: string}
-  type Suite<T> = Record<string, checkFunction<T>>
+
+  type Suite<T> = { [id: string]: Function<T> }
+  type SuiteWithSource<T> = { source: T, suite: Suite<T>}
+
+  type Parser<Source, Parsed> = (s: Source) => Promise<SuiteWithSource<Parsed>>
+
+  type Collection = (SuiteWithSource<any> | Promise<SuiteWithSource<any>>)[]
 }
+type Check = Check.Check
 ```
+
+_See [`./src/types/check.ts`](./src/types/check.ts) for the actual TypeScript code_
+
+### Status & Check Objects
+
+A `Check.Status` Object contains a `status` property with a value of `"pass"`, `"fail"`, or `"warn"`, and optionally contains an `info` property with a `string` value.
+
+A `Check` Object is the same as a `Status` Object with an additional string property named `id`
 
 _`pass` means file definitely matches COPC specificiations_  
 _`fail` means file does not match any COPC specifications_  
-_`warn` means file may not match current COPC specifications (out-dated), or may cause issues (extra-bytes?)_
+_`warn` means file may not match current COPC specifications or recommendations_
 
-### Nested Suites
+### Functions
 
-A `Check.Function` can also be a `NestedSuite` instead of a singular check, meaning it outputs a complete `Check` array (`Check[]` instead of `Status`). This simplifies the process of sharing and altering Suite sources by allowing a `Check.Function` to build its own object and run multiple distinct checks on that new object type.  
-See `src/checks/copc/hierarchy.ts` for an example of a Nested Suite.
+`Check.Function`s maintain the following properties:
+
+- Single (Object) parameter
+- Syncronous or Asyncronous
+- Output: `Check.Status` _(or a Promise)_
+- Pure function
+
+### Suites
+
+A `Check.Suite` is a map of string `id`s to `Check.Function`s, where each `Function` uses the same Object as its parameter (such as the `Copc` Object, for [`./src/suites/copc.ts`](./src/suites/copc.ts)). The `id` of a `Function` becomes the `id` value of the `Check` Object when a `Check.Suite` invokes its `Function`s
+
+_The purpose of this type of grouping is to limit the number of Getter calls for the same section of a file, like the 375 byte Header_
+
+All `Suite`s (with their `Check.Function`s) are located under `src/suites`
+
+### Parsers
+
+`Check.Parser`s are functions that take a source Object and return a `Check.SuiteWithSource` Object. Their main purpose is to parse a section of the given file into a usable object, and then return that object with its corrosponding `Suite` to be invoked from within a `Collection`.
+
+All `Parser`s are located under `src/parsers` (ex: [`nodeParser`](./src/parsers/nodes.ts))
+
+### Collections
+
+`Check.Collection`s are arrays of `Check.Suite`s with their respective source Object (`Check.SuiteWithSource` above). They allow Promises in order to use `Check.Parser`s internally without having to `await` them.
+
+All `Collection`s are located under `src/collections` (ex: [`CopcCollection`](./src/collections/copc.ts))
+
+Replacing `Collection`s is the primary way of generating `custom` reports through `generateReport`, as you can supply different `Check.Suite`s to perform different `Check.Function`s per source object.
+
+#### Custom scan
+
+`generateReport` has functionality to build customized reports by overwriting the `Check.Collection`s used within:
+
+Pseudo-Type:
+
+```TypeScript
+generateReport({
+  source,
+  options: {}
+}, {
+  copc: ({
+    filepath: string,
+    copc: Copc,
+    get: Getter,
+    deep: boolean,
+    maxThreads?: number
+  }) => Promise<Check.Collection>
+  las: ({
+    get: Getter,
+    header: Las.Header,
+    vlrs: Las.Vlr[]
+  }) => Promise<Check.Collection>
+  fallback: (get: Getter) => Promise<Check.Collection>
+})
+```
 
 ### All Checks
 
-| ID                      | Description                                                             | Scan  | Suite       | File                        |
-| :---------------------- | ----------------------------------------------------------------------- | :---: | ----------- | --------------------------- |
-| `fileSignature`         | [Redundant] First four bytes matches `'LASF'`                           | Quick | `Copc`      | `checks/copc/header.ts`     |
-| `majorVersion`          | [Redundant] `copc.header.majorVersion` is `1`                           | Quick | `Copc`      | `checks/copc/header.ts`     |
-| `minorVersion`          | `copc.header.minorVersion` is `4`                                       | Quick | `Copc`      | `checks/copc/header.ts`     |
-| `headerLength`          | `copc.header.headerLength` is `375`                                     | Quick | `Copc`      | `checks/copc/header.ts`     |
-| `pointDataRecordFormat` | `copc.header.pointDataRecordFormat` is `6`, `7`, or `8`                 | Quick | `Copc`      | `checks/copc/header.ts`     |
-| `pointCountByReturn`    | Sum of `copc.header.pointCountByReturn` equals `copc.header.pointCount` | Quick | `Copc`      | `checks/copc/header.ts`     |
-| `vlrCount`              | Number of VLRs in `copc.vlrs` matches `copc.header.vlrCount`            | Quick | `Copc`      | `checks/copc/vlrs.ts`       |
-| `evlrCount`             | Number of EVLRs in `copc.vlrs` matches `copc.header.evlrCount`          | Quick | `Copc`      | `checks/copc/vlrs.ts`       |
-| `copc-info`             | Exactly 1 copc `info` VLR exists with size of `160`                     | Quick | `Copc`      | `checks/copc/vlrs.ts`       |
-| `copc-hierarchy`        | Exactly 1 copc `hierarchy` VLR exists                                   | Quick | `Copc`      | `checks/copc/vlrs.ts`       |
-| `laszip-encoded`        | Checks for existance of LasZIP compression VLR, warns if not found      | Quick | `Copc`      | `checks/copc/vlrs.ts`       |
-| `rgb`                   | RGB channels are used in PDR, if present                                | Quick | `Hierarchy` | `checks/copc/point-data.ts` |
-| `rgbi`                  | Checks for 16-bit scaling of RGBI values, warns if 8-bit                | Quick | `Hierarchy` | `checks/copc/point-data.ts` |
-| `xyz`                   | Each point exists within Las and Copc bounds, per node                  | Quick | `Hierarchy` | `checks/copc/point-data.ts` |
-| `returns`               | Each point has `ReturnNumber <= NumberOfReturns`                        | Quick | `Hierarchy` | `checks/copc/point-data.ts` |
-| `...ID`                 | ...Description                                                          | Quick | `...`       | `checks/copc/*.ts`          |
+| ID                         | Description                                                             |  Scan   | Suite          |
+| :------------------------- | ----------------------------------------------------------------------- | :-----: | -------------- |
+| `minorVersion`             | `copc.header.minorVersion` is `4`                                       | Shallow | `Header`       |
+| `pointDataRecordFormat`    | `copc.header.pointDataRecordFormat` is `6`, `7`, or `8`                 | Shallow | `Header`       |
+| `headerLength`             | `copc.header.headerLength` is `375`                                     | Shallow | `Header`       |
+| `pointCountByReturn`       | Sum of `copc.header.pointCountByReturn` equals `copc.header.pointCount` | Shallow | `Header`       |
+| `legacyPointCount`         | `header.legacyPointCount` follows COPC/LAS specs                        | Shallow | `manualHeader` |
+| `legacyPointCountByReturn` | `header.legacyPointCountByReturn` follows COPC/LAS specs                | Shallow | `manualHeader` |
+| `vlrCount`                 | Number of VLRs in `copc.vlrs` matches `copc.header.vlrCount`            | Shallow | `Vlr`          |
+| `evlrCount`                | Number of EVLRs in `copc.vlrs` matches `copc.header.evlrCount`          | Shallow | `Vlr`          |
+| `copc-info`                | Exactly 1 copc `info` VLR exists with size of `160`                     | Shallow | `Vlr`          |
+| `copc-hierarchy`           | Exactly 1 copc `hierarchy` VLR exists                                   | Shallow | `Vlr`          |
+| `laszip-encoded`           | Checks for existance of LasZIP compression VLR, warns if not found      | Shallow | `Vlr`          |
+| `wkt`                      | Ensures `wkt` string can initialize `proj4`                             | Shallow | `manualVlr`    |
+| `bounds within cube`       | Copc `cube` envelops Las bounds (`min` & `max`)                         | Shallow | `Copc`         |
+| `rgb`                      | RGB channels are used in PDR, if present                                | Shallow | `PointData`    |
+| `rgbi`                     | Checks for 16-bit scaling of RGBI values, warns if 8-bit                | Shallow | `PointData`    |
+| `xyz`                      | Each point exists within Las and Copc bounds, per node                  | Shallow | `PointData`    |
+| `gpsTime`                  | Each point has `GpsTime` value within Las bounds                        | Shallow | `PointData`    |
+| `sortedGpsTime`            | The points in each node are sorted by `GpsTime` value, warns if not     |  Deep   | `PointData`    |
+| `returnNumber`             | Each point has `ReturnNumber <= NumberOfReturns`                        | Shallow | `PointData`    |
+| `nodesReachable`           | Every `Node` (`'D-X-Y-Z'`) in the `Hierarchy` is reachable              | Shallow | `PointData`    |
+| `...ID`                    | ...Description                                                          | Shallow | `...`          |
 
 Checks and their IDs are subject to change as I see fit
 
-## Report schema
+## Report
+
+### Report schema
+
+See [`JSON Schema`](./schema/report.schema.json)
+
+TypeScript pseudo-type Report:
 
 ```TypeScript
-{
-  name: string,
+import * as Copc from 'copc'
+
+type Report = {
+  name: string
   scan: {
     type: 'quick' | 'full' | 'custom'
     filetype: 'COPC' | 'LAS' | 'Unknown'
-    result: 'valid' | 'invalid' | 'NA'
     start: Date
     end: Date
     time: number
-  },
-  checks: [
-    {
-      id: string
-      status: 'pass' | 'fail' | 'warn'
-      info?: any
-    },
-  ],
-  // When filetype === 'COPC'
-  copc: {
+  }
+  checks: ({
+    id: string
+    status: 'pass' | 'fail' | 'warn'
+    info?: string
+  })[]
+
+  // When scan.filetype === 'COPC'
+  copc?: {
     header: Copc.Las.Header
     vlrs: Copc.Las.Vlr[]
     info: Copc.Info
-    wkt?: string
-    eb?: Copc.Las.ExtraBytes
-  },
-  // When filetype === 'LAS'
-  las: {
+    wkt: string
+    eb: Copc.Las.ExtraBytes
+  }
+
+  // When scan.filetype === 'LAS'
+  las?: {
     header: Copc.Las.Header
     vlrs: Copc.Las.Vlr[]
-  },
-  // When filetype === 'Unknown'
-  error: Error,
+  }
+  error: {
+    message: string
+    stack?: string
+  }
+
+  // When scan.filetype === 'Unknown'
+  error: {
+    message: string
+    stack?: string
+  }
+  copcError?: {
+    message: string
+    stack?: string
+  } // only used if Copc.create() and Las.*.parse() fail for different reasons
 }
 ```
+
+# Future Plans
+
+- **Bugfix** - Multi-page Hierarchies
+- Implement `--las` option to validate file against Las 1.4 specifications
+- Decrease memory usage by checking nodes as they're scanned, then throwing them away
+
+<!--for styling the Table of Contents-->
+<style type="text/css">
+    ol ol { list-style-type: upper-alpha; }
+    ol ol ol {list-style-type: upper-roman;}
+</style>

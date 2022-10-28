@@ -4,15 +4,22 @@
   "description": "Reads a file to determine if it's genuine COPC, and provides details about any errors/warnings against the COPC and LAS specs",
   "main": "exports.js",
   "types": "exports",
-  "author": "Cameron Woodbury",
+  "author": {
+    "name": "Cameron Woodbury",
+    "email": "cam@hobu.co"
+  },
   "license": "MIT",
   "private": true,
+  "bin": {
+    "copcc": "lib/index.js"
+  },
   "scripts": {
     "clean": "rm -rf ./lib",
     "build": "yarn clean && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "start": "node lib/index.js",
     "dev": "ts-node -r tsconfig-paths/register src/index.ts",
-    "test": "jest"
+    "test": "jest",
+    "prepare": "yarn build"
   },
   "devDependencies": {
     "@types/jest": "^29.0.2",

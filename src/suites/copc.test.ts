@@ -25,7 +25,19 @@ test('copcSuite failure', async () => {
 })
 
 test('copcSuite branch-coverage', async () => {
-  const { copc: badCopc } = await getCopcItems(ellipsoidFiles.color12)
+  const { copc } = await getCopcItems(ellipsoidFiles.color12)
+  // undoing the bounds within cube rounding fix
+  const badCopc = {
+    ...copc,
+    header: {
+      ...copc.header,
+      min: [
+        copc.header.min[0],
+        copc.header.min[1],
+        copc.header.min[2] - copc.header.scale[2],
+      ],
+    },
+  }
   const checks = await invokeAllChecks({ source: badCopc, suite: Suite })
 
   const boundWithinCube = findCheck(checks, 'bounds within cube')

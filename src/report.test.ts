@@ -83,7 +83,7 @@ test('shallow Unknown', async () => {
   expect(shallow.scan.filetype).toEqual('Unknown')
   if (!Report.isFail(shallow))
     throw new Error('generateReport() created the wrong Report.filetype')
-  expect(shallow.error.message).toContain('Invalid file signature:')
+  expect((shallow.error as Error).message).toContain('Invalid file signature:')
   // copcError undefined since both lasError & copcError fail for same reason
   expect(shallow.copcError).toBeUndefined()
 })
@@ -155,7 +155,7 @@ test('deep Unknown', async () => {
   expect(deep.scan.filetype).toEqual('Unknown')
   if (!Report.isFail(deep))
     throw new Error('generateReport() created the wrong Report.filetype')
-  expect(deep.error.message).toContain('Invalid header:')
+  expect((deep.error as Error).message).toContain('Invalid header:')
   // copcError undefined since both lasError & copcError fail for same reason
   expect(deep.copcError).toBeUndefined()
 })

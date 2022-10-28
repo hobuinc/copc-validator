@@ -72,7 +72,7 @@ export const copcc = async (argv: string[]) => {
   // deep & output don't need validated because undefined/false is used in context
 
   // RUN SCAN
-  const start = performance.now()
+  // const start = performance.now()
   const report = await generateReport({
     source: file,
     options: {
@@ -82,7 +82,7 @@ export const copcc = async (argv: string[]) => {
       mini,
     },
   })
-  const end = performance.now()
+  // const end = performance.now()
   // Using performance.now() to print the time after the report, for debugging convienence
 
   // OUTPUT SCAN
@@ -99,7 +99,7 @@ export const copcc = async (argv: string[]) => {
   // but process.stdout.write() may be preferred? will check with Connor
   // currently using process.stdout.write() so the shape of the output
   // (newlines, undefined, etc) matches the output file
-  console.log(`Scan time: ${end - start}ms`)
+  // console.log(`Scan time: ${end - start}ms`)
   return
 }
 
@@ -154,11 +154,12 @@ const flags: flag[] = [
 const space = (n: number) => Array(n > 0 ? n + 1 : 1).join(' ')
 export const writeHelp = (col: number) => {
   const columns = col > 180 ? 180 : col
-  console.log(columns)
   let message = `
    Usage: copcc [options] <path>   
 
    Scans a COPC/LAS file to verify the data matches the filetype specifications.
+
+   <path>           Path to file to attempt validation scan (Note: absolute or relative to PWD)
 
    Options:${space(columns - 26)}*all optional*
 

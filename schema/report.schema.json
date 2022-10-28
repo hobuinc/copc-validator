@@ -1,0 +1,430 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "report.schema.json",
+  "title": "Report",
+  "description": "The output from running copcc (or generateReport)",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Path to scanned file, or a Report Title if provided at scan execution"
+    },
+    "scan": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type of scan executed",
+          "enum": ["shallow", "deep", "custom"]
+        },
+        "filetype": {
+          "type": "string",
+          "description": "Level of information retrieved via copc.js",
+          "enum": ["COPC", "LAS", "Unknown"]
+        },
+        "start": {
+          "type": "string",
+          "description": "new Date() at start of scan execution",
+          "format": "date-time"
+        },
+        "end": {
+          "type": "string",
+          "description": "new Date() at end of scan execution",
+          "format": "date-time"
+        },
+        "time": {
+          "type": "number",
+          "description": "Scan time in milliseconds"
+        }
+      },
+      "required": ["type", "filetype", "start", "end", "time"],
+      "additionalProperties": false
+    },
+    "checks": {
+      "type": "array",
+      "description": "List of all checks attempted on the file",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Property name of Check Function in Suite"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status on if data is valid according to specifications",
+            "enum": ["pass", "fail", "warn"]
+          },
+          "info": {
+            "type": "string",
+            "description": "Additional information about the performed check"
+          }
+        },
+        "required": ["id", "status"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["name", "scan", "checks"],
+  "anyOf": [
+    {
+      "if": {
+        "properties": {
+          "scan": {
+            "properties": { "filetype": { "const": "COPC" } },
+            "required": ["filetype"]
+          }
+        },
+        "required": ["scan"]
+      },
+      "then": {
+        "properties": {
+          "copc": {
+            "type": "object",
+            "properties": {
+              "header": {
+                "type": "object",
+                "properties": {
+                  "fileSignature": { "const": "LASF" },
+                  "fileSourceId": { "type": "integer" },
+                  "globalEncoding": { "type": "integer" },
+                  "projectId": { "type": "string" },
+                  "majorVersion": { "type": "integer" },
+                  "minorVersion": { "type": "integer" },
+                  "systemIdentifier": { "type": "string" },
+                  "generatingSoftware": { "type": "string" },
+                  "fileCreationDayOfYear": { "type": "integer" },
+                  "fileCreationYear": { "type": "integer" },
+                  "headerLength": { "type": "integer" },
+                  "pointDataOffset": { "type": "integer" },
+                  "vlrCount": { "type": "integer" },
+                  "pointDataRecordFormat": { "type": "integer" },
+                  "pointDataRecordLength": { "type": "integer" },
+                  "pointCount": { "type": "integer" },
+                  "pointCountByReturn": {
+                    "type": "array",
+                    "items": { "type": "integer" },
+                    "minItems": 5,
+                    "maxItems": 15
+                  },
+                  "scale": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "offset": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "min": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "max": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "waveformDataOffset": { "type": "integer" },
+                  "evlrOffset": { "type": "integer" },
+                  "evlrCount": { "type": "integer" }
+                },
+                "required": [
+                  "fileSignature",
+                  "fileSourceId",
+                  "globalEncoding",
+                  "projectId",
+                  "majorVersion",
+                  "minorVersion",
+                  "systemIdentifier",
+                  "generatingSoftware",
+                  "fileCreationDayOfYear",
+                  "fileCreationYear",
+                  "headerLength",
+                  "pointDataOffset",
+                  "vlrCount",
+                  "pointDataRecordFormat",
+                  "pointDataRecordLength",
+                  "pointCount",
+                  "pointCountByReturn",
+                  "scale",
+                  "offset",
+                  "min",
+                  "max",
+                  "waveformDataOffset",
+                  "evlrOffset",
+                  "evlrCount"
+                ]
+              },
+              "vlrs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "userId": { "type": "string" },
+                    "recordId": { "type": "integer" },
+                    "contentOffset": { "type": "integer" },
+                    "contentLength": { "type": "integer" },
+                    "description": { "type": "string" },
+                    "isExtended": { "type": "boolean" }
+                  },
+                  "required": [
+                    "userId",
+                    "recordId",
+                    "contentOffset",
+                    "contentLength",
+                    "description",
+                    "isExtended"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "info": {
+                "type": "object",
+                "properties": {
+                  "cube": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 6,
+                    "maxItems": 6
+                  },
+                  "spacing": { "type": "number" },
+                  "rootHierarchyPage": {
+                    "type": "object",
+                    "properties": {
+                      "pageOffset": { "type": "integer" },
+                      "pageLength": { "type": "integer" }
+                    },
+                    "required": ["pageOffset", "pageLength"],
+                    "additionalProperties": false
+                  },
+                  "gpsTimeRange": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "cube",
+                  "spacing",
+                  "rootHierarchyPage",
+                  "gpsTimeRange"
+                ],
+                "additionalProperties": false
+              },
+              "eb": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "description": { "type": "string" },
+                    "type": { "enum": ["signed", "unsigned", "float"] },
+                    "length": { "type": "integer" },
+                    "nodata": { "type": "number" },
+                    "min": { "type": "number" },
+                    "max": { "type": "number" },
+                    "scale": { "type": "number" },
+                    "offset": { "type": "number" }
+                  },
+                  "required": ["name", "description", "length"],
+                  "additionalProperties": false
+                }
+              },
+              "wkt": {
+                "type": "string"
+              }
+            },
+            "required": ["header", "vlrs", "info", "eb"],
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scan": {
+            "properties": { "filetype": { "const": "LAS" } },
+            "required": ["filetype"]
+          }
+        },
+        "required": ["scan"]
+      },
+      "then": {
+        "properties": {
+          "las": {
+            "type": "object",
+            "properties": {
+              "header": {
+                "type": "object",
+                "properties": {
+                  "fileSignature": { "const": "LASF" },
+                  "fileSourceId": { "type": "integer" },
+                  "globalEncoding": { "type": "integer" },
+                  "projectId": { "type": "string" },
+                  "majorVersion": { "type": "integer" },
+                  "minorVersion": { "type": "integer" },
+                  "systemIdentifier": { "type": "string" },
+                  "generatingSoftware": { "type": "string" },
+                  "fileCreationDayOfYear": { "type": "integer" },
+                  "fileCreationYear": { "type": "integer" },
+                  "headerLength": { "type": "integer" },
+                  "pointDataOffset": { "type": "integer" },
+                  "vlrCount": { "type": "integer" },
+                  "pointDataRecordFormat": { "type": "integer" },
+                  "pointDataRecordLength": { "type": "integer" },
+                  "pointCount": { "type": "integer" },
+                  "pointCountByReturn": {
+                    "type": "array",
+                    "items": { "type": "integer" },
+                    "minItems": 5,
+                    "maxItems": 15
+                  },
+                  "scale": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "offset": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "min": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "max": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "waveformDataOffset": { "type": "integer" },
+                  "evlrOffset": { "type": "integer" },
+                  "evlrCount": { "type": "integer" }
+                },
+                "required": [
+                  "fileSignature",
+                  "fileSourceId",
+                  "globalEncoding",
+                  "projectId",
+                  "majorVersion",
+                  "minorVersion",
+                  "systemIdentifier",
+                  "generatingSoftware",
+                  "fileCreationDayOfYear",
+                  "fileCreationYear",
+                  "headerLength",
+                  "pointDataOffset",
+                  "vlrCount",
+                  "pointDataRecordFormat",
+                  "pointDataRecordLength",
+                  "pointCount",
+                  "pointCountByReturn",
+                  "scale",
+                  "offset",
+                  "min",
+                  "max",
+                  "waveformDataOffset",
+                  "evlrOffset",
+                  "evlrCount"
+                ]
+              },
+              "vlrs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "userId": { "type": "string" },
+                    "recordId": { "type": "integer" },
+                    "contentOffset": { "type": "integer" },
+                    "contentLength": { "type": "integer" },
+                    "description": { "type": "string" },
+                    "isExtended": { "type": "boolean" }
+                  },
+                  "required": [
+                    "userId",
+                    "recordId",
+                    "contentOffset",
+                    "contentLength",
+                    "description",
+                    "isExtended"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "stack": {
+                "type": "string"
+              }
+            },
+            "required": ["message"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scan": {
+            "properties": { "filetype": { "const": "Unknown" } },
+            "required": ["filetype"]
+          }
+        },
+        "required": ["scan"]
+      },
+      "then": {
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "stack": {
+                "type": "string"
+              }
+            },
+            "required": ["message"]
+          },
+          "copcError": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "stack": {
+                "type": "string"
+              }
+            },
+            "required": ["message"]
+          }
+        },
+        "required": ["error"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

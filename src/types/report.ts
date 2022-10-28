@@ -21,6 +21,7 @@ export declare namespace Report {
     mini?: boolean
   }
 
+  type copcError = { message: string; stack?: string }
   type Base = {
     name: string
     checks: Check[]
@@ -35,13 +36,13 @@ export declare namespace Report {
       header: Las.Header
       vlrs: Las.Vlr[]
     }
-    copcError: unknown // Error
+    error: copcError //Error //unknown
   }
   type Success = SuccessCopc | SuccessLas
   type Failure = Base & {
     scan: Scans.Failed
-    error: Error // use Error for the copcError if it's the same as the lasError,
-    copcError?: Error // otherwise use copcError for copcError and error for lasError
+    error: copcError //Error //unknown // use Error for the copcError if it's the same as the lasError,
+    copcError?: copcError //Error //unknown // otherwise use copcError for copcError and error for lasError
   }
   export type Report = Success | Failure
 }

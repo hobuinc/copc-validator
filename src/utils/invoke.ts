@@ -58,7 +58,8 @@ export const invokeCollection = async (
             )
           } catch (error) {
             return {
-              id: `Sourcer ${i}: Failed to read source`,
+              // Can't get parser function name or any other identifying information
+              id: `Parser ${i}: Failed to read source`,
               status: 'fail',
               info: (error as Error).message,
             } as Check

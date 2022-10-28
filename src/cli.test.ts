@@ -114,7 +114,7 @@ test('cli errors', async () => {
 
   expect(mockFileWrite).toBeCalledTimes(1)
   expect(mockFileWrite).toThrow()
-  expect(mockConsoleLog).toBeCalledTimes(1)
+  expect(mockConsoleLog).toBeCalledTimes(0)
   expect(mockConsoleError).toBeCalledTimes(1)
   // only one console.log() since 'Report successfully written...' is skipped
   // but console.log() still happens for the debug 'Scan time' message
@@ -162,14 +162,14 @@ const validateGoodScan = async (
     validateMockParams(mockFileWrite, expected)
     expect(mockFileWrite).toHaveReturnedWith(expected)
     expect(mockProcessWrite).toBeCalledTimes(0)
-    expect(mockConsoleLog).toBeCalledTimes(2)
+    expect(mockConsoleLog).toBeCalledTimes(1)
     mockFileWrite.mockClear()
     mockConsoleLog.mockClear()
   } else {
     expect(mockProcessWrite).toBeCalledTimes(1)
     validateMockParams(mockProcessWrite, expected)
     expect(mockFileWrite).toBeCalledTimes(0)
-    expect(mockConsoleLog).toBeCalledTimes(1)
+    expect(mockConsoleLog).toBeCalledTimes(0)
     mockProcessWrite.mockClear()
     mockConsoleLog.mockClear()
   }

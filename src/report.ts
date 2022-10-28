@@ -115,7 +115,11 @@ export const generateReport = async (
         },
         checks,
         las: mini ? undefined : { header, vlrs },
-        copcError: copcError,
+        error: {
+          // name: (copcError as Error).name,
+          message: (copcError as Error).message,
+          stack: (copcError as Error).stack,
+        },
       }
     } catch (lasError) {
       // Las.* functions failed, try poking around manually with the Getter
@@ -127,11 +131,25 @@ export const generateReport = async (
       // TODO: Figure out a way to test this function (need specific bad file)
       const errors = (() =>
         isEqual(
-          omit(lasError as Error, 'trace'),
-          omit(copcError as Error, 'trace'),
+          omit(lasError as Error, 'stack'),
+          omit(copcError as Error, 'stack'),
         )
-          ? { error: copcError as Error }
-          : { error: lasError as Error, copcError: copcError as Error })()
+          ? {
+              error: {
+                message: (copcError as Error).message,
+                stack: (copcError as Error).stack,
+              },
+            }
+          : {
+              error: {
+                message: (lasError as Error).message,
+                stack: (lasError as Error).stack,
+              },
+              copcError: {
+                message: (copcError as Error).message,
+                stack: (copcError as Error).stack,
+              },
+            })()
       return {
         name,
         scan: {

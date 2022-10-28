@@ -13,10 +13,11 @@ import vlrSuite from './vlrs'
 export const copcSuite: Check.Suite<Copc> = {
   ...headerSuite,
   ...vlrSuite,
-  'bounds within cube': ({ info: { cube }, header: { min, max } }) => {
+  'bounds within cube': ({ info: { cube }, header: { min, max, scale } }) => {
     const badBounds = min.reduce<string[]>(
       (prev, minValue, idx) =>
-        cube[idx] <= minValue && max[idx] <= cube[idx + 3]
+        cube[idx] - scale[idx] <= minValue &&
+        max[idx] <= cube[idx + 3] + scale[idx]
           ? [...prev]
           : [...prev, PointIdx[idx]],
       [],
