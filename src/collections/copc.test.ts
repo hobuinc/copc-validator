@@ -50,13 +50,13 @@ test('CopcCollection shallow oldCopc', async () => {
   expect(rgbi).toHaveProperty('status', 'warn')
   expect(rgbi).toHaveProperty(
     'info',
-    'Points appear to contain 8-bit RGBI. Should be scaled to 16-bit.',
+    'All Nodes contain 8-bit RGBI data. Should be scaled to 16-bit.',
   )
 
   const gpsTime = findCheck(failed, 'gpsTime')
   expect(gpsTime).toHaveProperty('status', 'fail')
   expect(gpsTime).toHaveProperty(
     'info',
-    'GpsTime out of bounds: [ 0-0-0-0,1-0-0-0,1-0-1-0,1-1-1-0 ]',
+    'GpsTime out of bounds: [ ALL-BUT-ONE-NODE: 1-1-0-0 ]',
   )
 })

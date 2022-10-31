@@ -1,4 +1,37 @@
-import { Binary, Getter, Las, Point, getBigUint64, parseBigInt } from 'copc'
+import {
+  Binary,
+  Getter,
+  Las,
+  Point,
+  getBigUint64,
+  parseBigInt,
+  Copc,
+  Hierarchy,
+} from 'copc'
+
+export const loadAllHierarchyPages = async (
+  get: Getter,
+  c?: Copc,
+): Promise<Hierarchy.Node.Map> => {
+  const copc = c || (await Copc.create(get))
+  const { nodes: n, pages } = await Copc.loadHierarchyPage(
+    get,
+    copc.info.rootHierarchyPage,
+  )
+  return {
+    ...n,
+    ...(
+      await Promise.all(
+        Object.entries(pages).map(
+          async ([_k, page]) =>
+            (
+              await Copc.loadHierarchyPage(get, page!)
+            ).nodes,
+        ),
+      )
+    ).reduce((prev, curr) => ({ ...prev, ...curr }), {}),
+  }
+}
 
 export const UINT32_MAX = 4_294_967_295
 

@@ -1,6 +1,17 @@
-import { formatGuid, parsePoint } from './parse'
+import { Copc, Getter } from 'copc'
+import { getCopcItems } from 'test'
+import { formatGuid, loadAllHierarchyPages, parsePoint } from './parse'
 
-test('branch coverage', async () => {
+test('loadAllHierarchyPages', async () => {
+  const { get, copc } = await getCopcItems()
+  expect(await loadAllHierarchyPages(get)).toEqual(
+    await loadAllHierarchyPages(get, copc),
+  )
+  expect(loadAllHierarchyPages(get, {} as Copc)).rejects.toThrow()
+  expect(loadAllHierarchyPages(Getter.create(__filename))).rejects.toThrow()
+})
+
+test('branch coverage', () => {
   expect(() => {
     formatGuid(new Uint8Array(15))
   }).toThrow('Invalid GUID buffer length')

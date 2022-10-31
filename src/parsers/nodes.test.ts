@@ -1,7 +1,7 @@
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
 import { checkAll, invokeAllChecks } from 'utils'
-import nodeParser, { readHierarchyNodes, scanNodes } from './nodes'
+import nodeParser from './nodes'
 
 const items = getCopcItems()
 

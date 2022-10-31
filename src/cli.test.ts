@@ -6,6 +6,7 @@ import { Report } from 'types'
 const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
 const reportName = 'report-name'
+const { version: copcVersion } = require('../package.json')
 
 const deepScan = generateReport({ source: filename, options: { deep: true } })
 
@@ -61,6 +62,26 @@ test('cli help', async () => {
   await copcc(['-help', filename])
   expect(mockProcessWrite).toBeCalledTimes(1)
   expect(mockProcessWrite).toBeCalledWith(writeHelp(200))
+  mockProcessWrite.mockClear()
+})
+
+test('cli version', async () => {
+  // basic usage
+  await copcc(['--version'])
+  expect(mockProcessWrite).toBeCalledTimes(1)
+  expect(mockProcessWrite).toBeCalledWith(copcVersion + '\n')
+  mockProcessWrite.mockClear()
+
+  // setting --version overwrites other settings
+  await copcc(['-vdm', filename])
+  expect(mockProcessWrite).toBeCalledTimes(1)
+  expect(mockProcessWrite).toBeCalledWith(copcVersion + '\n')
+  mockProcessWrite.mockClear()
+
+  // --help overwrites --version
+  await copcc(['-vh', `--output=${outputPath}`])
+  expect(mockProcessWrite).toBeCalledTimes(1)
+  expect(mockProcessWrite).toBeCalledWith(writeHelp(process.stdout.columns))
   mockProcessWrite.mockClear()
 })
 
