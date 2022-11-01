@@ -21,7 +21,7 @@ test('shallowNodeScan failure', async () => {
 
   await expect(
     nodeParser({ get, copc, filepath, deep, maxThreads }),
-  ).rejects.toThrow('Cannot read properties of undefined')
+  ).rejects.toThrow(/*'Cannot read properties of undefined'*/)
 })
 
 test('deepNodeScan all-pass', async () => {
@@ -41,5 +41,5 @@ test('deepNodeScan failures', async () => {
 
   await expect(
     nodeParser({ get, copc, filepath, deep, maxThreads }),
-  ).rejects.toThrow('Cannot read properties of undefined')
+  ).rejects.toThrow(/*'Cannot read properties of undefined'*/)
 })

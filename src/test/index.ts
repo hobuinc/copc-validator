@@ -6,9 +6,9 @@ export const maxThreads: number | undefined = undefined
 
 export const dirname = __dirname
 const filename = 'ellipsoid.copc.laz'
-export const ellipsoidFilename = join(dirname, 'data', filename)
+// export const ellipsoidFilename = join(dirname, 'data', filename)
 export const ellipsoidFiles = {
-  oldCopc: join(dirname, 'data', 'old-ellipsoid.copc.laz'),
+  oldCopc: join(dirname, 'data', 'ellipsoid.old.copc.laz'),
   badCopc: join(dirname, 'data', 'bad-ellipsoid.copc.laz'),
   copc: join(dirname, 'data', 'ellipsoid.copc.laz'),
   laz: join(dirname, 'data', 'ellipsoid.laz'),
@@ -36,23 +36,6 @@ export const getCopcItems = async (
   const get = Getter.create(file)
   const copc = await Copc.create(get)
   const nodes = await loadAllHierarchyPages(get, copc)
-  // const { nodes: n, pages } = await Copc.loadHierarchyPage(
-  //   get,
-  //   copc.info.rootHierarchyPage,
-  // )
-  // const nodes: Hierarchy.Node.Map = {
-  //   ...n,
-  //   ...(
-  //     await Promise.all(
-  //       Object.entries(pages).map(
-  //         async ([_k, page]) =>
-  //           (
-  //             await Copc.loadHierarchyPage(get, page!)
-  //           ).nodes,
-  //       ),
-  //     )
-  //   ).reduce((prev, curr) => ({ ...prev, ...curr }), {}),
-  // }
   return { filepath: resolve(file), get, copc, nodes }
 }
 

@@ -23,10 +23,6 @@ import { isEqual, omit } from 'lodash'
  * @returns {Promise<Report>} `Report` object detailing the filetype, checks completed,
  * and some additional information parsed from the file that may be useful
  */
-// export const generateReport = async (
-//   source: string,
-//   { name = source, deep = false, maxThreads, mini = false }: Report.Options,
-// ): Promise<Report> => {
 export const generateReport = async (
   {
     source,
@@ -111,7 +107,7 @@ export const generateReport = async (
           filetype: 'LAS',
           start,
           end: new Date(),
-          time: performance.now() - startTime,
+          time: /*performance.now()*/ now() - startTime,
         },
         checks,
         las: mini ? undefined : { header, vlrs },
@@ -157,7 +153,7 @@ export const generateReport = async (
           filetype: 'Unknown',
           start,
           end: new Date(),
-          time: performance.now() - startTime,
+          time: /*performance.now()*/ now() - startTime,
         },
         checks,
         ...errors,

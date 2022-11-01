@@ -2,11 +2,10 @@ import { Check } from 'types'
 import { map, flatMapDeep } from 'lodash'
 import PromisePool from '@supercharge/promise-pool'
 
-// export const now = global.performance.now || (() => new Date().getTime())
 export const now =
   typeof global.performance !== 'undefined'
     ? global.performance.now
-    : () => new Date().getTime()
+    : () => new Date().getTime() // Node 14.x does not have global.performance
 
 /**
  * Utility function to invoke multiple test Suites at once and combine them
