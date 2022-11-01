@@ -1,8 +1,5 @@
-import { difference } from 'lodash'
 import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
-import { Check } from 'types'
 import {
-  collectionToIds,
   checkAll,
   expectedChecks,
   findCheck,
@@ -34,9 +31,6 @@ test('CopcCollection shallow oldCopc', async () => {
 
   const checks = await invokeCollection(collection)
 
-  // const checkIds = await collectionToIds(collection)
-  // const expectedFailed = ['rgbi', 'gpsTime']
-  // const expectedPassed = difference(checkIds, expectedFailed)
   const [expectedPassed, expectedFailed] = await expectedChecks({
     collection,
     expected: ['rgbi', 'gpsTime'],

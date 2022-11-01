@@ -5,7 +5,7 @@ import { loadAllHierarchyPages } from 'utils'
 export const maxThreads: number | undefined = undefined
 
 export const dirname = __dirname
-const filename = 'ellipsoid.copc.laz'
+// const filename = 'ellipsoid.copc.laz'
 // export const ellipsoidFilename = join(dirname, 'data', filename)
 export const ellipsoidFiles = {
   oldCopc: join(dirname, 'data', 'ellipsoid.old.copc.laz'),

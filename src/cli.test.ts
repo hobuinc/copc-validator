@@ -6,7 +6,7 @@ import { Report } from 'types'
 const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
 const reportName = 'report-name'
-const { version: copcVersion } = require('../package.json')
+const { version: copcVersion } = require('../package.json') // eslint-disable-line
 
 const deepScan = generateReport({ source: filename, options: { deep: true } })
 
@@ -124,7 +124,7 @@ test('cli errors', async () => {
   // silence console.error() in copcc() since we don't currently care about it
   const mockConsoleError = jest
     .spyOn(console, 'error')
-    .mockImplementation(() => {})
+    .mockImplementation(() => {}) //eslint-disable-line
   mockFileWrite.mockClear()
   // force 'fs' error
   mockFileWrite.mockImplementationOnce(() => {
@@ -137,8 +137,6 @@ test('cli errors', async () => {
   expect(mockFileWrite).toThrow()
   expect(mockConsoleLog).toBeCalledTimes(0)
   expect(mockConsoleError).toBeCalledTimes(1)
-  // only one console.log() since 'Report successfully written...' is skipped
-  // but console.log() still happens for the debug 'Scan time' message
 })
 
 test('cli named-reports', async () => {
@@ -158,8 +156,7 @@ test('cli named-reports', async () => {
 })
 
 // ========== MOCKS ==========
-
-const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {})
+const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {}) //eslint-disable-line
 const mockProcessWrite = jest
   .spyOn(process.stdout, 'write')
   .mockImplementation(() => true)
@@ -196,18 +193,18 @@ const validateGoodScan = async (
   }
 }
 
+// ReturnType<typeof expectScan> is actually just `any` which doesn't help much,
+// but I'm using it anyway since it gives the illusion of typing with the reports
 const validateMockParams = (
-  mockFn: jest.SpyInstance<void, any> | jest.SpyInstance<boolean, any>,
+  mockFn: jest.SpyInstance<void | boolean, any>, //eslint-disable-line
   expected: ReturnType<typeof expectScan>,
 ) =>
   typeof mockFn.mock.results[0].value === 'boolean'
     ? // mockFn is mockProcessWrite
-      expect(JSON.parse(mockFn.mock.calls[0][0])).toEqual(expected)
+      expect(JSON.parse(mockFn.mock.calls[0][0] as string)).toEqual(expected)
     : // mockFn is mockFileWrite
-      expect(JSON.parse(mockFn.mock.calls[0][1])).toEqual(expected)
+      expect(JSON.parse(mockFn.mock.calls[0][1] as string)).toEqual(expected)
 
-// ReturnType<typeof expectScan> is actually just `any` which doesn't help much,
-// but I'm using it anyway since it gives the illusion of typing with the reports
 export const expectScan = (r: Report) =>
   expect.objectContaining({
     ...r,

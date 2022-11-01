@@ -27,6 +27,7 @@ type vlrCheck = {
  * @param p.infoOnSuccess - Optional string to include with Status if passed
  * @returns - A single `Check.Status` object
  */
+/* eslint-disable-next-line */
 export const vlrCheck = ({
   vlrs,
   userId,

@@ -1,4 +1,4 @@
-import { Las, Binary, parseBigInt, getBigUint64, Copc } from 'copc'
+import { Las, Binary, parseBigInt, getBigUint64 } from 'copc'
 import type { Check, manualHeaderParams as manualParams } from 'types'
 import {
   basicCheck,
@@ -90,6 +90,7 @@ export const manualHeaderSuite: Check.Suite<manualParams> = {
       buffer.slice(111, 131),
     )
     const pointCount = parseBigInt(getBigUint64(dv, 247, true))
+    // eslint-disable-next-line
     const pointCountByReturn = parseNumberOfPointsByReturn(
       buffer.slice(255, 375),
     ) // not doing anything with this yet, but including it increases jest coverage

@@ -1,4 +1,4 @@
-import { difference, omit } from 'lodash'
+import { difference } from 'lodash'
 import { readPointDataRecords } from 'parsers'
 import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
 import { AllNodesChecked, CheckedNode } from 'types'

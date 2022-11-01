@@ -33,11 +33,11 @@ _**COPC Validator**_ is a library for validating the header and content of a Clo
 
 1.  Install from `npm`
 
-        npm i -g copcc
+        npm i -g copc-validator
 
     _Global install is recommended_
 
-2.  Scan `copc.laz` file
+2.  Scan `copc.laz` file with `copcc` CLI
 
 Examples:
 
@@ -65,6 +65,8 @@ _**COPC Validator**_ has two main usages: imported as the `generateReport()` fun
 copcc [options] <path>
 ```
 
+> _`copcc` = `copc-Checker`_
+
 _The usage and implementation of **COPC Validator** is meant to be as simple as possible. The CLI will only need one file path and will automatically run a `shallow` scan by default, or a `deep` scan if provided with the `--deep` option. All other functionality is completely optional._
 
 ### Options
@@ -91,7 +93,7 @@ yarn add copc-validator
 Import `generateReport()`:
 
 ```TypeScript
-import { generateReport } from 'copcc'
+import { generateReport } from '@landrush/copc-validator
 
 // example usage:
 async function printReport() {
@@ -202,11 +204,19 @@ _The purpose of this type of grouping is to limit the number of Getter calls for
 
 All `Suite`s (with their `Check.Function`s) are located under `src/suites`
 
+#### `worker.js`
+
+`src/parsers/worker.js` essentially matches the structure of a `Suite` because it used to be the `src/suites/point-data.ts` `Suite`. To increase speed, the `pointDataSuite` became per-Node instead of per-File, which maximizes multi-threading, but creates quite a mess since `worker.js` must be (nearly) entirely self-contained for `Piscina` threading. So `src/suites/point-data.ts` now parses the output of `src/parsers/worker.js`, all of which is controlled by the `src/parsers/nodes.ts` `Parser`
+
 ### Parsers
 
 `Check.Parser`s are functions that take a source Object and return a `Check.SuiteWithSource` Object. Their main purpose is to parse a section of the given file into a usable object, and then return that object with its corrosponding `Suite` to be invoked from within a `Collection`.
 
 All `Parser`s are located under `src/parsers` (ex: [`nodeParser`](./src/parsers/nodes.ts))
+
+#### `nodes.ts`
+
+`src/parsers/nodes.ts` is unique among `Parser`s, in that it's actually running a `Suite` repeatedly as it parses. However, the data is not returned from `Piscina` like a regular `Check.Suite`, so `nodes.ts` then gives the output data to the (_new_) `pointDataSuite` for sorting into `Check.Status`es
 
 ### Collections
 
@@ -330,9 +340,10 @@ type Report = {
 
 # Future Plans
 
-- **Bugfix** - Multi-page Hierarchies
+- Add more `Check.Function`s - waiting on laz-perf chunk table
 - Implement `--las` option to validate file against Las 1.4 specifications
-- Decrease memory usage by checking nodes as they're scanned, then throwing them away
+- Continue to optimize for speed, especially large (1.5GB+) files
+- Trim/Streamline Node Parsing vs Other Parsers
 
 <!--for styling the Table of Contents-->
 <style type="text/css">

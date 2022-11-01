@@ -1,7 +1,7 @@
 import { Copc } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
 import { Check } from 'types'
-import { checkAll, findCheck, getCheckIds, invokeAllChecks } from 'utils'
+import { checkAll, findCheck, invokeAllChecks } from 'utils'
 import { copcSuite } from './copc'
 import headerSuite from './header'
 import vlrSuite from './vlrs'
@@ -10,7 +10,7 @@ const items = getCopcItems()
 
 const duplicatedTests = Object.keys(headerSuite).concat(Object.keys(vlrSuite))
 const Suite: Check.Suite<Copc> = Object.fromEntries(
-  Object.entries(copcSuite).filter(([id, _f]) => !duplicatedTests.includes(id)),
+  Object.entries(copcSuite).filter(([id]) => !duplicatedTests.includes(id)),
 ) // removing headerSuite and vlrSuite since they've got their own suites
 
 test('copcSuite all-pass', async () => {

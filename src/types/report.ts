@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-explicit-any */
 import { Copc, Las } from 'copc'
 import { Check } from './check'
 

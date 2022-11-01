@@ -9,7 +9,7 @@ export type deepNodeScan = {
   points: Record<string, number>[]
 }
 export type nodeScan = shallowNodeScan[] | deepNodeScan[]
-type nodeScanData = Record<string, number> | Record<string, number>[]
+// type nodeScanData = Record<string, number> | Record<string, number>[]
 
 /**
  * @example ```

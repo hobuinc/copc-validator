@@ -1,7 +1,6 @@
-import { Getter } from 'copc'
 import { headerSuite, vlrSuite } from 'suites'
-import { ellipsoidFiles, getCopcItems } from 'test'
-import { checkAll, invokeAllChecks, invokeCollection } from 'utils'
+import { getCopcItems } from 'test'
+import { invokeAllChecks, invokeCollection } from 'utils'
 import { FallbackCollection } from './fallback'
 
 const items = getCopcItems()

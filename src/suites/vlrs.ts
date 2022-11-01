@@ -49,8 +49,7 @@ export const manualVlrSuite: Check.Suite<{ get: Getter; vlrs: Las.Vlr[] }> = {
     const wkt = Binary.toCString(await Las.Vlr.fetch(get, vlr))
     const status = (() => {
       try {
-        const p = proj4(wkt)
-        //console.log(p)
+        /*const p = */ proj4(wkt)
         return Statuses.success
       } catch (error) {
         return Statuses.failureWithInfo(

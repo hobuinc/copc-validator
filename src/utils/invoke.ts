@@ -93,4 +93,5 @@ const performCheck = async (
   return { id, ...result }
 }
 
+// eslint-disable-next-line
 type SuiteWithSource = Check.Suite.withSource<any>

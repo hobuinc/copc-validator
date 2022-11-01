@@ -1,4 +1,4 @@
-import { Bounds, Copc, Las } from 'copc'
+import { Copc } from 'copc'
 import { Check } from 'types'
 import { Statuses } from 'utils'
 import headerSuite from './header'

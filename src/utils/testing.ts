@@ -17,7 +17,7 @@ export const splitChecks = (
 export const getCheckIds = (checks: Check[]): string[] =>
   checks.reduce<string[]>((prev, curr) => [...prev, curr.id], [])
 
-export const checkAll = (checks: Check[], pass: boolean = true) =>
+export const checkAll = (checks: Check[], pass = true) =>
   checks.forEach((check) =>
     pass
       ? expect(check).toHaveProperty('status', 'pass')

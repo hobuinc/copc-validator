@@ -23,10 +23,7 @@ export const loadAllHierarchyPages = async (
     ...(
       await Promise.all(
         Object.entries(pages).map(
-          async ([_k, page]) =>
-            (
-              await Copc.loadHierarchyPage(get, page!)
-            ).nodes,
+          async ([, page]) => (await Copc.loadHierarchyPage(get, page!)).nodes, //eslint-disable-line
         ),
       )
     ).reduce((prev, curr) => ({ ...prev, ...curr }), {}),
@@ -37,7 +34,7 @@ export const UINT32_MAX = 4_294_967_295
 
 export function parseNumberOfPointsByReturn(buffer: Binary): number[] {
   const dv = Binary.toDataView(buffer)
-  const bigs: BigInt[] = []
+  const bigs: bigint[] = []
   for (let offset = 0; offset < 15 * 8; offset += 8) {
     bigs.push(getBigUint64(dv, offset, true))
   }

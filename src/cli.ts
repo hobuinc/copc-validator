@@ -4,7 +4,7 @@ import { writeFileSync } from 'fs'
 import { resolve } from 'path'
 
 export const fs = { writeFileSync }
-const { version: copcVersion } = require('../package.json')
+const { version: copcVersion } = require('../package.json') //eslint-disable-line
 
 /** CLI Usage:
  * ```
@@ -179,10 +179,6 @@ export const writeHelp = (col: number) => {
     return prev
   }, 0)
 
-  // option line:
-  // ( ) = hardcoded space      [ ] = variable space
-  //(   )-x, --xxx[     ]blah blah blah description[     ](default: )[]xxxxx( )
-  // 3 + flag.length + X + description.length + Y + 9 + Z + default.length + 1 = 180 columns
   flags.forEach(({ flag, description, default: d }) => {
     const row = `   ${flag}${space(17 - flag.length)}${description} ${space(
       columns - 40 - description.length,

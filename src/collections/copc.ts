@@ -1,5 +1,5 @@
 import { Copc, Getter } from 'copc'
-import { copcSuite, headerSuite, vlrSuite, manualHeaderSuite } from 'suites'
+import { copcSuite, manualHeaderSuite } from 'suites'
 import { nodeParser, vlrParser, headerParser } from 'parsers'
 import { Check, manualHeaderParams } from 'types'
 
@@ -10,6 +10,7 @@ type CopcCollection = {
   deep?: boolean
   maxThreads?: number
 }
+/* eslint-disable-next-line */
 export const CopcCollection = async ({
   filepath,
   copc,
