@@ -15,6 +15,7 @@ module.exports = async ({ filepath, key, node, deep }) => {
       gpsTime: 'pass',
       sortedGpsTime: 'pass',
       returnNumber: 'pass',
+      zeroPoints: 'warn',
     }
     return [key, checks]
   }
@@ -67,7 +68,7 @@ const checkRgb = (data, pdrf) => {
         typeof d.Red !== 'undefined' ||
         typeof d.Green !== 'undefined' ||
         typeof d.Blue !== 'undefined',
-    )
+    ) // return 'fail' if RGB data is defined, but shouldn't be
   return checkNode(
     data,
     (d) =>
@@ -75,7 +76,8 @@ const checkRgb = (data, pdrf) => {
       typeof d.Green === 'undefined' ||
       typeof d.Blue === 'undefined' ||
       (d.Red === 0 && d.Green === 0 && d.Blue === 0),
-  )
+    true,
+  ) // return 'warn' if RGB data should be defined, but any point is undefined or un-utilized
 }
 
 const checkRgbi = (data, pdrf) => {

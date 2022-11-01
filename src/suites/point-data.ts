@@ -14,15 +14,17 @@ export const pointDataSuite: Check.Suite<AllNodesChecked> = {
     if (badNodes.length > 0)
       return data[badNodes[0]].rgb === 'fail' //pdrf === 6
         ? Statuses.failureWithInfo(
-            `(PDRF 6) RGB data found at: [ ${badNodes} ]`,
+            `(PDRF 6) RGB data found in: [ ${badNodes} ]`,
           )
         : Statuses.warningWithInfo(
-            `(PDRF 7,8) Unutilized RGB data found at: [ ${badNodes} ]`,
+            `(PDRF 7,8) Unutilized RGB bytes found in: [ ${badNodes} ]`,
           )
     return Statuses.success
   },
   rgbi: (data) => {
     const badNodes = filterAllNodeChecks(data, 'rgbi')
+    // console.log(badNodes)
+    // console.log(nonZeroNodes(data))
     if (badNodes.length > 0) {
       if (data[badNodes[0]].rgbi === 'warn')
         return badNodes.length === nonZeroNodes(data).length
@@ -53,10 +55,10 @@ export const pointDataSuite: Check.Suite<AllNodesChecked> = {
     return Statuses.success
   },
   sortedGpsTime: (data) => {
-    const badNodes = filterAllNodeChecks(data, 'sortedGpsTime')
-    if (badNodes.length > 0)
+    const warnNodes = filterAllNodeChecks(data, 'sortedGpsTime')
+    if (warnNodes.length > 0)
       return Statuses.warningWithInfo(
-        `GpsTime is unsorted: ${nodeString(badNodes, nonZeroNodes(data))}`,
+        `GpsTime is unsorted: ${nodeString(warnNodes, nonZeroNodes(data))}`,
       )
     return Statuses.success
   },
@@ -64,6 +66,12 @@ export const pointDataSuite: Check.Suite<AllNodesChecked> = {
     const badNodes = filterAllNodeChecks(data, 'returnNumber')
     if (badNodes.length > 0)
       return Statuses.failureWithInfo(`Invalid data in: [ ${badNodes} ]`)
+    return Statuses.success
+  },
+  zeroPoint: (data) => {
+    const zeroPointNodes = filterAllNodeChecks(data, 'zeroPoint')
+    if (zeroPointNodes.length > 0)
+      return Statuses.warningWithInfo(`Zero Point Nodes: [ ${zeroPointNodes} ]`)
     return Statuses.success
   },
   // other Node checks
@@ -118,20 +126,39 @@ export const checkNodesReachable = (nodes: AllNodesChecked) => {
 }
 
 // ========== UTILITIES ==========
-
+/**
+ *
+ * @param nodes
+ * @param id
+ * @returns
+ */
 const filterAllNodeChecks = (nodes: AllNodesChecked, id: string): string[] =>
   Object.entries(nodes).reduce<string[]>(
-    (prev, [key, data]) => (data[id] === 'pass' ? [...prev] : [...prev, key]),
+    (prev, [key, data]) =>
+      data[id] === 'pass' || data[id] === undefined // ignore undefined to warn about zero point nodes
+        ? [...prev]
+        : [...prev, key],
     [],
   )
 
-const nonZeroNodes = (nodes: AllNodesChecked): string[] =>
+/**
+ *
+ * @param nodes
+ * @returns
+ */
+export const nonZeroNodes = (nodes: AllNodesChecked): string[] =>
   Object.entries(nodes).reduce<string[]>(
     (prev, [key, d]) => (d.pointCount === 0 ? [...prev] : [...prev, key]),
     [],
   )
 
-const nodeString = (bad: string[], nonZero: string[]) =>
+/**
+ *
+ * @param bad
+ * @param nonZero
+ * @returns
+ */
+export const nodeString = (bad: string[], nonZero: string[]) =>
   `[ ${
     bad.length === nonZero.length
       ? 'ALL-NODES'

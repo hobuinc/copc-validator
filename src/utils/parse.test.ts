@@ -7,8 +7,12 @@ test('loadAllHierarchyPages', async () => {
   expect(await loadAllHierarchyPages(get)).toEqual(
     await loadAllHierarchyPages(get, copc),
   )
-  expect(loadAllHierarchyPages(get, {} as Copc)).rejects.toThrow()
-  expect(loadAllHierarchyPages(Getter.create(__filename))).rejects.toThrow()
+  expect(loadAllHierarchyPages(get, {} as Copc)).rejects.toThrow() // good Getter + bad Copc = Error
+  expect(loadAllHierarchyPages(Getter.create(__filename))).rejects.toThrow() // bad Getter -> bad Copc = Error
+  expect(await loadAllHierarchyPages(Getter.create(__filename), copc)).toEqual(
+    // bad Getter + good Copc = {}
+    {},
+  )
 })
 
 test('branch coverage', () => {
