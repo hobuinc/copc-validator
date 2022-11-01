@@ -1,6 +1,9 @@
 import { Check } from 'types'
 import { map, flatMapDeep } from 'lodash'
 import PromisePool from '@supercharge/promise-pool'
+
+export const now = performance.now || (() => new Date().getTime())
+
 /**
  * Utility function to invoke multiple test Suites at once and combine them
  * into one `Check` array. Supply a Suite with it's common source in this
