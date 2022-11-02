@@ -24,17 +24,57 @@ module.exports = async ({ filepath, key, node, deep }) => {
   const view = await Copc.loadPointDataView(get, copc, node)
   const dimensions = Object.keys(view.dimensions)
   const getDimensions = (idx) =>
-    dimensions
-      .map(view.getter)
-      .reduce((prev, curr, i) => ({ ...prev, [dimensions[i]]: curr(idx) }), {})
+    dimensions.map(view.getter).reduce((acc, getter, i) => {
+      acc[dimensions[i]] = getter(idx)
+      return acc
+    }, {})
+  // .reduce((prev, curr, i) => ({ ...prev, [dimensions[i]]: curr(idx) }), {})
+
+  // console.dir(getDimensions(0), { depth: null })
+  // const getDimensions = (idx) =>
+  //   Object.keys(view.dimensions).map((dimension) => [
+  //     dimension,
+  //     view.getter(dimension)(idx),
+  //   ]) // as ([dimensionName, number])[]
+
+  // return [
+  //   key,
+  //   {
+  //     ...node,
+  //     ...Object.fromEntries(
+  //       Object.entries(microPointDataSuite).map(([id, f]) => [
+  //         id,
+  //         f({
+  //           copc,
+  //           key,
+  //           data: deep
+  //             ? Array.from(new Array(view.pointCount), (_v, i) =>
+  //                 getDimensions(0),
+  //               )
+  //             : getDimensions(0),
+  //         }),
+  //       ]),
+  //     ),
+  //   },
+  // ]
+
+  // const data = deep ? Array.from(new Array(view.pointCount), (_v, i) => getDimensions(i))
 
   const data = deep
     ? Array.from(new Array(view.pointCount), (_v, i) => getDimensions(i))
     : getDimensions(0)
-  const source = { copc, key, data }
-  const checks = Object.fromEntries(
-    Object.entries(microPointDataSuite).map(([id, f]) => [id, f(source)]),
-  )
+  // const source = { copc, key, data }
+  // const checks = Object.fromEntries(
+  //   Object.entries(microPointDataSuite).map(([id, f]) => [
+  //     id,
+  //     f({ copc, key, data }),
+  //     //f(source),
+  //   ]),
+  // )
+  const checks = Object.entries(microPointDataSuite).reduce((acc, [id, f]) => {
+    acc[id] = f({ copc, key, data }) //f(source)
+    return acc
+  }, {})
   return [key, { ...node, ...checks }]
 }
 

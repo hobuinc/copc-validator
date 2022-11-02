@@ -33,9 +33,9 @@ _**COPC Validator**_ is a library for validating the header and content of a Clo
 
 1.  Install from `npm`
 
-        npm i -g copc-validator
+        npm i -g @landrush/copc-validator
 
-    _Global install is recommended_
+    _Global install is recommended for CLI usage_
 
 2.  Scan `copc.laz` file with `copcc` CLI
 
@@ -53,11 +53,9 @@ Examples:
 
       copcc path/to/example.copc.laz -dmt 64
 
-  _for a local install, replace `copcc` with `???`_
-
 # Usage
 
-_**COPC Validator**_ has two main usages: imported as the `generateReport()` function, or via the `copcc` Command-Line Interface (CLI)
+_**COPC Validator**_ has two main usages: via the `copcc` Command-Line Interface (CLI), or imported as the `generateReport()` function
 
 ## CLI
 
