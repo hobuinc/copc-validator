@@ -26,7 +26,13 @@ import { isEqual, omit } from 'lodash'
 export const generateReport = async (
   {
     source,
-    options: { name = source, deep = false, maxThreads, mini = false },
+    options: {
+      name = source,
+      deep = false,
+      maxThreads,
+      mini = false,
+      showProgress = false,
+    },
   }: generateReportParams,
   collections: {
     copc: Check.CollectionFn
@@ -62,6 +68,7 @@ export const generateReport = async (
         copc,
         deep,
         maxThreads,
+        showProgress,
       }),
     ) // no need to await CopcCollection since invokeCollection allows promises
 

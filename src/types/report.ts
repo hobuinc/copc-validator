@@ -20,6 +20,7 @@ export declare namespace Report {
     deep?: boolean
     maxThreads?: number
     mini?: boolean
+    showProgress?: boolean
   }
 
   type copcError = { message: string; stack?: string }

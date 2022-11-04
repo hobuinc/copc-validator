@@ -26,4 +26,10 @@ test('branch coverage', () => {
     parsePoint(new Uint8Array(25))
   }).toThrow('Invalid tuple buffer length')
   expect(parsePoint(new Uint8Array(24))).toEqual([0, 0, 0])
+
+  // global = { ...global, performance: undefined as unknown as Performance }
+  // const { now } = require('./invoke')
+
+  // expect(now()).toBeCloseTo(performance.now(), 1)
+  // expect(now()).toBeCloseTo(new Date().getTime())
 })

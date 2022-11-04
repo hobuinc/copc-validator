@@ -33,7 +33,7 @@ _**COPC Validator**_ is a library for validating the header and content of a Clo
 
 1.  Install from `npm`
 
-        npm i -g @landrush/copc-validator
+        $ npm i -g @landrush/copc-validator
 
     _Global install is recommended for CLI usage_
 
@@ -43,15 +43,15 @@ Examples:
 
 - Default
 
-      copcc ./path/to/example.copc.laz
+      $ copcc ./path/to/example.copc.laz
 
 - Deep scan, output to `<pwd>/output.json`
 
-      copcc --deep path/to/example.copc.laz --output=output.json
+      $ copcc --deep path/to/example.copc.laz --output=output.json
 
-- Deep & Minified scan with max threads = 64
+- Deep & Minified scan with max threads = 64, showing a progress bar
 
-      copcc path/to/example.copc.laz -dmt 64
+      $ copcc path/to/example.copc.laz -dpmt 64
 
 # Usage
 
@@ -59,9 +59,7 @@ _**COPC Validator**_ has two main usages: via the `copcc` Command-Line Interface
 
 ## CLI
 
-```sh
-copcc [options] <path>
-```
+    $ copcc [options] <path>
 
 > _`copcc` = `copc-Checker`_
 
@@ -69,14 +67,16 @@ _The usage and implementation of **COPC Validator** is meant to be as simple as 
 
 ### Options
 
-| Option    | Alias | Description                                                                     |   Type    |  Default  |
-| :-------- | :---: | ------------------------------------------------------------------------------- | :-------: | :-------: |
-| `deep`    |  `d`  | Read all points of each node; Otherwise, read only root point                   | `boolean` |  `false`  |
-| `threads` |  `t`  | Replace Piscina maxThreads with the provided integer                            | `number`  | CPU-based |
-| `name`    |  `n`  | Replace `name` in Report with provided string                                   | `string`  | `<path>`  |
-| `mini`    |  `m`  | Omit Copc or Las from Report, leaving `checks` and `scan` info                  | `boolean` |  `false`  |
-| `ouput`   |  `o`  | Writes the Report out to provided filepath; Otherwise, writes to `stdout`       | `string`  |    N/A    |
-| `help`    |  `h`  | Displays help information for the `copcc` command; Overwrites all other options | `boolean` |    N/A    |
+| Option     | Alias | Description                                                                     |   Type    |  Default  |
+| :--------- | :---: | ------------------------------------------------------------------------------- | :-------: | :-------: |
+| `deep`     |  `d`  | Read all points of each node; Otherwise, read only root point                   | `boolean` |  `false`  |
+| `threads`  |  `t`  | Replace Piscina maxThreads with the provided integer                            | `number`  | CPU-based |
+| `name`     |  `n`  | Replace `name` in Report with provided string                                   | `string`  | `<path>`  |
+| `mini`     |  `m`  | Omit Copc or Las from Report, leaving `checks` and `scan` info                  | `boolean` |  `false`  |
+| `progress` |  `p`  | Show a progress bar while reading the point data                                | `boolean` |  `false`  |
+| `ouput`    |  `o`  | Writes the Report out to provided filepath; Otherwise, writes to `stdout`       | `string`  |    N/A    |
+| `help`     |  `h`  | Displays help information for the `copcc` command; Overwrites all other options | `boolean` |    N/A    |
+| `version`  |  `v`  | Displays `@landrush/copc-validator` version (from `package.json`)               | `boolean` |    N/A    |
 
 ## Import
 
@@ -91,21 +91,23 @@ yarn add copc-validator
 Import `generateReport()`:
 
 ```TypeScript
-import { generateReport } from '@landrush/copc-validator
-
-// example usage:
-async function printReport() {
-  const report = await generateReport({
-    source: 'path/to/example.copc.laz',
-    options: {} // default options
-  })
-  console.log(report)
-}
+import { generateReport } from '@landrush/copc-validator'
 ```
+
+- Example:
+  ```TypeScript
+  async function printReport() {
+    const report = await generateReport({
+      source: 'path/to/example.copc.laz',
+      options: {} // default options
+    })
+    console.log(report)
+  }
+  ```
 
 ### Options
 
-`generateReport` accepts most (not `help` and `output`) of the same options as the CLI through the `options` property of the first parameter:
+`generateReport` accepts **most\*** of the same options as the CLI through the `options` property of the first parameter:
 
 Example:
 
@@ -117,9 +119,17 @@ generateReport({
     mini: true // omit copc/las info from report
     deep: true // read all points per node
     maxThreads: 32 // maxThread limit for Piscina (for reading points)
+    showProgress: false // show cli-progress bar while reading point data
   }
 })
 ```
+
+> \* **Key option differences:**
+>
+> - No `output`, `help`, or `version` options
+> - `threads` is renamed to `maxThreads`
+> - `progress` is renamed to `showProgress`
+> - Any **Alias** (listed [above](###options)) will not work
 
 # Scans
 
@@ -163,7 +173,7 @@ namespace Check {
     | (c: T) => Status
     | (c: T) => Promise<Status>
 
-  type Suite<T> = { [id: string]: Function<T> }
+  type Suite<T> = { [id: string]: Check.Function<T> }
   type SuiteWithSource<T> = { source: T, suite: Suite<T>}
 
   type Parser<Source, Parsed> = (s: Source) => Promise<SuiteWithSource<Parsed>>

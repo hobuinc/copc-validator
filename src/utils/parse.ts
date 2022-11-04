@@ -23,10 +23,13 @@ export const loadAllHierarchyPages = async (
     ...(
       await Promise.all(
         Object.entries(pages).map(
-          async ([, page]) => (await Copc.loadHierarchyPage(get, page!)).nodes, //eslint-disable-line
+          async ([, page]) =>
+            (
+              await Copc.loadHierarchyPage(get, page as Hierarchy.Page)
+            ).nodes,
         ),
       )
-    ).reduce((prev, curr) => ({ ...prev, ...curr }), {}),
+    ).reduce((acc, map) => Object.assign(acc, map), {}),
   }
 }
 

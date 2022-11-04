@@ -1,21 +1,26 @@
 import { difference } from 'lodash'
-import { readPointDataRecords } from 'parsers'
+import { readPointDataRecords, nonZeroNodes } from 'parsers'
 import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
 import { AllNodesChecked, CheckedNode } from 'types'
 import { checkAll, findCheck, invokeAllChecks } from 'utils'
-import pointDataSuite, { nodeString, nonZeroNodes as NZN } from './point-data'
+import pointDataSuite, { nodeString } from './point-data'
 
 const items = getCopcItems()
 
 test('pointDataSuite all-pass', async () => {
-  const { filepath, nodes } = await items
+  const { filepath, copc, nodes } = await items
+  const nonZero = nonZeroNodes(nodes)
   const checks = await invokeAllChecks({
-    source: await readPointDataRecords({
-      filepath,
-      nodes,
-      deep: true,
-      maxThreads,
-    }),
+    source: {
+      data: await readPointDataRecords({
+        filepath,
+        nodes,
+        copc,
+        deep: true,
+        maxThreads,
+      }),
+      nonZero,
+    },
     suite: pointDataSuite,
   })
   checkAll(checks)
@@ -23,6 +28,7 @@ test('pointDataSuite all-pass', async () => {
 
 test('pointDataSuite failures', async () => {
   const { nodes } = await items
+
   const nodeMap: AllNodesChecked = Object.fromEntries(
     Object.entries(nodes)
       .map(([key, data]) => [
@@ -50,13 +56,14 @@ test('pointDataSuite failures', async () => {
             gpsTime: 'pass',
             sortedGpsTime: 'pass',
             returnNumber: 'pass',
-            zeroPoint: 'warn',
+            zeroPoints: 'warn',
           } as unknown as CheckedNode,
         ],
       ]),
   )
+  const nonZero = nonZeroNodes(nodeMap)
   const checks = await invokeAllChecks({
-    source: nodeMap,
+    source: { data: nodeMap, nonZero },
     suite: pointDataSuite,
   })
   checkAll(checks, false)
@@ -64,10 +71,12 @@ test('pointDataSuite failures', async () => {
 
 test('pointDataSuite pdrf=6', async () => {
   // get copc data with unscaled RGBI data
-  const { filepath, nodes } = await getCopcItems(ellipsoidFiles.oldCopc)
+  const { filepath, copc, nodes } = await getCopcItems(ellipsoidFiles.oldCopc)
+  const nonZero = nonZeroNodes(nodes)
   const nodeMap = await readPointDataRecords({
     filepath,
     nodes,
+    copc,
     deep: false,
     maxThreads,
   })
@@ -80,7 +89,7 @@ test('pointDataSuite pdrf=6', async () => {
     ]),
   ) as unknown as AllNodesChecked
   const rgbWarnChecks = await invokeAllChecks({
-    source: rgbWarnMap,
+    source: { data: rgbWarnMap, nonZero },
     suite: pointDataSuite,
   })
 
@@ -106,7 +115,7 @@ test('pointDataSuite pdrf=6', async () => {
     ]),
   ) as unknown as AllNodesChecked
   const rgbFailChecks = await invokeAllChecks({
-    source: rgbFailMap,
+    source: { data: rgbFailMap, nonZero },
     suite: pointDataSuite,
   })
 
@@ -123,10 +132,12 @@ test('pointDataSuite pdrf=6', async () => {
 })
 
 test('pointDataSuite utils', async () => {
-  const { filepath, nodes } = await items
+  const { filepath, copc, nodes } = await items
+  const nonZero = nonZeroNodes(nodes)
   const realNodeChecks = await readPointDataRecords({
     filepath,
     nodes,
+    copc,
     deep: false,
     maxThreads,
   })
@@ -157,15 +168,15 @@ test('pointDataSuite utils', async () => {
       ]),
   ) as unknown as AllNodesChecked
   const allNodes = Object.keys(nodeChecks) //length: 6
-  const nonZeroNodes = NZN(nodeChecks) //length: 5
+  // const nonZero = nonZeroNodes(nodeChecks) //length: 5
   expect(
     nodeString(
       allNodes,
-      nonZeroNodes, // more bad nodes than non-zero nodes
+      nonZero, // more bad nodes than non-zero nodes
     ), // also 2+ more non-zero nodes than bad nodes
   ).toBe(`[ ${allNodes} ]`)
   expect(nodeString(allNodes, allNodes)).toBe('[ ALL-NODES ]') //same length bad nodes and non-zero nodes
-  expect(nodeString(nonZeroNodes, allNodes)).toBe(
-    `[ ALL-BUT-ONE-NODE: ${difference(allNodes, nonZeroNodes)} ]`,
+  expect(nodeString(nonZero, allNodes)).toBe(
+    `[ ALL-BUT-ONE-NODE: ${difference(allNodes, nonZero)} ]`,
   ) // 1 more non-zero node than bad node
 })

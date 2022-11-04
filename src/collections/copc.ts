@@ -9,19 +9,21 @@ type CopcCollection = {
   get: Getter
   deep?: boolean
   maxThreads?: number
+  showProgress?: boolean
 }
 /* eslint-disable-next-line */
 export const CopcCollection = async ({
   filepath,
   copc,
   get,
+  showProgress = false,
   deep = false,
   maxThreads,
 }: CopcCollection): Promise<Check.Suite.Collection> => [
   { source: copc, suite: copcSuite },
   headerParser(get, copcHeaderSuite),
   vlrParser(get),
-  nodeParser({ get, copc, filepath, deep, maxThreads }),
+  nodeParser({ get, copc, filepath, deep, maxThreads, showProgress }),
 ]
 
 const { legacyPointCount, legacyPointCountByReturn } = manualHeaderSuite

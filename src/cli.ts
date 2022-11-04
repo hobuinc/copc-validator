@@ -6,37 +6,70 @@ import { resolve } from 'path'
 export const fs = { writeFileSync }
 const { version: copcVersion } = require('../package.json') //eslint-disable-line
 
-/** CLI Usage:
- * ```
- * copcc {--deep} {--mini} {--name: string} {--output: string} {--threads: number} [file]
- * ```
- *
- * `deep` | `d`: Runs a Deep Scan, checking every point in a PDR (if valid copc/las) for
- * data that may violate the COPC spec.  *Optional - runs Shallow scan if omitted*
- *
- * `output` | `o`: A path to an output file for copcc to write the report to.
- *                                       *Optional - writes to stdout if omitted*
- *
- * `name` | `n`: Name for the report.    *Optional - uses filename if omitted*
- *
- * `threads` | `t`: Max Thread count to pass to Piscina, for scanning nodes (checks/copc/nodes.ts)
- *                                       *Optional - based on CPU if omitted*
- *
- * `mini` | `m`: Outputs a minified version of the report without Copc/Las data (checks & scan only)
- *                                       *Optional - included extended copc.js data if omitted*
- *
- * TODO: `las`: Skip attempting to validate as COPC and just validate the LAS specs
- *                                       *Optional - attempts Copc first if omitted*
- *
- * `file`: A file path (local or URL) to run the validation checks against  *Required*
- */
+// ========== OPTIONS HERE ==========
+const flags: flag[] = [
+  {
+    flag: '-d, --deep',
+    description: 'Scan all (versus root) points of each node',
+    default: 'false',
+  },
+  {
+    flag: '-t, --threads',
+    description: 'Max thread count for scanning Hierarchy Nodes',
+    default: 'CPU-based',
+  },
+  {
+    flag: '-n, --name',
+    description: 'Title for report output',
+    default: '<path>',
+  },
+  {
+    flag: '-m, --mini',
+    description: 'Omit extended COPC/LAS info from report',
+    default: 'false',
+  },
+  {
+    flag: '-p, --progress',
+    description: 'Show a progress bar while reading the point data',
+    default: 'false',
+  },
+  {
+    flag: '-o, --output',
+    description: 'Path to write report as JSON file',
+    default: 'stdout',
+  },
+  { flag: '-h, --help', description: 'Output this help information' },
+  { flag: '-v, --version', description: 'Output copcc version' },
+]
+type ExpectedArgv = {
+  _: string[]
+  help: boolean
+  h: boolean //alias
+  version: boolean
+  v: boolean //alias
+  deep: boolean
+  d: boolean //alias
+  mini: boolean
+  m: boolean //alias
+  progress: boolean
+  p: boolean //alias
+  output?: string
+  o?: string //alias
+  name?: string
+  n?: string //alias
+  threads?: number
+  t?: number //alias
+}
+
+// ========== MAIN CLI FUNCTION ==========
 export const copcc = async (argv: string[]) => {
   if (argv === undefined || argv.length < 1)
     throw new Error('Not enough argument(s) provided')
 
   // PARSE ARGS
   const args = minimist<ExpectedArgv>(argv, {
-    boolean: ['deep', 'mini', 'help', 'version'],
+    // ===== OPTIONS ALSO GO HERE =====
+    boolean: ['deep', 'mini', 'progress', 'help', 'version'],
     string: ['output', 'name'],
     alias: {
       output: 'o',
@@ -46,6 +79,7 @@ export const copcc = async (argv: string[]) => {
       mini: 'm',
       help: 'h',
       version: 'v',
+      progress: 'p',
     },
   })
   const {
@@ -57,11 +91,11 @@ export const copcc = async (argv: string[]) => {
     name: givenName,
     threads,
     mini,
+    progress,
   } = args
 
   if (help) {
-    // process.stdout.write(helpString)
-    process.stdout.write(writeHelp(process.stdout.columns)) //writeHelp)
+    process.stdout.write(writeHelp(process.stdout.columns))
     return
   }
   if (version) {
@@ -76,10 +110,7 @@ export const copcc = async (argv: string[]) => {
 
   const name = givenName || file
 
-  // deep & output don't need validated because undefined/false is used in context
-
   // RUN SCAN
-  // const start = performance.now()
   const report = await generateReport({
     source: file,
     options: {
@@ -87,10 +118,9 @@ export const copcc = async (argv: string[]) => {
       deep,
       maxThreads: threads,
       mini,
+      showProgress: progress,
     },
   })
-  // const end = performance.now()
-  // Using performance.now() to print the time after the report, for debugging convienence
 
   // OUTPUT SCAN
   if (output) {
@@ -106,60 +136,12 @@ export const copcc = async (argv: string[]) => {
   // but process.stdout.write() may be preferred? will check with Connor
   // currently using process.stdout.write() so the shape of the output
   // (newlines, undefined, etc) matches the output file
-  // console.log(`Scan time: ${end - start}ms`)
   return
 }
 
 export default copcc
 
-type ExpectedArgv = {
-  _: string[]
-  help: boolean
-  h: boolean //alias
-  version: boolean
-  v: boolean //alias
-  deep: boolean
-  d: boolean //alias
-  mini: boolean
-  m: boolean //alias
-  output?: string
-  o?: string //alias
-  name?: string
-  n?: string //alias
-  threads?: number
-  t?: number //alias
-}
-
 type flag = { flag: string; description: string; default?: string }
-const flags: flag[] = [
-  {
-    flag: '-n, --name',
-    description: 'Title for report output',
-    default: '<path>',
-  },
-  {
-    flag: '-o, --output',
-    description: 'Path to write report as JSON file',
-    default: 'stdout',
-  },
-  {
-    flag: '-m, --mini',
-    description: 'Omit extended COPC/LAS info from report',
-    default: 'false',
-  },
-  {
-    flag: '-d, --deep',
-    description: 'Scan all (versus root) points of each node',
-    default: 'false',
-  },
-  {
-    flag: '-t, --threads',
-    description: 'Max thread count for scanning Hierarchy Nodes',
-    default: 'CPU-based',
-  },
-  { flag: '-h, --help', description: 'Output this help information' },
-  { flag: '-v, --version', description: 'Output copcc version' },
-]
 
 const space = (n: number) => Array(n > 0 ? n + 1 : 1).join(' ')
 export const writeHelp = (col: number) => {

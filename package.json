@@ -4,6 +4,13 @@
   "description": "Reads a file to determine if it's genuine COPC, and provides details about any errors/warnings against the COPC and LAS specs",
   "main": "exports.js",
   "types": "exports",
+  "keywords": [
+    "copc",
+    "validate",
+    "cli"
+  ],
+  "homepage": "https://github.com/hobuinc/copc-validator#readme.md",
+  "repository": "github:hobuinc/copc-validator",
   "author": {
     "name": "Cameron Woodbury",
     "email": "cam@hobu.co"

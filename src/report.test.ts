@@ -8,7 +8,10 @@ const lasItems = getLasItems()
 
 test('shallow COPC', async () => {
   const { copc } = await copcItems
-  const shallow = await generateReport({ source: copcFile, options: {} }) // default options
+  const shallow = await generateReport({
+    source: copcFile,
+    options: { showProgress: true },
+  }) // default options
   expect(Report.isCopc(shallow)).toBe(true)
   // given this check, the throw below should be unnecessary, but TS doesn't understand
   expect(Report.isFail(shallow)).toBe(false)
@@ -97,7 +100,7 @@ test('deep COPC', async () => {
   const { copc } = await copcItems
   const deep = await generateReport({
     source: copcFile,
-    options: { deep: true },
+    options: { deep: true, showProgress: true },
   }) // default parameters
   expect(Report.isCopc(deep)).toBe(true)
   // given this check, the throw below should be unnecessary, but TS doesn't understand

@@ -8,7 +8,7 @@ const items = getCopcItems()
 test('shallowNodeScan all-pass', async () => {
   const { filepath, get, copc } = await items
   const checks = await invokeAllChecks(
-    await nodeParser({ get, copc, filepath }), //default arguments
+    await nodeParser({ get, copc, filepath, showProgress: true }), //default arguments
   )
   checkAll(checks)
 })
@@ -26,9 +26,15 @@ test('shallowNodeScan failure', async () => {
 
 test('deepNodeScan all-pass', async () => {
   const { filepath, get, copc } = await items
-  const deep = true
   const checks = await invokeAllChecks(
-    await nodeParser({ get, copc, filepath, deep, maxThreads }),
+    await nodeParser({
+      get,
+      copc,
+      filepath,
+      deep: true,
+      maxThreads,
+      showProgress: true,
+    }),
   )
   checkAll(checks)
 })
