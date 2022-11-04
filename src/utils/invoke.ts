@@ -1,6 +1,6 @@
 import { Check } from 'types'
 import { map, flatMapDeep } from 'lodash'
-import PromisePool from '@supercharge/promise-pool'
+// import PromisePool from '@supercharge/promise-pool'
 
 export const now =
   typeof global.performance !== 'undefined'
@@ -54,25 +54,54 @@ export const invokeCollection = async (
 ): Promise<Check[]> =>
   Promise.all(
     (
-      await PromisePool.for(await collection)
-        .withConcurrency(200)
-        .process(async (suiteWSource, i) => {
+      await Promise.all(
+        (
+          await collection
+        ).flatMap(async (suiteWSource, i) => {
           try {
             const { suite, source } = await suiteWSource
-            return Object.entries(suite).map(([id, f]) =>
+            const suiteChecks = Object.entries(suite).map(([id, f]) =>
               performCheck(source, f, id),
             )
+            return suiteChecks
           } catch (error) {
-            return {
-              // Can't get parser function name or any other identifying information
-              id: `Parser ${i}: Failed to read source`,
-              status: 'fail',
-              info: (error as Error).message,
-            } as Check
+            return [
+              {
+                id: `Parser ${i}: Failed to read source`,
+                status: 'fail',
+                info: (error as Error).message,
+              },
+            ] as Check[]
           }
-        })
-    ).results.flat(),
+        }),
+      )
+    ).flat(),
   )
+
+// export const invokeCollection = async (
+//   collection: Promise<Check.Suite.Collection> | Check.Suite.Collection,
+// ): Promise<Check[]> =>
+//   Promise.all(
+//     (
+//       await PromisePool.for(await collection)
+//         .withConcurrency(200)
+//         .process(async (suiteWSource, i) => {
+//           try {
+//             const { suite, source } = await suiteWSource
+//             return Object.entries(suite).map(([id, f]) =>
+//               performCheck(source, f, id),
+//             )
+//           } catch (error) {
+//             return {
+//               // Can't get parser function name or any other identifying information
+//               id: `Parser ${i}: Failed to read source`,
+//               status: 'fail',
+//               info: (error as Error).message,
+//             } as Check
+//           }
+//         })
+//     ).results.flat(),
+//   )
 
 // I need to do further testing to ensure the above functions are performance optimal
 
@@ -81,6 +110,7 @@ const performCheck = async (
   f: Check.Function<unknown>,
   id: string,
 ): Promise<Check> => {
+  // console.log(`Performing ${id}...`)
   // console.time(id)
   const result: Check.Status = await (() => {
     try {

@@ -22,6 +22,7 @@
     "prepare": "yarn build"
   },
   "devDependencies": {
+    "@types/cli-progress": "^3.11.0",
     "@types/jest": "^29.0.2",
     "@types/lodash": "^4.14.185",
     "@types/minimist": "^1.2.2",
@@ -41,6 +42,7 @@
   "dependencies": {
     "@landrush/proj4": "^2.7.7",
     "@supercharge/promise-pool": "^2.3.2",
+    "cli-progress": "^3.11.2",
     "copc": "^0.0.4",
     "lodash": "^4.17.21",
     "minimist": "^1.2.6",
