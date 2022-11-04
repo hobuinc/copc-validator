@@ -14,23 +14,20 @@ export const loadAllHierarchyPages = async (
   c?: Copc,
 ): Promise<Hierarchy.Node.Map> => {
   const copc = c || (await Copc.create(get))
-  const { nodes: n, pages } = await Copc.loadHierarchyPage(
+  const { nodes, pages } = await Copc.loadHierarchyPage(
     get,
     copc.info.rootHierarchyPage,
   )
-  return {
-    ...n,
-    ...(
-      await Promise.all(
-        Object.entries(pages).map(
-          async ([, page]) =>
-            (
-              await Copc.loadHierarchyPage(get, page as Hierarchy.Page)
-            ).nodes,
-        ),
-      )
-    ).reduce((acc, map) => Object.assign(acc, map), {}),
-  }
+  return (
+    await Promise.all(
+      Object.entries(pages).map(
+        async ([, page]) =>
+          (
+            await Copc.loadHierarchyPage(get, page as Hierarchy.Page)
+          ).nodes,
+      ),
+    )
+  ).reduce((acc, map) => Object.assign(acc, map), nodes)
 }
 
 export const UINT32_MAX = 4_294_967_295

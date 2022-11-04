@@ -3,6 +3,6 @@ global.performance = undefined as unknown as Performance
 import { now } from './invoke'
 
 test('now', () => {
-  expect(now()).toBeCloseTo(new Date().getTime(), -1)
+  expect(now()).toBeCloseTo(new Date().getTime(), -2)
 })
 // and now() became gross when I decided to leave Node.JS 14.x in the GH Action

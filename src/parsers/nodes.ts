@@ -76,6 +76,8 @@ export const readPointDataRecords = (
   withBar = false,
 ): Promise<AllNodesChecked> =>
   withBar ? readPointDataRecordsWBar(params) : readPointDataRecordsWOBar(params)
+
+// ===== readPointDataRecord functions =====
 export const readPointDataRecordsWBar = async ({
   nodes,
   filepath,
