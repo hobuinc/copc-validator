@@ -1,5 +1,5 @@
 // doing all this gross stuff for ~1% Total Funcs coverage
-global = { ...global, performance: undefined as unknown as Performance }
+global.performance = undefined as unknown as Performance
 import { now } from './invoke'
 
 test('now', () => {
