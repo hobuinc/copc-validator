@@ -1,5 +1,5 @@
 {
-  "name": "@landrush/copc-validator",
+  "name": "copc-validator",
   "version": "0.0.3",
   "description": "Reads a file to determine if it's genuine COPC, and provides details about any errors/warnings against the COPC and LAS specs",
   "main": "exports.js",
