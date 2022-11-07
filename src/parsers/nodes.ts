@@ -126,7 +126,7 @@ export const readPointDataRecordsWBar = async ({
       }),
     ],
   )
-  let checkedNodes: AllNodesChecked = {}
+  const checkedNodes: AllNodesChecked = {}
   for (const [key, pNode] of promises) {
     const n = await pNode
     bar.increment(deep ? n.pointCount : 1)
@@ -151,7 +151,7 @@ export const readPointDataRecordsWOBar = async ({
     useAtomics: false,
   })
 
-  let checkedNodes: AllNodesChecked = {}
+  const checkedNodes: AllNodesChecked = {}
   for (const [key, cNode] of Object.entries(nodes).map(([key, node]) => [
     key,
     piscina.run({
