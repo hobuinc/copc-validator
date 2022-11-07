@@ -4,7 +4,10 @@ import { Check, AllNodesChecked } from 'types'
 import { Statuses } from 'utils'
 
 /**
- *
+ * Suite of Check Functions for parsing the checks returned by Piscina (from
+ * ./parsers/nodes.ts). The first set of functions are each for checking the
+ * different Check `id`s in each object across all the Nodes. And below, there
+ * are other (currently one) check functions for the AllNodesChecked object
  */
 export const pointDataSuite: Check.Suite<{
   data: AllNodesChecked
@@ -12,7 +15,7 @@ export const pointDataSuite: Check.Suite<{
 }> = {
   // parse data from src/parsers/worker.js (through nodes.ts)
   rgb: ({ data, nonZero }) => {
-    const badNodes = filterAllNodeChecks(data, 'rgb')
+    const badNodes = badNodesFromChecks(data, 'rgb')
     if (badNodes.length > 0)
       return data[badNodes[0]].rgb === 'fail' //pdrf === 6
         ? Statuses.failureWithInfo(
@@ -27,7 +30,7 @@ export const pointDataSuite: Check.Suite<{
     return Statuses.success
   },
   rgbi: ({ data, nonZero }) => {
-    const badNodes = filterAllNodeChecks(data, 'rgbi')
+    const badNodes = badNodesFromChecks(data, 'rgbi')
     if (badNodes.length > 0) {
       if (data[badNodes[0]].rgbi === 'warn')
         return badNodes.length === nonZero.length
@@ -44,13 +47,13 @@ export const pointDataSuite: Check.Suite<{
     return Statuses.success
   },
   xyz: ({ data }) => {
-    const badNodes = filterAllNodeChecks(data, 'xyz')
+    const badNodes = badNodesFromChecks(data, 'xyz')
     if (badNodes.length > 0)
       return Statuses.failureWithInfo(`Points out of bounds: [ ${badNodes} ]`)
     return Statuses.success
   },
   gpsTime: ({ data, nonZero }) => {
-    const badNodes = filterAllNodeChecks(data, 'gpsTime')
+    const badNodes = badNodesFromChecks(data, 'gpsTime')
     if (badNodes.length > 0)
       return Statuses.failureWithInfo(
         `GpsTime out of bounds: ${nodeString(badNodes, nonZero)}`,
@@ -58,7 +61,7 @@ export const pointDataSuite: Check.Suite<{
     return Statuses.success
   },
   sortedGpsTime: ({ data, nonZero }) => {
-    const warnNodes = filterAllNodeChecks(data, 'sortedGpsTime')
+    const warnNodes = badNodesFromChecks(data, 'sortedGpsTime')
     if (warnNodes.length > 0)
       return Statuses.warningWithInfo(
         `GpsTime is unsorted: ${nodeString(warnNodes, nonZero)}`,
@@ -66,13 +69,13 @@ export const pointDataSuite: Check.Suite<{
     return Statuses.success
   },
   returnNumber: ({ data }) => {
-    const badNodes = filterAllNodeChecks(data, 'returnNumber')
+    const badNodes = badNodesFromChecks(data, 'returnNumber')
     if (badNodes.length > 0)
       return Statuses.failureWithInfo(`Invalid data in: [ ${badNodes} ]`)
     return Statuses.success
   },
   zeroPoint: ({ data }) => {
-    const zeroPointNodes = filterAllNodeChecks(data, 'zeroPoints')
+    const zeroPointNodes = badNodesFromChecks(data, 'zeroPoints')
     if (zeroPointNodes.length > 0)
       return Statuses.warningWithInfo(`Zero Point Nodes: [ ${zeroPointNodes} ]`)
     return Statuses.success
@@ -138,7 +141,7 @@ export const checkNodesReachable = (nodes: AllNodesChecked) => {
  * @param id
  * @returns
  */
-const filterAllNodeChecks = (nodes: AllNodesChecked, id: string): string[] => {
+const badNodesFromChecks = (nodes: AllNodesChecked, id: string): string[] => {
   const acc: string[] = []
   for (const key in nodes) {
     if (nodes[key][id] === 'warn' || nodes[key][id] === 'fail') acc.push(key)

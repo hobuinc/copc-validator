@@ -136,5 +136,5 @@ module.exports = async ({ filepath, copc, key, node, deep }) => {
     }
   }
 
-  return [key, checks]
+  return checks
 }

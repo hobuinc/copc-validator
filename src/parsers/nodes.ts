@@ -85,16 +85,16 @@ export const readPointDataRecordsWBar = async ({
   deep,
   maxThreads,
 }: readPDRsParams): Promise<AllNodesChecked> => {
-  // setup piscina
   const piscina = new Piscina({
     filename: resolve(__dirname, 'worker.js'),
     maxThreads,
     idleTimeout: 100,
+    useAtomics: false,
   })
 
   const nodeCount = Object.keys(nodes).length
-  const { start, opts } = {
-    start: deep ? copc.header.pointCount : nodeCount,
+  const { total, opts } = {
+    total: deep ? copc.header.pointCount : nodeCount,
     opts: {
       barsize:
         process.stderr.columns > 80
@@ -105,36 +105,38 @@ export const readPointDataRecordsWBar = async ({
   }
   const bar = new SingleBar({
     format: `checking ${
-      deep ? 'nodes' : 'points'
-    } [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}`,
+      deep ? 'all' : 'root'
+    } points [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}`,
     barCompleteChar: '=',
     barIncompleteChar: '-',
     clearOnComplete: true,
     ...opts,
   })
-  bar.start(start, 0)
+  bar.start(total, 0)
 
-  const checkedNodes: AllNodesChecked = (
-    await Promise.all(
-      Object.entries(nodes).map(async ([key, node]) => {
-        const r: [string, CheckedNode] = await piscina.run({
-          filepath,
-          copc,
-          key,
-          node,
-          deep,
-        })
-        bar.increment(deep ? node?.pointCount : 1)
-        return r
+  const promises: [string, Promise<CheckedNode>][] = Object.entries(nodes).map(
+    ([key, node]) => [
+      key,
+      piscina.run({
+        filepath,
+        copc,
+        key,
+        node,
+        deep,
       }),
-    )
-  ).reduce<AllNodesChecked>((acc, [key, checkedNode]) => {
-    acc[key] = checkedNode
-    return acc
-  }, {})
+    ],
+  )
+  let checkedNodes: AllNodesChecked = {}
+  for (const [key, pNode] of promises) {
+    const n = await pNode
+    bar.increment(deep ? n.pointCount : 1)
+    checkedNodes[key] = n
+  }
+
   bar.stop()
   return checkedNodes
 }
+// separate function so we don't bother initializing the bar if it's unnecessary
 export const readPointDataRecordsWOBar = async ({
   nodes,
   filepath,
@@ -142,33 +144,25 @@ export const readPointDataRecordsWOBar = async ({
   deep,
   maxThreads,
 }: readPDRsParams): Promise<AllNodesChecked> => {
-  // setup piscina
   const piscina = new Piscina({
     filename: resolve(__dirname, 'worker.js'),
     maxThreads,
     idleTimeout: 100,
+    useAtomics: false,
   })
 
-  return (
-    // read each node
-    (
-      await Promise.all(
-        Object.entries(nodes).map(
-          async ([key, node]) =>
-            await piscina.run({
-              filepath,
-              copc,
-              key,
-              node,
-              deep,
-            }),
-        ),
-      )
-    )
-      // and turn it back into a Hierarchy.Node.Map-like object
-      .reduce<AllNodesChecked>((acc, [key, checkedNode]) => {
-        acc[key] = checkedNode
-        return acc
-      }, {})
-  )
+  let checkedNodes: AllNodesChecked = {}
+  for (const [key, cNode] of Object.entries(nodes).map(([key, node]) => [
+    key,
+    piscina.run({
+      filepath,
+      copc,
+      key,
+      node,
+      deep,
+    }),
+  ]) as [string, Promise<CheckedNode>][]) {
+    checkedNodes[key] = await cNode
+  }
+  return checkedNodes
 }

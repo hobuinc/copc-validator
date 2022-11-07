@@ -26,9 +26,11 @@
     "dev": "ts-node -r tsconfig-paths/register src/index.ts",
     "test": "jest",
     "lint": "eslint . --ext .ts",
+    "flamegraph": "0x --output-dir='.0x/artifacts/{pid}' --output-html='.0x/graphs/{pid}.html' --open lib/index.js",
     "prepare": "yarn build"
   },
   "devDependencies": {
+    "0x": "^5.4.1",
     "@types/cli-progress": "^3.11.0",
     "@types/jest": "^29.0.2",
     "@types/lodash": "^4.14.185",

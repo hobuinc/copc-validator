@@ -23,7 +23,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: https://registry.landrush.npme.io/
-          scope: '@landrush'
+          # scope: '@landrush'
+          cache: 'yarn'
       - run: yarn --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}

@@ -1,0 +1,30 @@
+name: Publish Tag to NPM
+
+# Usage: Run `npm version` locally, which will create a local git 'tag' of the version
+# Then, push that tag to GitHub (`git push origin v*.*.*`) to automatically publish the version
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          registry-url: https://registry.landrush.npme.io/
+          scope: '@landrush'
+      - run: yarn --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Code Quality
+        run: yarn test --coverage --all && yarn lint
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}
