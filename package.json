@@ -2,8 +2,7 @@
   "name": "copc-validator",
   "version": "0.0.4",
   "description": "Reads a file to determine if it's genuine COPC, and provides details about any errors/warnings against the COPC and LAS specs",
-  "main": "exports.js",
-  "types": "exports",
+  "main": "lib/exports.js",
   "keywords": [
     "copc",
     "validate",
@@ -30,7 +29,6 @@
     "prepare": "yarn build"
   },
   "devDependencies": {
-    "0x": "^5.4.1",
     "@types/cli-progress": "^3.11.0",
     "@types/jest": "^29.0.2",
     "@types/lodash": "^4.14.185",
@@ -38,6 +36,7 @@
     "@types/node": "^18.7.18",
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",
+    "0x": "^5.4.1",
     "eslint": "^8.26.0",
     "eslint-config-prettier": "^8.5.0",
     "jest": "^29.0.3",

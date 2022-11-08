@@ -17,13 +17,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          # registry-url: https://registry.landrush.npme.io/
+          registry-url: https://registry.npmjs.org
       - run: yarn --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Code Quality
-        run: yarn test --coverage --all && yarn lint
-      - name: Publish
-        run: npm publish
+      - run: yarn test --coverage --all && yarn lint
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}
