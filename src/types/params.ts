@@ -1,4 +1,4 @@
-import { Binary, Getter, Las } from 'copc'
+import type { Binary, Copc, Getter, Las } from 'copc'
 import { Report } from './report'
 
 export type generateReportParams = {
@@ -9,4 +9,13 @@ export type generateReportParams = {
 // suites
 export type manualHeaderParams = { buffer: Binary; dv: DataView }
 export type manualVlrParams = { get: Getter; vlrs: Las.Vlr[] }
-// export type pointDataParams = { copc: Copc; nodeMap: enhancedNodeMap }
+
+// parsers
+export type nodeParserParams = {
+  get: Getter
+  copc: Copc
+  filepath: string
+  deep?: boolean
+  maxThreads?: number
+  showProgress?: boolean
+}

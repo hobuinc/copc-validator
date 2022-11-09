@@ -4,7 +4,7 @@ import { Check, AllNodesChecked } from 'types'
 import { Statuses } from 'utils'
 
 /**
- * Suite of Check Functions for parsing the checks returned by Piscina (from
+ * Suite of Check Functions for parsing the checks returned by Workers (from
  * ./parsers/nodes.ts). The first set of functions are each for checking the
  * different Check `id`s in each object across all the Nodes. And below, there
  * are other (currently one) check functions for the AllNodesChecked object

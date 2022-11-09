@@ -1,11 +1,13 @@
 const { Getter, Copc, Bounds, Key } = require('copc')
+const { expose } = require('threads/worker')
 
 const boolToStatus = (b, warning = false) =>
   !b ? 'pass' : warning ? 'warn' : 'fail'
 
-let prevGpsTime = 0
-
-module.exports = async ({ filepath, copc, key, node, deep }) => {
+expose(async function ({ filepath, copc, key, node, deep }) {
+  // console.log(`Reading ${key}`)
+  // console.time(key)
+  let prevGpsTime = 0
   if (node.pointCount === 0) {
     const checks = {
       ...node,
@@ -136,5 +138,7 @@ module.exports = async ({ filepath, copc, key, node, deep }) => {
     }
   }
 
-  return checks
-}
+  // console.timeEnd(key)
+  // console.log(checks)
+  return [key, checks]
+})
