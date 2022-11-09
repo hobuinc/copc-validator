@@ -33,7 +33,7 @@ _**COPC Validator**_ is a library for validating the header and content of a Clo
 
 1.  Install from `npm`
 
-        $ npm i -g @landrush/copc-validator
+        npm i -g copc-validator
 
     _Global install is recommended for CLI usage_
 
@@ -43,15 +43,15 @@ Examples:
 
 - Default
 
-      $ copcc ./path/to/example.copc.laz
+      copcc ./path/to/example.copc.laz
 
 - Deep scan, output to `<pwd>/output.json`
 
-      $ copcc --deep path/to/example.copc.laz --output=output.json
+      copcc --deep path/to/example.copc.laz --output=output.json
 
 - Deep & Minified scan with max threads = 64, showing a progress bar
 
-      $ copcc path/to/example.copc.laz -dpmt 64
+      copcc path/to/example.copc.laz -dpmt 64
 
 # Usage
 
@@ -59,7 +59,7 @@ _**COPC Validator**_ has two main usages: via the `copcc` Command-Line Interface
 
 ## CLI
 
-    $ copcc [options] <path>
+    copcc [options] <path>
 
 > _`copcc` = `copc-Checker`_
 
@@ -70,13 +70,13 @@ _The usage and implementation of **COPC Validator** is meant to be as simple as 
 | Option     | Alias | Description                                                                     |   Type    |  Default  |
 | :--------- | :---: | ------------------------------------------------------------------------------- | :-------: | :-------: |
 | `deep`     |  `d`  | Read all points of each node; Otherwise, read only root point                   | `boolean` |  `false`  |
-| `threads`  |  `t`  | Replace Piscina maxThreads with the provided integer                            | `number`  | CPU-based |
+| `workers`  |  `w`  | Number of Workers to create - _Use at own (performance) risk_                   | `number`  | CPU-count |
 | `name`     |  `n`  | Replace `name` in Report with provided string                                   | `string`  | `<path>`  |
 | `mini`     |  `m`  | Omit Copc or Las from Report, leaving `checks` and `scan` info                  | `boolean` |  `false`  |
 | `progress` |  `p`  | Show a progress bar while reading the point data                                | `boolean` |  `false`  |
 | `ouput`    |  `o`  | Writes the Report out to provided filepath; Otherwise, writes to `stdout`       | `string`  |    N/A    |
 | `help`     |  `h`  | Displays help information for the `copcc` command; Overwrites all other options | `boolean` |    N/A    |
-| `version`  |  `v`  | Displays `@landrush/copc-validator` version (from `package.json`)               | `boolean` |    N/A    |
+| `version`  |  `v`  | Displays `copc-validator` version (from `package.json`)                         | `boolean` |    N/A    |
 
 ## Import
 
@@ -91,7 +91,7 @@ yarn add copc-validator
 Import `generateReport()`:
 
 ```TypeScript
-import { generateReport } from '@landrush/copc-validator'
+import { generateReport } from 'copc-validator'
 ```
 
 - Example:
@@ -118,7 +118,7 @@ generateReport({
     name: 'Name for Report output' // default: source
     mini: true // omit copc/las info from report
     deep: true // read all points per node
-    maxThreads: 32 // maxThread limit for Piscina (for reading points)
+    workers: 32 // Number of Workers to spawn with threads.js
     showProgress: false // show cli-progress bar while reading point data
   }
 })
@@ -127,7 +127,6 @@ generateReport({
 > \* **Key option differences:**
 >
 > - No `output`, `help`, or `version` options
-> - `threads` is renamed to `maxThreads`
 > - `progress` is renamed to `showProgress`
 > - Any **Alias** (listed [above](###options)) will not work
 
@@ -212,10 +211,6 @@ _The purpose of this type of grouping is to limit the number of Getter calls for
 
 All `Suite`s (with their `Check.Function`s) are located under `src/suites`
 
-#### `worker.js`
-
-`src/parsers/worker.js` essentially matches the structure of a `Suite` because it used to be the `src/suites/point-data.ts` `Suite`. To increase speed, the `pointDataSuite` became per-Node instead of per-File, which maximizes multi-threading, but creates quite a mess since `worker.js` must be (nearly) entirely self-contained for `Piscina` threading. So `src/suites/point-data.ts` now parses the output of `src/parsers/worker.js`, all of which is controlled by the `src/parsers/nodes.ts` `Parser`
-
 ### Parsers
 
 `Check.Parser`s are functions that take a source Object and return a `Check.SuiteWithSource` Object. Their main purpose is to parse a section of the given file into a usable object, and then return that object with its corrosponding `Suite` to be invoked from within a `Collection`.
@@ -224,7 +219,16 @@ All `Parser`s are located under `src/parsers` (ex: [`nodeParser`](./src/parsers/
 
 #### `nodes.ts`
 
-`src/parsers/nodes.ts` is unique among `Parser`s, in that it's actually running a `Suite` repeatedly as it parses. However, the data is not returned from `Piscina` like a regular `Check.Suite`, so `nodes.ts` then gives the output data to the (_new_) `pointDataSuite` for sorting into `Check.Status`es
+`src/parsers/nodes.ts` is unique among `Parser`s, in that it's actually running a `Suite` repeatedly as it parses. However, the data is not returned from the multithreaded Workers like a regular `Check.Suite`, so `nodes.ts` then gives the output data to the (_new_) `pointDataSuite` for sorting into `Check.Status`es
+
+<details>
+<summary><code>worker.js</code></summary>
+<p></p>
+
+`src/utils/worker.js` essentially matches the structure of a `Suite` because it used to be the `src/suites/point-data.ts` `Suite`. To increase speed, the `pointDataSuite` became per-Node instead of per-File, which maximizes multi-threading, but creates quite a mess since `worker.js` must be (nearly) entirely self-contained for `Worker`/`Web Worker` threading. So `src/suites/point-data.ts` now parses the output of `src/utils/worker.js`, all of which is controlled by the `src/parsers/nodes.ts` `Parser`
+
+</details>
+<br/>
 
 ### Collections
 

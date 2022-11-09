@@ -20,7 +20,7 @@ test('shallowNodeScan failure', async () => {
   const deep = false
 
   await expect(
-    nodeParser({ get, copc, filepath, deep, maxThreads }),
+    nodeParser({ get, copc, filepath, deep, workerCount: maxThreads }),
   ).rejects.toThrow() //different messages per node version
 })
 
@@ -32,7 +32,7 @@ test('deepNodeScan all-pass', async () => {
       copc,
       filepath,
       deep: true,
-      maxThreads,
+      workerCount: maxThreads,
       showProgress: true,
     }),
   )
@@ -46,6 +46,6 @@ test('deepNodeScan failures', async () => {
   const deep = true
 
   await expect(
-    nodeParser({ get, copc, filepath, deep, maxThreads }),
+    nodeParser({ get, copc, filepath, deep, workerCount: maxThreads }),
   ).rejects.toThrow()
 })

@@ -17,7 +17,7 @@ test('pointDataSuite all-pass', async () => {
         nodes,
         copc,
         deep: true,
-        maxThreads,
+        workerCount: maxThreads,
       }),
       nonZero,
     },
@@ -78,7 +78,7 @@ test('pointDataSuite pdrf=6', async () => {
     nodes,
     copc,
     deep: false,
-    maxThreads,
+    workerCount: maxThreads,
   })
 
   // pretend 'rgb' test returned 'warn' (meaning pdrf = 7 | 8)
@@ -139,7 +139,7 @@ test('pointDataSuite utils', async () => {
     nodes,
     copc,
     deep: false,
-    maxThreads,
+    workerCount: maxThreads,
   })
   const nodeChecks = Object.fromEntries(
     Object.entries(realNodeChecks)

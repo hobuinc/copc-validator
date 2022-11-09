@@ -29,7 +29,7 @@ export const generateReport = async (
     options: {
       name = source,
       deep = false,
-      maxThreads,
+      workers,
       mini = false,
       showProgress = false,
     },
@@ -67,7 +67,7 @@ export const generateReport = async (
         get,
         copc,
         deep,
-        maxThreads,
+        workerCount: workers,
         showProgress,
       }),
     ) // no need to await CopcCollection since invokeCollection allows promises

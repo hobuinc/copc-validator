@@ -11,7 +11,7 @@ export const nodeParser: Check.Parser<
   copc,
   filepath,
   deep = false,
-  maxThreads,
+  workerCount,
   showProgress = false,
 }: nodeParserParams) => {
   const nodes = await loadAllHierarchyPages(get, copc)
@@ -23,7 +23,7 @@ export const nodeParser: Check.Parser<
           filepath,
           copc,
           deep,
-          maxThreads,
+          workerCount,
         },
         showProgress,
       ),
@@ -52,7 +52,7 @@ export type readPDRsParams = {
   filepath: string
   copc: Copc
   deep: boolean
-  maxThreads?: number
+  workerCount?: number
 }
 /**
  *
@@ -61,7 +61,7 @@ export type readPDRsParams = {
  * @returns
  */
 export const readPointDataRecords = (
-  { nodes, filepath, copc, deep, maxThreads }: readPDRsParams,
+  { nodes, filepath, copc, deep, workerCount }: readPDRsParams,
   withBar = false,
 ): Promise<AllNodesChecked> =>
   runTasks(
@@ -73,5 +73,5 @@ export const readPointDataRecords = (
       deep,
     })),
     withBar,
-    maxThreads,
+    workerCount,
   )

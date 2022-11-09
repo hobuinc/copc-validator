@@ -16,18 +16,17 @@ type workerFunction = (p: workerParams) => workerResult
 export const runTasks = async (
   tasks: workerParams[],
   withBar: boolean,
-  maxThreads?: number,
+  workerCount?: number,
 ) => {
   // setup thread pool
   const pool = Pool(
     () => spawn<workerFunction>(new Worker('./worker')),
-    maxThreads,
+    workerCount,
   )
   const results: workerResult[] = []
 
-  const { queueTasks, terminate } = ((b: boolean) => {
-    if (b) {
-      // if withBar === true
+  const { queueTasks, terminate } = (() => {
+    if (withBar) {
       // setup cli-progress bar
       const { deep, copc } = tasks[0]
       const count = tasks.length
@@ -86,7 +85,7 @@ export const runTasks = async (
         await pool.terminate()
       },
     }
-  })(withBar)
+  })()
 
   // queue all tasks
   await queueTasks()

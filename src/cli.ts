@@ -14,9 +14,9 @@ const flags: flag[] = [
     default: 'false',
   },
   {
-    flag: '-t, --threads',
+    flag: '-w, --workers',
     description: 'Max thread count for scanning Hierarchy Nodes',
-    default: 'CPU-based',
+    default: 'CPU-count',
   },
   {
     flag: '-n, --name',
@@ -57,8 +57,8 @@ type ExpectedArgv = {
   o?: string //alias
   name?: string
   n?: string //alias
-  threads?: number
-  t?: number //alias
+  workers?: number
+  w?: number //alias
 }
 
 // ========== MAIN CLI FUNCTION ==========
@@ -75,7 +75,7 @@ export const copcc = async (argv: string[]) => {
       output: 'o',
       deep: 'd',
       name: 'n',
-      threads: 't',
+      workers: 'w',
       mini: 'm',
       help: 'h',
       version: 'v',
@@ -89,7 +89,7 @@ export const copcc = async (argv: string[]) => {
     deep,
     output,
     name: givenName,
-    threads,
+    workers,
     mini,
     progress,
   } = args
@@ -116,7 +116,7 @@ export const copcc = async (argv: string[]) => {
     options: {
       name,
       deep,
-      maxThreads: threads,
+      workers,
       mini,
       showProgress: progress,
     },

@@ -18,7 +18,7 @@ export declare namespace Report {
   export type Options = {
     name?: string
     deep?: boolean
-    maxThreads?: number
+    workers?: number
     mini?: boolean
     showProgress?: boolean
   }

@@ -16,6 +16,6 @@ export type nodeParserParams = {
   copc: Copc
   filepath: string
   deep?: boolean
-  maxThreads?: number
+  workerCount?: number
   showProgress?: boolean
 }
