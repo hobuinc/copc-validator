@@ -1,5 +1,5 @@
 import { Copc, Getter } from 'copc'
-import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
+import { ellipsoidFiles, getCopcItems, workerCount } from 'test'
 import { checkAll, invokeAllChecks } from 'utils'
 import nodeParser from './nodes'
 
@@ -20,7 +20,7 @@ test('shallowNodeScan failure', async () => {
   const deep = false
 
   await expect(
-    nodeParser({ get, copc, filepath, deep, workerCount: maxThreads }),
+    nodeParser({ get, copc, filepath, deep, workerCount: workerCount }),
   ).rejects.toThrow() //different messages per node version
 })
 
@@ -32,7 +32,7 @@ test('deepNodeScan all-pass', async () => {
       copc,
       filepath,
       deep: true,
-      workerCount: maxThreads,
+      workerCount: workerCount,
       showProgress: true,
     }),
   )
@@ -46,6 +46,6 @@ test('deepNodeScan failures', async () => {
   const deep = true
 
   await expect(
-    nodeParser({ get, copc, filepath, deep, workerCount: maxThreads }),
+    nodeParser({ get, copc, filepath, deep, workerCount: workerCount }),
   ).rejects.toThrow()
 })

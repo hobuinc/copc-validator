@@ -2,7 +2,7 @@ import { Copc, Getter, Hierarchy, Las } from 'copc'
 import { join, resolve } from 'path'
 import { loadAllHierarchyPages } from 'utils'
 
-export const maxThreads: number | undefined = undefined
+export const workerCount: number | undefined = undefined
 
 export const dirname = __dirname
 // const filename = 'ellipsoid.copc.laz'

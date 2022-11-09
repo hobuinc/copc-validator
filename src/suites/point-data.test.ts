@@ -1,6 +1,6 @@
 import { difference } from 'lodash'
 import { readPointDataRecords, nonZeroNodes } from 'parsers'
-import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
+import { ellipsoidFiles, getCopcItems, workerCount } from 'test'
 import { AllNodesChecked, CheckedNode } from 'types'
 import { checkAll, findCheck, invokeAllChecks } from 'utils'
 import pointDataSuite, { nodeString } from './point-data'
@@ -17,7 +17,7 @@ test('pointDataSuite all-pass', async () => {
         nodes,
         copc,
         deep: true,
-        workerCount: maxThreads,
+        workerCount: workerCount,
       }),
       nonZero,
     },
@@ -78,7 +78,7 @@ test('pointDataSuite pdrf=6', async () => {
     nodes,
     copc,
     deep: false,
-    workerCount: maxThreads,
+    workerCount: workerCount,
   })
 
   // pretend 'rgb' test returned 'warn' (meaning pdrf = 7 | 8)
@@ -139,7 +139,7 @@ test('pointDataSuite utils', async () => {
     nodes,
     copc,
     deep: false,
-    workerCount: maxThreads,
+    workerCount: workerCount,
   })
   const nodeChecks = Object.fromEntries(
     Object.entries(realNodeChecks)

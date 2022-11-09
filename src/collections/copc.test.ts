@@ -1,4 +1,4 @@
-import { ellipsoidFiles, getCopcItems, maxThreads } from 'test'
+import { ellipsoidFiles, getCopcItems, workerCount } from 'test'
 import {
   checkAll,
   expectedChecks,
@@ -26,7 +26,7 @@ test('CopcCollection shallow oldCopc', async () => {
     get,
     copc,
     deep,
-    maxThreads,
+    workerCount,
   })
 
   const checks = await invokeCollection(collection)
