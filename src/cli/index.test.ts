@@ -1,4 +1,4 @@
-import copcc, { fs, writeHelp } from './cli'
+import copcc, { fs, writeHelp } from 'cli'
 import generateReport from 'report'
 import { ellipsoidFiles } from 'test'
 import { Report } from 'types'

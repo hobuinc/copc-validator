@@ -20,7 +20,17 @@ export const runTasks = async (
 ) => {
   // setup thread pool
   const pool = Pool(
-    () => spawn<workerFunction>(new Worker('./worker')),
+    () =>
+      spawn<workerFunction>(
+        new Worker(
+          /*'./worker'*/ typeof process === 'object'
+            ? './worker'
+            : new URL('./worker.js', import.meta.url).href,
+          {
+            type: 'module',
+          },
+        ),
+      ),
     workerCount,
   )
   const results: workerResult[] = []

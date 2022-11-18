@@ -7,7 +7,7 @@ import {
   invokeCollection,
   splitChecks,
 } from 'utils'
-import { CopcCollection } from './copc'
+import { CopcCollection } from './valid'
 
 const items = getCopcItems()
 

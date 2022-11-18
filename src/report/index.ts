@@ -6,7 +6,11 @@ import {
 import { invokeCollection, now } from 'utils'
 import { Copc, Getter, Las } from 'copc'
 import { Check, generateReportParams, Report } from 'types'
-import { isEqual, omit } from 'lodash'
+// import { isEqual, omit } from 'lodash'
+// import isEqual from 'lodash/isEqual'
+import isEqual from 'lodash.isequal'
+// import omit from 'lodash/omit'
+import omit from 'lodash.omit'
 
 /**
  * Main function for scanning a given file. Attempts to use `copc.js` parse functions
@@ -27,7 +31,9 @@ export const generateReport = async (
   {
     source,
     options: {
-      name = source,
+      name = source /* typeof source === 'string'
+        ? source
+        : 'Report ' + new Date().toISOString(),*/,
       deep = false,
       workers,
       mini = false,
@@ -46,7 +52,7 @@ export const generateReport = async (
 ): Promise<Report> => {
   const type = deep ? 'deep' : 'shallow'
   const start = new Date()
-  const startTime = now() //performance.now()
+  const startTime = now()
   // Getter.create() should never throw error outside of bad string
   const get = Getter.create(source)
   try {

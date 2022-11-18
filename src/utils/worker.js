@@ -1,5 +1,7 @@
-const { Getter, Copc, Bounds, Key } = require('copc')
-const { expose } = require('threads/worker')
+// const { Getter, Copc, Bounds, Key } = require('copc')
+// const { expose } = require('threads/worker')
+import { Getter, Copc, Bounds, Key } from 'copc'
+import { expose } from 'threads/worker'
 
 const boolToStatus = (b, warning = false) =>
   !b ? 'pass' : warning ? 'warn' : 'fail'

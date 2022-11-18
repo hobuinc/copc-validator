@@ -2,7 +2,7 @@ import type { Binary, Copc, Getter, Las } from 'copc'
 import { Report } from './report'
 
 export type generateReportParams = {
-  source: string
+  source: string //| Getter
   options: Report.Options
 }
 

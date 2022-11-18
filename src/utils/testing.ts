@@ -1,4 +1,6 @@
-import { difference } from 'lodash'
+// import { difference } from 'lodash'
+// import difference from 'lodash/difference'
+import difference from 'lodash.difference'
 import { Check } from 'types'
 
 export const findCheck = (checks: Check[], id: string) =>

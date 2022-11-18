@@ -1,11 +1,18 @@
 #!/usr/bin/env node
-// import { ellipsoidFiles } from './test'
-import copcc from './cli'
+import copcc from 'cli'
+import { pathToFileURL } from 'url'
 
-if (typeof require !== 'undefined' && require.main === module) {
-  const argv = process.argv.slice(2)
-  // if (argv.length < 1) argv.push(ellipsoidFiles.copc)
-  // the line above enables `yarn dev` as a quick test of the CLI with good COPC data
-  // can still test options (like --output), but will need to provide a source file
-  copcc(argv)
+// module was imported
+export * from 'report'
+export * from 'collections'
+export * from 'parsers'
+export * from 'suites'
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  // module was not imported but called directly
+  await copcc(process.argv.slice(2))
 }
+
+// TODO: Fix ts-node with ESM. Broken:
+//  * yarn dev
+//  * yarn test
