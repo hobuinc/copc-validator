@@ -1,3 +1,3 @@
-export * from './header'
-export * from './nodes'
-export * from './vlrs'
+export * from './header.js'
+export * from './nodes.js'
+export * from './vlrs.js'

@@ -1,8 +1,8 @@
 import { Copc } from 'copc'
-import { Check } from 'types'
-import { Statuses } from 'utils'
-import headerSuite from './header'
-import vlrSuite from './vlrs'
+import { Check } from '../types/index.js'
+import { Statuses } from '../utils/index.js'
+import headerSuite from './header.js'
+import vlrSuite from './vlrs.js'
 
 /**
  * Suite of Check Function for checking the `Copc` object to validate a `copc.laz`

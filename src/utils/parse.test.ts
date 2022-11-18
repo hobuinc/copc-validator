@@ -1,5 +1,5 @@
 import { Copc, Getter } from 'copc'
-import { getCopcItems } from 'test'
+import { ellipsoidFiles, getCopcItems } from 'test'
 import { formatGuid, loadAllHierarchyPages, parsePoint } from './parse'
 
 test('loadAllHierarchyPages', async () => {
@@ -8,8 +8,12 @@ test('loadAllHierarchyPages', async () => {
     await loadAllHierarchyPages(get, copc),
   )
   expect(loadAllHierarchyPages(get, {} as Copc)).rejects.toThrow() // good Getter + bad Copc = Error
-  expect(loadAllHierarchyPages(Getter.create(__filename))).rejects.toThrow() // bad Getter -> bad Copc = Error
-  expect(await loadAllHierarchyPages(Getter.create(__filename), copc)).toEqual(
+  expect(
+    loadAllHierarchyPages(Getter.create(ellipsoidFiles.sh)),
+  ).rejects.toThrow() // bad Getter -> bad Copc = Error
+  expect(
+    await loadAllHierarchyPages(Getter.create(ellipsoidFiles.sh), copc),
+  ).toEqual(
     // bad Getter + good Copc = {}
     {},
   )

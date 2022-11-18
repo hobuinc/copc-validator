@@ -2,14 +2,11 @@ import {
   CopcCollection,
   LasCopcCollection,
   FallbackCollection,
-} from 'collections'
-import { invokeCollection, now } from 'utils'
+} from '../collections/index.js'
+import { invokeCollection, now } from '../utils/index.js'
 import { Copc, Getter, Las } from 'copc'
-import { Check, generateReportParams, Report } from 'types'
-// import { isEqual, omit } from 'lodash'
-// import isEqual from 'lodash/isEqual'
+import { Check, generateReportParams, Report } from '../types/index.js'
 import isEqual from 'lodash.isequal'
-// import omit from 'lodash/omit'
 import omit from 'lodash.omit'
 
 /**
@@ -31,9 +28,7 @@ export const generateReport = async (
   {
     source,
     options: {
-      name = source /* typeof source === 'string'
-        ? source
-        : 'Report ' + new Date().toISOString(),*/,
+      name = source,
       deep = false,
       workers,
       mini = false,
@@ -120,12 +115,11 @@ export const generateReport = async (
           filetype: 'LAS',
           start,
           end: new Date(),
-          time: /*performance.now()*/ now() - startTime,
+          time: now() - startTime,
         },
         checks,
         las: mini ? undefined : { header, vlrs },
         error: {
-          // name: (copcError as Error).name,
           message: (copcError as Error).message,
           stack: (copcError as Error).stack,
         },
@@ -166,7 +160,7 @@ export const generateReport = async (
           filetype: 'Unknown',
           start,
           end: new Date(),
-          time: /*performance.now()*/ now() - startTime,
+          time: now() - startTime,
         },
         checks,
         ...errors,

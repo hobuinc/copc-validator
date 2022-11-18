@@ -1,5 +1,5 @@
 import { Getter } from 'copc'
-import { getCopcItems } from 'test'
+import { ellipsoidFiles, getCopcItems } from 'test'
 import { checkAll, invokeAllChecks } from 'utils'
 import vlrSuite, { manualVlrSuite } from './vlrs'
 
@@ -37,7 +37,7 @@ test('manualVlrSuite all-pass', async () => {
 })
 
 test('manualVlrSuite failures', async () => {
-  const get = Getter.create(__filename)
+  const get = Getter.create(ellipsoidFiles.sh)
   const {
     copc: { vlrs },
   } = await items

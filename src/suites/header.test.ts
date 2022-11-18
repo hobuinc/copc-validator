@@ -1,5 +1,5 @@
 import { Binary, Getter, Las } from 'copc'
-import { getCopcItems } from 'test'
+import { ellipsoidFiles, getCopcItems } from 'test'
 import { checkAll, findCheck, invokeAllChecks } from 'utils'
 import { headerSuite, manualHeaderSuite } from './header'
 
@@ -34,7 +34,7 @@ test('manualHeaderSuite all-pass', async () => {
 })
 
 test('manualHeaderSuite failure', async () => {
-  const get = Getter.create(__filename)
+  const get = Getter.create(ellipsoidFiles.sh)
   const buffer = await get(0, Las.Constants.minHeaderLength)
   const dv = Binary.toDataView(buffer)
   const checks = await invokeAllChecks({

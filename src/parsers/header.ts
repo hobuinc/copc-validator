@@ -1,6 +1,6 @@
 import { Binary, Getter, Las } from 'copc'
-import { manualHeaderSuite as Suite } from 'suites'
-import type { Check, manualHeaderParams } from 'types'
+import { manualHeaderSuite as Suite } from '../suites/index.js'
+import type { Check, manualHeaderParams } from '../types/index.js'
 
 export const headerParser = async (
   get: Getter,

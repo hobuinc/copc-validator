@@ -1,8 +1,8 @@
 import { Binary, Getter, Las } from 'copc'
-import { headerParser, vlrParser } from 'parsers'
-import { headerSuite, vlrSuite } from 'suites'
-import { Check } from 'types'
-import { getterToHeader } from 'utils'
+import { headerParser, vlrParser } from '../parsers/index.js'
+import { headerSuite, vlrSuite } from '../suites/index.js'
+import { Check } from '../types/index.js'
+import { getterToHeader } from '../utils/index.js'
 
 export const FallbackCollection = async (
   get: Getter,

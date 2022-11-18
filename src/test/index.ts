@@ -1,10 +1,12 @@
 import { Copc, Getter, Hierarchy, Las } from 'copc'
 import { join, resolve } from 'path'
 import { loadAllHierarchyPages } from 'utils'
+import { dirname as dirpath } from 'path'
+import { fileURLToPath } from 'url'
 
 export const workerCount: number | undefined = undefined
 
-export const dirname = __dirname
+export const dirname = dirpath(fileURLToPath(import.meta.url))
 // const filename = 'ellipsoid.copc.laz'
 // export const ellipsoidFilename = join(dirname, 'data', filename)
 export const ellipsoidFiles = {
@@ -15,6 +17,8 @@ export const ellipsoidFiles = {
   laz14: join(dirname, 'data', 'ellipsoid-1.4.laz'),
   color12: join(dirname, 'data', '1.2-with-color.copc.laz'),
   fake: join(dirname, 'data', 'fake-copc.txt'),
+  sh: join(dirname, 'data', 'generate-ellipsoid-1.4.sh'),
+  binNonCopc: join(dirname, 'data', ''),
 }
 
 /**

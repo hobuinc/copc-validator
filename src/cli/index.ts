@@ -1,14 +1,12 @@
 import minimist from 'minimist'
-import { generateReport } from 'report/index.js'
+import { generateReport } from '../report/index.js'
 import { writeFileSync } from 'fs'
 import { resolve } from 'path'
-import { writeHelp } from './help'
-// import { version as copcVersion } from '../../package.json' assert { type: 'json' }
+import { writeHelp } from './help.js'
 
-export * from './help'
+export * from './help.js'
 
 export const fs = { writeFileSync }
-// const { version: copcVersion } = require('../../package.json') //eslint-disable-line
 const copcVersion: string = process.env.npm_package_version || 'vX.X.X'
 
 type ExpectedArgv = {
@@ -38,7 +36,6 @@ export const copcc = async (argv: string[]) => {
 
   // PARSE ARGS
   const args = minimist<ExpectedArgv>(argv, {
-    // ===== OPTIONS ALSO GO HERE =====
     boolean: ['deep', 'mini', 'progress', 'help', 'version'],
     string: ['output', 'name'],
     alias: {
@@ -101,11 +98,9 @@ export const copcc = async (argv: string[]) => {
     } catch (err) {
       console.error(err)
     }
-  } else process.stdout.write(JSON.stringify(report, null, 2) + '\n') //console.dir(report, { depth: null })
-  // console.dir prints entire report object & keeps VSCode syntax highlighting
-  // but process.stdout.write() may be preferred? will check with Connor
-  // currently using process.stdout.write() so the shape of the output
-  // (newlines, undefined, etc) matches the output file
+  } else process.stdout.write(JSON.stringify(report, null, 2) + '\n')
+
+  // EXIT NODE
   return
 }
 

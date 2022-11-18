@@ -20,14 +20,11 @@ export const loadAllHierarchyPages = async (
   )
   return (
     await Promise.all(
-      Object.entries(pages).map(
-        async ([, page]) =>
-          (
-            await Copc.loadHierarchyPage(get, page as Hierarchy.Page)
-          ).nodes,
+      Object.values(pages).map((page) =>
+        Copc.loadHierarchyPage(get, page as Hierarchy.Page),
       ),
     )
-  ).reduce((acc, map) => Object.assign(acc, map), nodes)
+  ).reduce((acc, tree) => Object.assign(acc, tree.nodes), nodes)
 }
 
 export const UINT32_MAX = 4_294_967_295

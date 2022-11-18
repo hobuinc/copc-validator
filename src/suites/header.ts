@@ -1,12 +1,15 @@
 import { Las, Binary, parseBigInt, getBigUint64 } from 'copc'
-import type { Check, manualHeaderParams as manualParams } from 'types'
+import type {
+  Check,
+  manualHeaderParams as manualParams,
+} from '../types/index.js'
 import {
   basicCheck,
   complexCheck,
   parseNumberOfPointsByReturn,
   parseLegacyNumberOfPointsByReturn,
   UINT32_MAX,
-} from 'utils'
+} from '../utils/index.js'
 
 /**
  * Suite of Check Functions for checking the `copc.header` object to validate

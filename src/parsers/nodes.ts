@@ -1,7 +1,7 @@
 import { Copc, Hierarchy } from 'copc'
-import { pointDataSuite } from 'suites'
-import { Check, AllNodesChecked, nodeParserParams } from 'types'
-import { loadAllHierarchyPages, runTasks } from 'utils'
+import { pointDataSuite } from '../suites/index.js'
+import { Check, AllNodesChecked, nodeParserParams } from '../types/index.js'
+import { loadAllHierarchyPages, runTasks } from '../utils/index.js'
 
 export const nodeParser: Check.Parser<
   nodeParserParams,

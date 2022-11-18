@@ -1,6 +1,11 @@
 import { Binary, Getter, Las } from 'copc'
-import { Check } from 'types'
-import { basicCheck, vlrCheck, Statuses, checkVlrDuplicates } from 'utils'
+import { Check } from '../types/index.js'
+import {
+  basicCheck,
+  vlrCheck,
+  Statuses,
+  checkVlrDuplicates,
+} from '../utils/index.js'
 import proj4 from '@landrush/proj4'
 
 /**

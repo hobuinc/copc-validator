@@ -21,14 +21,10 @@
   },
   "scripts": {
     "clean": "rm -rf ./lib",
-    "oldbuild": "yarn clean && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
-    "oldcompile": "babel src -d lib --source-maps --extensions '.ts' && tsc-alias -p tsconfig.build.json",
     "build": "yarn clean && tsc --build src && tsc-alias -p src/tsconfig.json && find lib -name '*.test.*' -delete",
-    "compile": "babel src -d dist --source-maps --extensions '.ts' && tsc-alias -p tsconfig.json",
-    "bbuild": "yarn clean && yarn compile",
     "start": "node lib/index.js",
     "dev": "ts-node --esm -r tsconfig-paths/register src/index.ts",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
     "lint": "eslint . --ext .ts",
     "flamegraph": "0x --output-dir='.0x/artifacts/{pid}' --output-html='.0x/graphs/{pid}.html' --open lib/index.js",
     "prepare": "yarn build"

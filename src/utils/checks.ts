@@ -1,5 +1,5 @@
 import { Check } from 'types'
-import { Statuses } from './status'
+import { Statuses } from './status.js'
 
 /**
  * Utility function to convert simple boolean logic and basic functions

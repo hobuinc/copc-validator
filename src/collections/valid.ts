@@ -1,7 +1,7 @@
 import { Copc, Getter } from 'copc'
-import { copcSuite, manualHeaderSuite } from 'suites'
-import { nodeParser, vlrParser, headerParser } from 'parsers'
-import { Check, manualHeaderParams } from 'types'
+import { copcSuite, manualHeaderSuite } from '../suites/index.js'
+import { nodeParser, vlrParser, headerParser } from '../parsers/index.js'
+import { Check, manualHeaderParams } from '../types/index.js'
 
 type CopcCollection = {
   filepath: string

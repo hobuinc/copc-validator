@@ -23,7 +23,7 @@ export const runTasks = async (
     () =>
       spawn<workerFunction>(
         new Worker(
-          /*'./worker'*/ typeof process === 'object'
+          typeof process === 'object'
             ? './worker'
             : new URL('./worker.js', import.meta.url).href,
           {

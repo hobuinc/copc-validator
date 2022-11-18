@@ -1,7 +1,7 @@
 import { Las } from 'copc'
-import { Check } from 'types'
-import { complexCheck } from './checks'
-import { Statuses } from './status'
+import { Check } from '../types/index.js'
+import { complexCheck } from './checks.js'
+import { Statuses } from './status.js'
 
 type vlrCheck = {
   vlrs: Las.Vlr[]

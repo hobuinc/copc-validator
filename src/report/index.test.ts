@@ -77,16 +77,16 @@ test('shallow LAS', async () => {
 
 test('shallow Unknown', async () => {
   const shallow = await generateReport({
-    source: __filename,
+    source: ellipsoidFiles.sh,
     options: {
-      name: __filename,
+      name: ellipsoidFiles.sh,
       deep: false,
     },
   }) // default parameters but provided
   expect(Report.isCopc(shallow)).toBe(false)
   expect(Report.isFail(shallow)).toBe(true)
 
-  expect(shallow.name).toEqual(__filename)
+  expect(shallow.name).toEqual(ellipsoidFiles.sh)
   expect(shallow.scan.type).toEqual('shallow')
   expect(shallow.scan.filetype).toEqual('Unknown')
   if (!Report.isFail(shallow))

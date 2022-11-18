@@ -1,17 +1,19 @@
-import copcc, { fs, writeHelp } from 'cli'
-import generateReport from 'report'
-import { ellipsoidFiles } from 'test'
-import { Report } from 'types'
+import copcc, { fs, writeHelp } from '.'
+// import { jest } from '@jest/globals'
+import generateReport from '../report/index.js'
+import { ellipsoidFiles } from '../test/index.js'
+import { Report } from '../types/index.js'
 
 const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
 const reportName = 'report-name'
-const { version: copcVersion } = require('../package.json') // eslint-disable-line
+// const { version: copcVersion } = require('../package.json') // eslint-disable-line
+const copcVersion: string = process.env.npm_package_version || 'vX.X.X'
 
 const deepScan = generateReport({ source: filename, options: { deep: true } })
 
-afterEach(() => jest.clearAllMocks())
-afterAll(() => jest.restoreAllMocks())
+afterEach(() => import.meta.jest.clearAllMocks())
+afterAll(() => import.meta.jest.restoreAllMocks())
 
 // ========== TESTS ==========
 test('cli shallow', async () => {
@@ -25,7 +27,7 @@ test('cli shallow', async () => {
 })
 
 test('cli deep', async () => {
-  jest.setTimeout(20000)
+  import.meta.jest.setTimeout(20000)
   const expectedScan = expectScan(
     await deepScan, //await generateReport(filename, { deep: true }),
   )
@@ -35,7 +37,7 @@ test('cli deep', async () => {
 })
 
 test('cli deep file-output', async () => {
-  jest.setTimeout(20000)
+  import.meta.jest.setTimeout(20000)
   const expectedScan = expectScan(
     await deepScan, //await generateReport(filename, { deep: true }),
   )
@@ -122,7 +124,7 @@ test('cli errors', async () => {
   )
 
   // silence console.error() in copcc() since we don't currently care about it
-  const mockConsoleError = jest
+  const mockConsoleError = import.meta.jest
     .spyOn(console, 'error')
     .mockImplementation(() => {}) //eslint-disable-line
   mockFileWrite.mockClear()
@@ -140,7 +142,7 @@ test('cli errors', async () => {
 })
 
 test('cli named-reports', async () => {
-  jest.setTimeout(10000)
+  import.meta.jest.setTimeout(10000)
   const expectedShallow = expectScan(
     await generateReport({ source: filename, options: { name: reportName } }),
   )
@@ -156,12 +158,14 @@ test('cli named-reports', async () => {
 })
 
 // ========== MOCKS ==========
-const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {}) //eslint-disable-line
-const mockProcessWrite = jest
+const mockConsoleLog = import.meta.jest
+  .spyOn(console, 'log')
+  .mockImplementation(() => {}) //eslint-disable-line
+const mockProcessWrite = import.meta.jest
   .spyOn(process.stdout, 'write')
   .mockImplementation(() => true)
   .mockName('process.write')
-const mockFileWrite = jest
+const mockFileWrite = import.meta.jest
   .spyOn(fs, 'writeFileSync')
   .mockImplementation((_file, data) =>
     JSON.parse(typeof data === 'string' ? data : data.toString()),
