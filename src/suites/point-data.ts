@@ -1,6 +1,4 @@
 import { Key } from 'copc'
-// import { difference } from 'lodash'
-// import difference from 'lodash/difference'
 import difference from 'lodash.difference'
 import { Check, AllNodesChecked } from '../types/index.js'
 import { Statuses } from '../utils/index.js'
