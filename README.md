@@ -49,9 +49,9 @@ Examples:
 
       copcc --deep path/to/example.copc.laz --output=output.json
 
-- Deep & Minified scan with max threads = 64, showing a progress bar
+- Deep & Minified scan with worker count = 64, showing a progress bar
 
-      copcc path/to/example.copc.laz -dpmt 64
+      copcc path/to/example.copc.laz -dpmw 64
 
 # Usage
 
@@ -288,6 +288,7 @@ generateReport({
 | `gpsTime`                  | Each point has `GpsTime` value within Las bounds                        | Shallow | `PointData`    |
 | `sortedGpsTime`            | The points in each node are sorted by `GpsTime` value, warns if not     |  Deep   | `PointData`    |
 | `returnNumber`             | Each point has `ReturnNumber <= NumberOfReturns`                        | Shallow | `PointData`    |
+| `zeroPoint`                | Warns with list of all `pointCount: 0` nodes in the Hierarchy           | Deep\*  | `PointData`    |
 | `nodesReachable`           | Every `Node` (`'D-X-Y-Z'`) in the `Hierarchy` is reachable              | Shallow | `PointData`    |
 | `...ID`                    | ...Description                                                          | Shallow | `...`          |
 
@@ -355,7 +356,6 @@ type Report = {
 - Add more `Check.Function`s - waiting on laz-perf chunk table
 - Implement `--las` option to validate file against Las 1.4 specifications
 - Continue to optimize for speed, especially large (1.5GB+) files
-- Trim/Streamline Node Parsing vs Other Parsers
 
 <!--for styling the Table of Contents-->
 <style type="text/css">

@@ -3,7 +3,7 @@
   "version": "0.0.7",
   "description": "Reads a file to determine if it's genuine COPC, and provides details about any errors/warnings against the COPC and LAS specs",
   "type": "module",
-  "main": "lib/index.js",
+  "main": "lib/exports.js",
   "keywords": [
     "copc",
     "validate",
