@@ -3,7 +3,7 @@ import {
   LasCopcCollection,
   FallbackCollection,
 } from '../collections/index.js'
-import { invokeCollection, now } from '../utils/index.js'
+import { invokeCollection, currTime } from '../utils/index.js'
 import { Copc, Getter, Las } from 'copc'
 import { Check, generateReportParams, Report } from '../types/index.js'
 import isEqual from 'lodash.isequal'
@@ -47,7 +47,7 @@ export const generateReport = async (
 ): Promise<Report> => {
   const type = deep ? 'deep' : 'shallow'
   const start = new Date()
-  const startTime = now()
+  const startTime = currTime()
   // Getter.create() should never throw error outside of bad string
   const get = Getter.create(source)
   try {
@@ -80,7 +80,7 @@ export const generateReport = async (
         filetype: 'COPC',
         start,
         end: new Date(),
-        time: /*performance.now()*/ now() - startTime,
+        time: /*performance.now()*/ currTime() - startTime,
       },
       checks,
       copc: mini ? undefined : copc,
@@ -115,7 +115,7 @@ export const generateReport = async (
           filetype: 'LAS',
           start,
           end: new Date(),
-          time: now() - startTime,
+          time: currTime() - startTime,
         },
         checks,
         las: mini ? undefined : { header, vlrs },
@@ -160,7 +160,7 @@ export const generateReport = async (
           filetype: 'Unknown',
           start,
           end: new Date(),
-          time: now() - startTime,
+          time: currTime() - startTime,
         },
         checks,
         ...errors,

@@ -1,14 +1,11 @@
 import { Check } from 'types'
-// import { map, flatMapDeep } from 'lodash'
-// import map from 'lodash/map'
-// import flatMapDeep from 'lodash/flatMapDeep'
 import map from 'lodash.map'
 import flatMapDeep from 'lodash.flatmapdeep'
 
-export const now =
+export const currTime =
   typeof performance !== 'undefined'
-    ? performance.now
-    : () => new Date().getTime() // Node 14.x does not have global.performance
+    ? () => performance.now()
+    : () => new Date().getTime()
 
 /**
  * Utility function to invoke multiple test Suites at once and combine them

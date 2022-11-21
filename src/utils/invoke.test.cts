@@ -1,6 +1,6 @@
 global.performance = undefined as unknown as Performance
-import { now } from './invoke'
+import { currTime } from './invoke'
 
 test('now', () => {
-  expect(now()).toBeCloseTo(new Date().getTime(), -2)
+  expect(currTime()).toBeCloseTo(new Date().getTime(), -2)
 })
