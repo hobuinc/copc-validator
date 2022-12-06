@@ -1,7 +1,7 @@
 import { Copc, Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems, workerCount } from 'test'
 import { checkAll, invokeAllChecks } from 'utils'
-import nodeParser from './nodes'
+import { nodeParser } from './nodes'
 
 const items = getCopcItems()
 

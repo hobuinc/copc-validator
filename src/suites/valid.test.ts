@@ -3,8 +3,8 @@ import { ellipsoidFiles, getCopcItems } from 'test'
 import { Check } from 'types'
 import { checkAll, findCheck, invokeAllChecks } from 'utils'
 import { copcSuite } from './valid'
-import headerSuite from './header'
-import vlrSuite from './vlrs'
+import { headerSuite } from './header'
+import { vlrSuite } from './vlrs'
 
 const items = getCopcItems()
 

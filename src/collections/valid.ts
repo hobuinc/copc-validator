@@ -21,8 +21,8 @@ export const CopcCollection = async ({
   workerCount,
 }: CopcCollection): Promise<Check.Suite.Collection> => [
   { source: copc, suite: copcSuite },
-  headerParser(get, copcHeaderSuite),
-  vlrParser(get),
+  headerParser({ get, suite: copcHeaderSuite }),
+  vlrParser({ get }),
   nodeParser({
     get,
     copc,

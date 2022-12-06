@@ -20,7 +20,7 @@ const headerFallback = async ({ get, buffer }: headerFallback) => {
       suite: headerSuite,
     }
   } catch (error) {
-    return headerParser(get)
+    return headerParser({ get })
   }
 }
 
@@ -31,6 +31,6 @@ const vlrFallback = async ({ get, info }: vlrFallback) => {
     const vlrs = await Las.Vlr.walk(get, header)
     return { source: { header, vlrs }, suite: vlrSuite }
   } catch (error) {
-    return vlrParser(get)
+    return vlrParser({ get })
   }
 }

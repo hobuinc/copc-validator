@@ -34,8 +34,6 @@ export const headerSuite: Check.Suite<{ header: Las.Header }> = {
     ),
 }
 
-export default headerSuite
-
 export const manualHeaderSuite: Check.Suite<manualParams> = {
   fileSignature: ({ buffer }) => {
     const fileSignature = Binary.toCString(buffer.slice(0, 4))

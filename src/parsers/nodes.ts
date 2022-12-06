@@ -33,8 +33,6 @@ export const nodeParser: Check.Parser<
   }
 }
 
-export default nodeParser
-
 // ========== UTILITIES ============
 /**
  *

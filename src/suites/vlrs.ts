@@ -43,8 +43,6 @@ export const vlrSuite: Check.Suite<{
     }),
 }
 
-export default vlrSuite
-
 export const manualVlrSuite: Check.Suite<{ get: Getter; vlrs: Las.Vlr[] }> = {
   wkt: async ({ get, vlrs }) => {
     const vlr = Las.Vlr.find(vlrs, 'LASF_Projection', 2112)

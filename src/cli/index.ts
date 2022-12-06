@@ -103,5 +103,3 @@ export const copcc = async (argv: string[]) => {
   // EXIT NODE
   return
 }
-
-export default copcc

@@ -27,11 +27,13 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
     "lint": "eslint . --ext .ts",
     "flamegraph": "0x --output-dir='.0x/artifacts/{pid}' --output-html='.0x/graphs/{pid}.html' --open lib/index.js",
+    "worker": "rollup -c rollup.config.worker.js",
     "prepare": "yarn build"
   },
   "devDependencies": {
     "0x": "^5.4.1",
     "@rollup/plugin-commonjs": "^23.0.3",
+    "@rollup/plugin-json": "^5.0.2",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-typescript": "^10.0.1",
     "@types/cli-progress": "^3.11.0",
@@ -51,6 +53,8 @@
     "prettier": "^2.7.1",
     "rollup": "^3.6.0",
     "rollup-plugin-dts": "^5.0.0",
+    "rollup-plugin-polyfill-node": "^0.11.0",
+    "rollup-plugin-string": "^3.0.0",
     "ts-jest": "^29.0.1",
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.7.0",

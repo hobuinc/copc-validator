@@ -1,7 +1,7 @@
 import { Getter } from 'copc'
 import { ellipsoidFiles, getCopcItems } from 'test'
 import { checkAll, invokeAllChecks } from 'utils'
-import vlrSuite, { manualVlrSuite } from './vlrs'
+import { vlrSuite, manualVlrSuite } from './vlrs'
 
 const items = getCopcItems()
 

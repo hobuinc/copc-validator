@@ -1,4 +1,4 @@
-import generateReport from 'report'
+import { generateReport } from 'report'
 import { ellipsoidFiles, getCopcItems, getLasItems } from 'test'
 import { Report } from 'types'
 

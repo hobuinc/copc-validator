@@ -2,10 +2,15 @@ import { Binary, Getter, Las } from 'copc'
 import { manualHeaderSuite as Suite } from '../suites/index.js'
 import type { Check, manualHeaderParams } from '../types/index.js'
 
-export const headerParser = async (
-  get: Getter,
-  suite: Check.Suite<manualHeaderParams> = Suite,
-): Check.Suite.Nested<manualHeaderParams> => {
+type headerParserParams = {
+  get: Getter
+  suite?: Check.Suite<manualHeaderParams>
+}
+
+export const headerParser: Check.Parser<
+  headerParserParams,
+  manualHeaderParams
+> = async ({ get, suite = Suite }) => {
   const buffer = await get(0, Las.Constants.minHeaderLength)
   const dv = Binary.toDataView(buffer)
   if (buffer.byteLength < Las.Constants.minHeaderLength)

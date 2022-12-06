@@ -3,10 +3,12 @@ import { Check, manualVlrParams } from '../types/index.js'
 import { manualVlrSuite as Suite } from '../suites/index.js'
 import { getterToHeader, doWalk } from '../utils/index.js'
 
-export const vlrParser = async (
-  get: Getter,
-  suite: Check.Suite<manualVlrParams> = Suite,
-): Check.Suite.Nested<manualVlrParams> => {
+type vlrParserParams = { get: Getter; suite?: Check.Suite<manualVlrParams> }
+
+export const vlrParser: Check.Parser<
+  vlrParserParams,
+  manualVlrParams
+> = async ({ get, suite = Suite }) => {
   const { info } = await getterToHeader(get)
   const vlrs = await doWalk({
     get,
@@ -22,3 +24,4 @@ export const vlrParser = async (
   })
   return { source: { get, vlrs: [...vlrs, ...evlrs] }, suite }
 }
+// TODO: Parse without doWalk (to avoid Copc.create() errors)?

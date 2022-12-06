@@ -1,13 +1,11 @@
-import copcc, { fs, writeHelp } from '.'
-// import { jest } from '@jest/globals'
-import generateReport from '../report/index.js'
-import { ellipsoidFiles } from '../test/index.js'
-import { Report } from '../types/index.js'
+import { copcc, fs, writeHelp } from '.'
+import { generateReport } from 'report' //'../report/index.js'
+import { ellipsoidFiles } from 'test' //'../test/index.js'
+import { Report } from 'types' //'../types/index.js'
 
 const filename = ellipsoidFiles.copc
 const outputPath = 'output.json'
 const reportName = 'report-name'
-// const { version: copcVersion } = require('../package.json') // eslint-disable-line
 const copcVersion: string = process.env.npm_package_version || 'vX.X.X'
 
 const deepScan = generateReport({ source: filename, options: { deep: true } })

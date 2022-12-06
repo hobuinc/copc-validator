@@ -168,5 +168,3 @@ export const generateReport = async (
     }
   }
 }
-
-export default generateReport

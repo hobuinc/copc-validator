@@ -3,7 +3,7 @@ import { readPointDataRecords, nonZeroNodes } from 'parsers'
 import { ellipsoidFiles, getCopcItems, workerCount } from 'test'
 import { AllNodesChecked, CheckedNode } from 'types'
 import { checkAll, findCheck, invokeAllChecks } from 'utils'
-import pointDataSuite, { nodeString } from './point-data'
+import { pointDataSuite, nodeString } from './point-data'
 
 const items = getCopcItems()
 
