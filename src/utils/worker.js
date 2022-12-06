@@ -168,3 +168,5 @@ expose(async function ({ filepath, copc, key, node, deep }) {
   // console.log(checks)
   return [key, checks]
 })
+
+export default ''

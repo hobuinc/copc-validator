@@ -1,7 +1,8 @@
 import { SingleBar } from 'cli-progress'
 import { Copc, Hierarchy } from 'copc'
-import { spawn, Pool, Worker } from 'threads'
+import { spawn, Pool, Worker, BlobWorker } from 'threads'
 import { AllNodesChecked, CheckedNode } from 'types'
+import WorkerText from './worker'
 
 type workerParams = {
   filepath: string
@@ -22,14 +23,15 @@ export const runTasks = async (
   const pool = Pool(
     () =>
       spawn<workerFunction>(
-        new Worker(
-          typeof process === 'object'
-            ? './worker'
-            : new URL('./worker.js', import.meta.url).href,
-          {
-            type: 'module',
-          },
-        ),
+        BlobWorker.fromText(WorkerText),
+        // new Worker(
+        //   typeof process === 'object'
+        //     ? './worker'
+        //     : new URL('./worker.js', import.meta.url).href,
+        //   {
+        //     type: 'module',
+        //   },
+        // ),
       ),
     workerCount,
   )

@@ -9,3 +9,4 @@ lib/
 isolate-0x*-v8.log
 *.0x/
 *.tsbuildinfo
+bundles/
