@@ -1,6 +1,7 @@
 // const { Getter, Copc, Bounds, Key } = require('copc')
 // const { expose } = require('threads/worker')
 import { expose } from 'threads/worker'
+import { LazPerf } from 'laz-perf/lib/worker/index.js'
 import { Getter, Copc, Bounds, Key } from 'copc'
 const { stepTo } = Bounds
 const { parse } = Key
@@ -10,9 +11,29 @@ const { loadPointDataView } = Copc
 const boolToStatus = (b, warning = false) =>
   !b ? 'pass' : warning ? 'warn' : 'fail'
 
-expose(async function ({ filepath, copc, key, node, deep }) {
+let lazPerfPromise
+
+expose(async function ({
+  filepath,
+  copc,
+  key,
+  node,
+  deep,
+  lazPerfWasmFilename,
+}) {
   // console.log(`Reading ${key}`)
   // console.time(key)
+  if (lazPerfWasmFilename.startsWith('http://')) {
+    lazPerfPromise = LazPerf.create({
+      locateFile: () => lazPerfWasmFilename,
+      INITIAL_MEMORY: 262144,
+      TOTAL_STACK: 65536,
+      FAST_MEMORY: 65536,
+    })
+  } else {
+    lazPerfPromise = undefined // let Copc create its own lazPerf
+    // had issues finding the laz-perf.wasm file locally, so for now I'm ignoring it
+  }
   let prevGpsTime = 0
   if (node.pointCount === 0) {
     const checks = {
@@ -28,7 +49,10 @@ expose(async function ({ filepath, copc, key, node, deep }) {
     return [key, checks]
   }
   const get = create(filepath) //Getter.
-  const view = await loadPointDataView(get, copc, node) //Copc.
+  // console.log(filepath, lazPerfWasmFilename)
+  const view = await loadPointDataView(get, copc, node, {
+    lazPerf: await lazPerfPromise,
+  }) //Copc.
   const dimensions = Object.keys(view.dimensions)
   const getters = dimensions.reduce((acc, dimension) => {
     acc[dimension] = view.getter(dimension)
@@ -51,7 +75,7 @@ expose(async function ({ filepath, copc, key, node, deep }) {
       gpsTimeRange: [min, max],
     },
   } = copc
-  const hasRgb = copc.header.pointDataRecordFormat !== 6 //pointDataRecordFormat !== 6
+  const hasRgb = copc.header.pointDataRecordFormat !== 6
   const [minx, miny, minz, maxx, maxy, maxz] = stepTo(
     //Bounds.
     cube,
@@ -65,18 +89,8 @@ expose(async function ({ filepath, copc, key, node, deep }) {
   for (let i = 0; i < length; i++) {
     const { rgb, rgbi, xyz, gpsTime, sortedGpsTime, returnNumber } = checks
     let earlyBreak = true
-    // if (
-    //   (rgb === 'fail' || rgb === 'warn') &&
-    //   (rgbi === 'fail' || rgbi === 'pass') &&
-    //   xyz === 'fail' &&
-    //   gpsTime === 'fail' &&
-    //   sortedGpsTime === 'fail' &&
-    //   returnNumber === 'fail'
-    // ) {
-    //   break
-    //   //early stop, no need to read any more points
-    // }
     const point = getDimensions(i)
+
     if (typeof rgb === 'undefined' || rgb === 'pass') {
       earlyBreak = false
       checks.rgb = !hasRgb
@@ -92,8 +106,6 @@ expose(async function ({ filepath, copc, key, node, deep }) {
               (point.Red === 0 && point.Green === 0 && point.Blue === 0),
             true,
           )
-    } else {
-      earlyBreak &&= true
     }
     if (typeof rgbi === 'undefined' || rgbi === 'warn') {
       earlyBreak = false
@@ -116,8 +128,6 @@ expose(async function ({ filepath, copc, key, node, deep }) {
         )
       } //this, with `rgbi === warn`, is the equivalent of checking that every
       //  point is bad, otherwise the node tests OK
-    } else {
-      earlyBreak &&= true
     }
     if (typeof xyz === 'undefined' || xyz === 'pass') {
       earlyBreak = false
@@ -132,8 +142,6 @@ expose(async function ({ filepath, copc, key, node, deep }) {
           point.Z < minz ||
           point.Z > maxz,
       )
-    } else {
-      earlyBreak &&= true
     }
     if (typeof gpsTime === 'undefined' || gpsTime === 'pass') {
       earlyBreak = false
@@ -142,15 +150,11 @@ expose(async function ({ filepath, copc, key, node, deep }) {
           point.GpsTime < min ||
           point.GpsTime > max,
       )
-    } else {
-      earlyBreak &&= true
     }
     if (typeof sortedGpsTime === 'undefined' || sortedGpsTime === 'pass') {
       earlyBreak = false
       checks.sortedGpsTime = boolToStatus(point.gpsTime < prevGpsTime)
       prevGpsTime = point.gpsTime
-    } else {
-      earlyBreak &&= true
     }
     if (typeof returnNumber === 'undefined' || returnNumber === 'pass') {
       earlyBreak = false
@@ -159,14 +163,11 @@ expose(async function ({ filepath, copc, key, node, deep }) {
           typeof point.NumberOfReturns === 'undefined' ||
           point.ReturnNumber > point.NumberOfReturns,
       )
-    } else {
-      earlyBreak &&= true
     }
+    if (earlyBreak) break
   }
 
   // console.timeEnd(key)
   // console.log(checks)
   return [key, checks]
 })
-
-export default ''

@@ -2,11 +2,6 @@ import { Check } from 'types'
 import map from 'lodash.map'
 import flatMapDeep from 'lodash.flatmapdeep'
 
-export const currTime =
-  typeof performance !== 'undefined'
-    ? () => performance.now()
-    : () => new Date().getTime()
-
 /**
  * Utility function to invoke multiple test Suites at once and combine them
  * into one `Check` array. Supply a Suite with it's common source in this
@@ -77,32 +72,6 @@ export const invokeCollection = async (
       )
     ).flat(),
   )
-
-// export const invokeCollection = async (
-//   collection: Promise<Check.Suite.Collection> | Check.Suite.Collection,
-// ): Promise<Check[]> =>
-//   Promise.all(
-//     (
-//       await PromisePool.for(await collection)
-//         .withConcurrency(200)
-//         .process(async (suiteWSource, i) => {
-//           try {
-//             const { suite, source } = await suiteWSource
-//             return Object.entries(suite).map(([id, f]) =>
-//               performCheck(source, f, id),
-//             )
-//           } catch (error) {
-//             return {
-//               // Can't get parser function name or any other identifying information
-//               id: `Parser ${i}: Failed to read source`,
-//               status: 'fail',
-//               info: (error as Error).message,
-//             } as Check
-//           }
-//         })
-//     ).results.flat(),
-//   )
-
 // I need to do further testing to ensure the above functions are performance optimal
 
 const performCheck = async (

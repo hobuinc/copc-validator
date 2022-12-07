@@ -27,7 +27,7 @@
 
 # Introduction
 
-_**COPC Validator**_ is a library for validating the header and content of a Cloud-Optimized Point Cloud (COPC) LAS file. Extending the `copc.js` library, it accepts either a (relative) file path or COPC url, and runs a series of checks against the values parsed by `copc.js`.
+_**COPC Validator**_ is a library & command-line application for validating the header and content of a Cloud-Optimized Point Cloud (COPC) LAS file. Extending the `copc.js` library, it accepts either a (relative) file path or COPC url, and runs a series of checks against the values parsed by `copc.js`.
 
 ## Getting Started
 
@@ -51,7 +51,7 @@ Examples:
 
 - Deep & Minified scan with worker count = 64, showing a progress bar
 
-      copcc path/to/example.copc.laz -dpmw 64
+      copcc path/to/example.copc.laz -dmpw 64
 
 # Usage
 
@@ -60,8 +60,6 @@ _**COPC Validator**_ has two main usages: via the `copcc` Command-Line Interface
 ## CLI
 
     copcc [options] <path>
-
-> _`copcc` = `copc-Checker`_
 
 _The usage and implementation of **COPC Validator** is meant to be as simple as possible. The CLI will only need one file path and will automatically run a `shallow` scan by default, or a `deep` scan if provided with the `--deep` option. All other functionality is completely optional._
 
@@ -80,19 +78,19 @@ _The usage and implementation of **COPC Validator** is meant to be as simple as 
 
 ## Import
 
-Add to project:
+1. Add to project:
 
-```sh
-npm i copc-validator
-  # or
-yarn add copc-validator
-```
+   ```sh
+   yarn add copc-validator
+     # or
+   npm i copc-validator
+   ```
 
-Import `generateReport()`:
+2. Import `generateReport()`:
 
-```TypeScript
-import { generateReport } from 'copc-validator'
-```
+   ```TypeScript
+   import { generateReport } from 'copc-validator'
+   ```
 
 - Example:
   ```TypeScript
@@ -104,6 +102,8 @@ import { generateReport } from 'copc-validator'
     console.log(report)
   }
   ```
+
+3. Copy `laz-perf.wasm` to `/public` _(for browser usage)_
 
 ### Options
 
@@ -128,6 +128,7 @@ generateReport({
 >
 > - No `output`, `help`, or `version` options
 > - `progress` is renamed to `showProgress`
+>   - Not usable in a browser
 > - Any **Alias** (listed [above](###options)) will not work
 
 # Scans

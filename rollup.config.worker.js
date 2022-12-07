@@ -1,35 +1,25 @@
 import commonjs from '@rollup/plugin-commonjs'
 import nodePolyfills from 'rollup-plugin-polyfill-node'
-import typescript from '@rollup/plugin-typescript'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import json from '@rollup/plugin-json'
-// import { uglify } from 'rollup-plugin-uglify'
 
 export default {
-  input: 'src/utils/worker.js',
+  input: 'src/utils/workers/worker.js',
   output: {
-    file: 'bundles/worker.js',
+    file: 'lib/utils/workers/worker.umd.js',
     format: 'umd',
     name: 'Worker',
     globals: {
-      'cross-fetch': 'cross-fetch',
       fs: 'fs',
       path: 'path',
       url: 'url',
     },
   },
-  external: ['cross-fetch', 'fetch', 'fs', 'path'],
+  external: ['fs', 'path'],
   plugins: [
-    nodeResolve(),
-    typescript({
-      // tsconfig: './tsconfig.production.json',
-      // This will put the declarations at the top level of our output, which is
-      // ./lib.  Otherwise it sticks them in ./lib/lib for some reason.
-      // declarationDir: '.',
-    }),
+    nodeResolve({ browser: true }),
     commonjs(),
     nodePolyfills(),
     json(),
-    // uglify(),
   ],
 }

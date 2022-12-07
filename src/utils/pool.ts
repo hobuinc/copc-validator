@@ -1,8 +1,9 @@
 import { SingleBar } from 'cli-progress'
 import { Copc, Hierarchy } from 'copc'
-import { spawn, Pool, Worker, BlobWorker } from 'threads'
+import { spawn, Pool, Worker } from 'threads'
 import { AllNodesChecked, CheckedNode } from 'types'
-import WorkerText from './worker'
+import { Paths } from './misc.js'
+// import WorkerText from './worker'
 
 type workerParams = {
   filepath: string
@@ -10,6 +11,7 @@ type workerParams = {
   key: string
   node: Hierarchy.Node
   deep: boolean
+  lazPerfWasmFilename: string
 }
 type workerResult = [string, CheckedNode]
 type workerFunction = (p: workerParams) => workerResult
@@ -23,15 +25,9 @@ export const runTasks = async (
   const pool = Pool(
     () =>
       spawn<workerFunction>(
-        BlobWorker.fromText(WorkerText),
-        // new Worker(
-        //   typeof process === 'object'
-        //     ? './worker'
-        //     : new URL('./worker.js', import.meta.url).href,
-        //   {
-        //     type: 'module',
-        //   },
-        // ),
+        new Worker(Paths.worker, {
+          type: 'module',
+        }),
       ),
     workerCount,
   )

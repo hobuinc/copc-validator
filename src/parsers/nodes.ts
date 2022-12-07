@@ -1,7 +1,7 @@
 import { Copc, Hierarchy } from 'copc'
 import { pointDataSuite } from '../suites/index.js'
 import { Check, AllNodesChecked, nodeParserParams } from '../types/index.js'
-import { loadAllHierarchyPages, runTasks } from '../utils/index.js'
+import { loadAllHierarchyPages, Paths, runTasks } from '../utils/index.js'
 
 export const nodeParser: Check.Parser<
   nodeParserParams,
@@ -61,15 +61,22 @@ export type readPDRsParams = {
 export const readPointDataRecords = (
   { nodes, filepath, copc, deep, workerCount }: readPDRsParams,
   withBar = false,
-): Promise<AllNodesChecked> =>
-  runTasks(
+): Promise<AllNodesChecked> => {
+  // console.log('READ PDR', Paths.lazPerf)
+  return runTasks(
+    // turn Hierarchy.Node.Map into Array of Worker tasks
     Object.entries(nodes).map(([key, node]) => ({
       filepath,
       key,
       node: node || { pointCount: 0, pointDataOffset: 0, pointDataLength: 0 },
       copc,
       deep,
+      lazPerfWasmFilename: Paths.lazPerf,
+      // typeof process === 'object'
+      //   ? 'laz-perf.wasm'
+      //   : window.origin + '/laz-perf.wasm',
     })),
     withBar,
     workerCount,
   )
+}

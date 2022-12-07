@@ -1,5 +1,6 @@
 export * from './checks.js'
 export * from './invoke.js'
+export * from './misc.js'
 export * from './parse.js'
 export * from './pool.js'
 export * from './status.js'
