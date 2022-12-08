@@ -2,8 +2,10 @@
   "name": "copc-validator",
   "version": "0.0.10",
   "description": "Reads a file to determine if it's genuine COPC, and provides details about any errors/warnings against the COPC and LAS specs",
-  "type": "module",
   "main": "lib/exports.js",
+  "bin": {
+    "copcc": "lib/index.js"
+  },
   "keywords": [
     "copc",
     "validate",
@@ -16,9 +18,7 @@
     "email": "cam@hobu.co"
   },
   "license": "MIT",
-  "bin": {
-    "copcc": "lib/index.js"
-  },
+  "type": "module",
   "scripts": {
     "clean": "rm -rf ./lib",
     "build": "yarn clean && tsc --build src && tsc-alias -p src/tsconfig.json && find lib -name '*.test.*' -delete",
