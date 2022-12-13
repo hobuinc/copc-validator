@@ -109,20 +109,25 @@ _The usage and implementation of **COPC Validator** is meant to be as simple as 
 
 `generateReport` accepts **most\*** of the same options as the CLI through the `options` property of the first parameter:
 
-Example:
+TypeScript:
 
 ```TypeScript
-generateReport({
-  source,
-  options: {
-    name: 'Name for Report output' // default: source
-    mini: true // omit copc/las info from report
-    deep: true // read all points per node
-    workers: 32 // Number of Workers to spawn with threads.js
-    showProgress: false // show cli-progress bar while reading point data
-  }
+const generateReport = ({
+  source: string | File,
+  options?: {
+    name?: string,          //default: source | 'COPC Validator Report'
+    mini?: boolean,         //default: false
+    deep?: boolean,         //default: false
+    workers?: number,       //default: CPU Thread Count
+    showProgress?: boolean, //default: false
+  },
+  collections?: {copc, las, fallback}
 })
 ```
+
+_[See below]() for `collections` information_
+
+**UPDATE: Version 0.1.0 introduces the ability to pass a `File` as the `source`, more easily enabling web browser validation**
 
 > \* **Key option differences:**
 >
@@ -246,24 +251,28 @@ Replacing `Collection`s is the primary way of generating `custom` reports throug
 Pseudo-Type:
 
 ```TypeScript
-generateReport({
-  source,
-  options: {}
-}, {
+import type {Copc, Getter, Las} from 'copc'
+type Collections = {
   copc: ({
     filepath: string,
     copc: Copc,
     get: Getter,
     deep: boolean,
-    maxThreads?: number
-  }) => Promise<Check.Collection>
+    workerCount?: number
+  }) => Promise<Check.Collection>,
   las: ({
     get: Getter,
     header: Las.Header,
     vlrs: Las.Vlr[]
-  }) => Promise<Check.Collection>
+  }) => Promise<Check.Collection>,
   fallback: (get: Getter) => Promise<Check.Collection>
-})
+}
+
+const generateReport = async ({
+  source: string | File,
+  options?: {...},
+  collections?: Collections
+}) => Promise<Report>
 ```
 
 ### All Checks

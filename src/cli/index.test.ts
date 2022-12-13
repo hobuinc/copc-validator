@@ -1,4 +1,4 @@
-import { copcc, fs, writeHelp } from '.'
+import { copcc, fs, helpString } from '.'
 import { generateReport } from 'report' //'../report/index.js'
 import { ellipsoidFiles } from 'test' //'../test/index.js'
 import { Report } from 'types' //'../types/index.js'
@@ -47,21 +47,21 @@ test('cli deep file-output', async () => {
 test('cli help', async () => {
   await copcc(['-h'])
   expect(mockProcessWrite).toBeCalledTimes(1)
-  expect(mockProcessWrite).toBeCalledWith(writeHelp(process.stdout.columns))
+  expect(mockProcessWrite).toBeCalledWith(helpString(process.stdout.columns))
   mockProcessWrite.mockClear()
 
   process.stdout.columns = 100
 
   await copcc(['--help'])
   expect(mockProcessWrite).toBeCalledTimes(1)
-  expect(mockProcessWrite).toBeCalledWith(writeHelp(100))
+  expect(mockProcessWrite).toBeCalledWith(helpString(100))
   mockProcessWrite.mockClear()
 
   process.stdout.columns = 200
 
   await copcc(['-help', filename])
   expect(mockProcessWrite).toBeCalledTimes(1)
-  expect(mockProcessWrite).toBeCalledWith(writeHelp(200))
+  expect(mockProcessWrite).toBeCalledWith(helpString(200))
   mockProcessWrite.mockClear()
 })
 
@@ -81,7 +81,7 @@ test('cli version', async () => {
   // --help overwrites --version
   await copcc(['-vh', `--output=${outputPath}`])
   expect(mockProcessWrite).toBeCalledTimes(1)
-  expect(mockProcessWrite).toBeCalledWith(writeHelp(process.stdout.columns))
+  expect(mockProcessWrite).toBeCalledWith(helpString(process.stdout.columns))
   mockProcessWrite.mockClear()
 })
 
@@ -109,17 +109,43 @@ test('cli mini', async () => {
 
 test('cli errors', async () => {
   // no args provided
-  await expect(copcc([])).rejects.toThrow('Not enough argument(s) provided')
+  await copcc([])
+  expect(mockProcessWrite).toBeCalledTimes(2)
+  expect(mockProcessWrite).toHaveBeenNthCalledWith(
+    1,
+    'ERROR: Not enough argument(s) provided\n',
+  )
+  expect(mockProcessWrite).toHaveBeenNthCalledWith(
+    2,
+    helpString(process.stdout.columns),
+  )
+  mockProcessWrite.mockClear()
 
   // no source file provided
-  await expect(copcc(['--deep', '--output', outputPath])).rejects.toThrow(
-    'Must provide a filepath to be validated',
+  await copcc(['--deep', '--output', outputPath])
+  expect(mockProcessWrite).toBeCalledTimes(2)
+  expect(mockProcessWrite).toHaveBeenNthCalledWith(
+    1,
+    'ERROR: Must provide a filepath to be validated\n',
   )
+  expect(mockProcessWrite).toHaveBeenNthCalledWith(
+    2,
+    helpString(process.stdout.columns),
+  )
+  mockProcessWrite.mockClear()
 
   // multiple filepaths
-  await expect(copcc([filename, ellipsoidFiles.laz14])).rejects.toThrow(
-    'Too many arguments (filepaths) provided',
+  await copcc([filename, ellipsoidFiles.laz14])
+  expect(mockProcessWrite).toBeCalledTimes(2)
+  expect(mockProcessWrite).toHaveBeenNthCalledWith(
+    1,
+    'ERROR: Too many arguments (filepaths) provided\n',
   )
+  expect(mockProcessWrite).toHaveBeenNthCalledWith(
+    2,
+    helpString(process.stdout.columns),
+  )
+  mockProcessWrite.mockClear()
 
   // silence console.error() in copcc() since we don't currently care about it
   const mockConsoleError = import.meta.jest
@@ -181,8 +207,10 @@ const validateGoodScan = async (
     expect(mockFileWrite).toBeCalledTimes(1)
     validateMockParams(mockFileWrite, expected)
     expect(mockFileWrite).toHaveReturnedWith(expected)
-    expect(mockProcessWrite).toBeCalledTimes(0)
-    expect(mockConsoleLog).toBeCalledTimes(1)
+    expect(mockProcessWrite).toBeCalledTimes(1)
+    expect(mockProcessWrite).toBeCalledWith(
+      expect.stringContaining(`Report successfully written to`),
+    )
     mockFileWrite.mockClear()
     mockConsoleLog.mockClear()
   } else {

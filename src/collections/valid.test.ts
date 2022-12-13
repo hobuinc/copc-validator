@@ -13,7 +13,7 @@ const items = getCopcItems()
 
 test('CopcCollection shallow all-pass', async () => {
   const { filepath, get, copc } = await items
-  const collection = CopcCollection({ filepath, get, copc })
+  const collection = CopcCollection({ file: filepath, get, copc })
   const checks = await invokeCollection(collection)
   checkAll(checks)
 })
@@ -22,7 +22,7 @@ test('CopcCollection shallow oldCopc', async () => {
   const { filepath, get, copc } = await getCopcItems(ellipsoidFiles.oldCopc)
   const deep = false
   const collection = CopcCollection({
-    filepath,
+    file: filepath,
     get,
     copc,
     deep,

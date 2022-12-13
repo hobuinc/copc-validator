@@ -9,7 +9,7 @@ test('shallowNodeScan all-pass', async () => {
   const { filepath, get, copc } = await items
   process.stderr.columns = 60
   const checks = await invokeAllChecks(
-    await nodeParser({ get, copc, filepath, showProgress: true }), //default arguments
+    await nodeParser({ get, copc, file: filepath, showProgress: true }), //default arguments
   )
   checkAll(checks)
 })
@@ -21,7 +21,7 @@ test('shallowNodeScan failure', async () => {
   const deep = false
 
   await expect(
-    nodeParser({ get, copc, filepath, deep, workerCount }),
+    nodeParser({ get, copc, file: filepath, deep, workerCount }),
   ).rejects.toThrow() //different messages per node version
 })
 
@@ -32,7 +32,7 @@ test('deepNodeScan all-pass', async () => {
     await nodeParser({
       get,
       copc,
-      filepath,
+      file: filepath,
       deep: true,
       workerCount,
       showProgress: true,
@@ -48,6 +48,6 @@ test('deepNodeScan failures', async () => {
   const deep = true
 
   await expect(
-    nodeParser({ get, copc, filepath, deep, workerCount }),
+    nodeParser({ get, copc, file: filepath, deep, workerCount }),
   ).rejects.toThrow()
 })

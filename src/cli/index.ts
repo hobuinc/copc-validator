@@ -2,7 +2,7 @@ import minimist from 'minimist'
 import { generateReport } from '../report/index.js'
 import { writeFileSync } from 'fs'
 import { resolve } from 'path'
-import { writeHelp } from './help.js'
+import { helpString } from './help.js'
 
 export * from './help.js'
 
@@ -29,10 +29,18 @@ type ExpectedArgv = {
   w?: number //alias
 }
 
+const stdoutWrite = (str: string) => process.stdout.write(str)
+const writeHelp = (col: number) => stdoutWrite(helpString(col))
+
 // ========== MAIN CLI FUNCTION ==========
 export const copcc = async (argv: string[]) => {
-  if (argv === undefined || argv.length < 1)
-    throw new Error('Not enough argument(s) provided')
+  if (argv === undefined || argv.length < 1) {
+    stdoutWrite('ERROR: Not enough argument(s) provided\n')
+    writeHelp(process.stdout.columns)
+    process.exitCode = 1
+    return
+    // throw new Error('Not enough argument(s) provided')
+  }
 
   // PARSE ARGS
   const args = minimist<ExpectedArgv>(argv, {
@@ -62,18 +70,29 @@ export const copcc = async (argv: string[]) => {
   } = args
 
   if (help) {
-    process.stdout.write(writeHelp(process.stdout.columns))
+    writeHelp(process.stdout.columns)
     return
   }
   if (version) {
-    process.stdout.write(copcVersion + '\n')
+    stdoutWrite(copcVersion + '\n')
     return
   }
 
   // VALIDATE ARGS
-  if (!file) throw new Error('Must provide a filepath to be validated')
-  if (rest.length > 0)
-    throw new Error('Too many arguments (filepaths) provided')
+  if (!file) {
+    stdoutWrite('ERROR: Must provide a filepath to be validated\n')
+    writeHelp(process.stdout.columns)
+    // throw new Error('Must provide a filepath to be validated')
+    process.exitCode = 1
+    return
+  }
+  if (rest.length > 0) {
+    stdoutWrite('ERROR: Too many arguments (filepaths) provided\n')
+    writeHelp(process.stdout.columns)
+    // throw new Error('Too many arguments (filepaths) provided')
+    process.exitCode = 1
+    return
+  }
 
   const name = givenName || file
 
@@ -94,7 +113,7 @@ export const copcc = async (argv: string[]) => {
     const path = resolve(output)
     try {
       fs.writeFileSync(path, JSON.stringify(report, null, 2))
-      console.log(`Report successfully written to: ${path}`)
+      stdoutWrite(`Report successfully written to ${path}\n`)
     } catch (err) {
       console.error(err)
     }

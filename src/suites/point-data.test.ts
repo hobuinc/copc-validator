@@ -13,7 +13,7 @@ test('pointDataSuite all-pass', async () => {
   const checks = await invokeAllChecks({
     source: {
       data: await readPointDataRecords({
-        filepath,
+        file: filepath,
         nodes,
         copc,
         deep: true,
@@ -74,7 +74,7 @@ test('pointDataSuite pdrf=6', async () => {
   const { filepath, copc, nodes } = await getCopcItems(ellipsoidFiles.oldCopc)
   const nonZero = nonZeroNodes(nodes)
   const nodeMap = await readPointDataRecords({
-    filepath,
+    file: filepath,
     nodes,
     copc,
     deep: false,
@@ -135,7 +135,7 @@ test('pointDataSuite utils', async () => {
   const { filepath, copc, nodes } = await items
   const nonZero = nonZeroNodes(nodes)
   const realNodeChecks = await readPointDataRecords({
-    filepath,
+    file: filepath,
     nodes,
     copc,
     deep: false,

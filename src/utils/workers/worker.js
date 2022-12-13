@@ -1,11 +1,8 @@
-// const { Getter, Copc, Bounds, Key } = require('copc')
-// const { expose } = require('threads/worker')
 import { expose } from 'threads/worker'
 import { LazPerf } from 'laz-perf/lib/worker/index.js'
 import { Getter, Copc, Bounds, Key } from 'copc'
 const { stepTo } = Bounds
 const { parse } = Key
-const { create } = Getter
 const { loadPointDataView } = Copc
 
 const boolToStatus = (b, warning = false) =>
@@ -13,14 +10,7 @@ const boolToStatus = (b, warning = false) =>
 
 let lazPerfPromise
 
-expose(async function ({
-  filepath,
-  copc,
-  key,
-  node,
-  deep,
-  lazPerfWasmFilename,
-}) {
+expose(async function ({ file, copc, key, node, deep, lazPerfWasmFilename }) {
   // console.log(`Reading ${key}`)
   // console.time(key)
   if (lazPerfWasmFilename.startsWith('http://')) {
@@ -32,7 +22,7 @@ expose(async function ({
     })
   } else {
     lazPerfPromise = undefined // let Copc create its own lazPerf
-    // had issues finding the laz-perf.wasm file locally, so for now I'm ignoring it
+    // had issues finding the laz-perf.wasm file in NodeJS, so for now I'm ignoring it
   }
   let prevGpsTime = 0
   if (node.pointCount === 0) {
@@ -48,8 +38,10 @@ expose(async function ({
     }
     return [key, checks]
   }
-  const get = create(filepath) //Getter.
-  // console.log(filepath, lazPerfWasmFilename)
+  const get =
+    typeof file === 'string'
+      ? Getter.create(file)
+      : async (b, e) => new Uint8Array(await file.slice(b, e).arrayBuffer())
   const view = await loadPointDataView(get, copc, node, {
     lazPerf: await lazPerfPromise,
   }) //Copc.

@@ -77,8 +77,8 @@ export function formatGuid(buffer: Binary): string {
 }
 
 // Need info to run VLR tests, so I might as well steal the buffer and DataView
-export const getterToHeader = async (get: Getter) => {
-  const buffer = await get(0, Las.Constants.minHeaderLength)
+export const getterToHeader = async (getter: Getter) => {
+  const buffer = await getter(0, Las.Constants.minHeaderLength)
   const dv = Binary.toDataView(buffer)
   const info: Las.Vlr.OffsetInfo = ((minorVersion: number) => {
     const header = {

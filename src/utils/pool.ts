@@ -3,10 +3,9 @@ import { Copc, Hierarchy } from 'copc'
 import { spawn, Pool, Worker } from 'threads'
 import { AllNodesChecked, CheckedNode } from 'types'
 import { Paths } from './misc.js'
-// import WorkerText from './worker'
 
 type workerParams = {
-  filepath: string
+  file: string | File
   copc: Copc
   key: string
   node: Hierarchy.Node

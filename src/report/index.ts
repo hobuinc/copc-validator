@@ -5,7 +5,7 @@ import {
 } from '../collections/index.js'
 import { invokeCollection, currTime } from '../utils/index.js'
 import { Copc, Getter, Las } from 'copc'
-import { Check, generateReportParams, Report } from '../types/index.js'
+import { Check, Report } from '../types/index.js'
 import isEqual from 'lodash.isequal'
 import omit from 'lodash.omit'
 
@@ -24,32 +24,26 @@ import omit from 'lodash.omit'
  * @returns {Promise<Report>} `Report` object detailing the filetype, checks completed,
  * and some additional information parsed from the file that may be useful
  */
-export const generateReport = async (
-  {
-    source,
-    options: {
-      name = source,
-      deep = false,
-      workers,
-      mini = false,
-      showProgress = false,
-    },
-  }: generateReportParams,
-  collections: {
-    copc: Check.CollectionFn
-    las: Check.CollectionFn
-    fallback: Check.CollectionFn
-  } = {
-    copc: CopcCollection,
-    las: LasCopcCollection,
-    fallback: FallbackCollection,
-  },
-): Promise<Report> => {
+export const generateReport = async ({
+  source,
+  options = defaultOptions,
+  collections = defaultCollections,
+}: generateReportParams): // collections: Collections = defaultCollections,
+Promise<Report> => {
+  const { deep, mini, workers, showProgress } = options
+  let { name } = options
+  if (typeof name === 'undefined')
+    name = typeof source === 'string' ? source : defaultOptions.name
   const type = deep ? 'deep' : 'shallow'
   const start = new Date()
   const startTime = currTime()
   // Getter.create() should never throw error outside of bad string
-  const get = Getter.create(source)
+  const get =
+    typeof source === 'string'
+      ? Getter.create(source)
+      : async (b: number, e: number) =>
+          new Uint8Array(await source.slice(b, e).arrayBuffer())
+  // Getter for File API
   try {
     // Attempt Copc.create()
     const copc = await Copc.create(get)
@@ -64,7 +58,7 @@ export const generateReport = async (
 
     const checks = await invokeCollection(
       collections.copc({
-        filepath: source,
+        file: source,
         get,
         copc,
         deep,
@@ -80,13 +74,12 @@ export const generateReport = async (
         filetype: 'COPC',
         start,
         end: new Date(),
-        time: /*performance.now()*/ currTime() - startTime,
+        time: currTime() - startTime,
       },
       checks,
       copc: mini ? undefined : copc,
     }
   } catch (copcError) {
-    //throw copcError
     // Copc.create() failed, definitely not valid COPC...
     // Check file with Las functions to determine why Copc.create() failed
     // TODO: if Error is 'no such file or directory', no need to attempt LasParse
@@ -101,8 +94,8 @@ export const generateReport = async (
       //   - Corrupt/bad binary data
       const vlrs = await Las.Vlr.walk(get, header)
       // Las.Vlr.walk() can fail for the following reasons:
-      //   - vlrHeaderLength !== 54
-      //   - evlrHeaderLength !== 60
+      //   - any vlrHeaderLength !== 54
+      //   - any evlrHeaderLength !== 60
       //   - Corrupt/bad binary data
       const checks = await invokeCollection(
         collections.las({ get, header, vlrs }),
@@ -167,4 +160,27 @@ export const generateReport = async (
       }
     }
   }
+}
+
+type generateReportParams = {
+  source: string | File
+  options?: Report.Options
+  collections?: Collections
+}
+const defaultOptions = {
+  name: 'COPC Validator Report',
+  deep: false,
+  mini: false,
+  workers: undefined,
+  showProgress: false,
+}
+type Collections = {
+  copc: Check.CollectionFn
+  las: Check.CollectionFn
+  fallback: Check.CollectionFn
+}
+const defaultCollections: Collections = {
+  copc: CopcCollection,
+  las: LasCopcCollection,
+  fallback: FallbackCollection,
 }

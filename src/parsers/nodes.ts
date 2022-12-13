@@ -1,15 +1,23 @@
-import { Copc, Hierarchy } from 'copc'
+import { Copc, Hierarchy, Getter } from 'copc'
 import { pointDataSuite } from '../suites/index.js'
-import { Check, AllNodesChecked, nodeParserParams } from '../types/index.js'
+import { Check, AllNodesChecked } from '../types/index.js'
 import { loadAllHierarchyPages, Paths, runTasks } from '../utils/index.js'
 
+export type nodeParserParams = {
+  get: Getter
+  copc: Copc
+  file: string | File
+  deep?: boolean
+  workerCount?: number
+  showProgress?: boolean
+}
 export const nodeParser: Check.Parser<
   nodeParserParams,
   { data: AllNodesChecked; nonZero: string[] }
 > = async ({
   get,
   copc,
-  filepath,
+  file,
   deep = false,
   workerCount,
   showProgress = false,
@@ -20,7 +28,7 @@ export const nodeParser: Check.Parser<
       data: await readPointDataRecords(
         {
           nodes,
-          filepath,
+          file,
           copc,
           deep,
           workerCount,
@@ -47,7 +55,7 @@ export const nonZeroNodes = (nodes: Hierarchy.Node.Map): string[] =>
 
 export type readPDRsParams = {
   nodes: Hierarchy.Node.Map
-  filepath: string
+  file: string | File
   copc: Copc
   deep: boolean
   workerCount?: number
@@ -59,22 +67,18 @@ export type readPDRsParams = {
  * @returns
  */
 export const readPointDataRecords = (
-  { nodes, filepath, copc, deep, workerCount }: readPDRsParams,
+  { nodes, file, copc, deep, workerCount }: readPDRsParams,
   withBar = false,
 ): Promise<AllNodesChecked> => {
-  // console.log('READ PDR', Paths.lazPerf)
   return runTasks(
     // turn Hierarchy.Node.Map into Array of Worker tasks
     Object.entries(nodes).map(([key, node]) => ({
-      filepath,
+      file,
       key,
       node: node || { pointCount: 0, pointDataOffset: 0, pointDataLength: 0 },
       copc,
       deep,
       lazPerfWasmFilename: Paths.lazPerf,
-      // typeof process === 'object'
-      //   ? 'laz-perf.wasm'
-      //   : window.origin + '/laz-perf.wasm',
     })),
     withBar,
     workerCount,

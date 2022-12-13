@@ -4,7 +4,7 @@ import { nodeParser, vlrParser, headerParser } from '../parsers/index.js'
 import { Check, manualHeaderParams } from '../types/index.js'
 
 type CopcCollection = {
-  filepath: string
+  file: string | File
   copc: Copc
   get: Getter
   deep?: boolean
@@ -13,7 +13,7 @@ type CopcCollection = {
 }
 /* eslint-disable-next-line */
 export const CopcCollection = async ({
-  filepath,
+  file,
   copc,
   get,
   showProgress = false,
@@ -26,7 +26,7 @@ export const CopcCollection = async ({
   nodeParser({
     get,
     copc,
-    filepath,
+    file,
     deep,
     workerCount,
     showProgress,

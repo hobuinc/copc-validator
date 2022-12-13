@@ -36,7 +36,7 @@ const flags: flag[] = [
 ]
 
 const space = (n: number) => Array(n > 0 ? n + 1 : 1).join(' ')
-export const writeHelp = (col: number) => {
+export const helpString = (col: number) => {
   const columns = col > 180 ? 180 : col
   let message = `
    Usage: copcc [options] <path>   
