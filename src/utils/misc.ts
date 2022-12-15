@@ -1,3 +1,5 @@
+import { ThreadsWorkerOptions } from 'threads/dist/types/master'
+
 export const currTime =
   typeof performance !== 'undefined'
     ? () => performance.now()
@@ -10,12 +12,18 @@ export const currTime =
  * Could not get node lazPerf path working so Copc just creates its own in node
  */
 export const Paths = {
-  worker:
-    typeof process === 'object'
-      ? './workers/worker.js'
-      : new URL('./workers/worker.umd.js', import.meta.url).href,
   lazPerf:
     typeof process === 'object'
       ? 'laz-perf.wasm' // new URL('./workers/laz-perf.wasm', import.meta.url).href //
       : window.origin + '/laz-perf.wasm',
+}
+
+export const NodeVsBrowser: { worker: [string, ThreadsWorkerOptions] } = {
+  worker:
+    typeof process === 'object'
+      ? ['./workers/worker.js', { type: 'module' }]
+      : [
+          new URL('./workers/worker.umd.js', import.meta.url).href,
+          { type: 'classic' },
+        ],
 }

@@ -1,6 +1,9 @@
 // module was imported
 // export * from './report/index.js'
 export { generateReport } from 'report'
-export * from './collections/index.js'
-export * from './parsers/index.js'
-export * from './suites/index.js'
+export * from 'collections'
+export * from 'parsers'
+export * from 'suites'
+export * from 'types'
+// export { Report } from 'types'
+// export type { Check } from 'types'

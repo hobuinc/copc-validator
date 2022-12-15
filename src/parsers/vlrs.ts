@@ -1,6 +1,6 @@
 import { Getter } from 'copc'
 import { Check, manualVlrParams } from '../types/index.js'
-import { manualVlrSuite as Suite } from '../suites/index.js'
+import { manualVlrSuite } from '../suites/index.js'
 import { getterToHeader, doWalk } from '../utils/index.js'
 
 type vlrParserParams = { get: Getter; suite?: Check.Suite<manualVlrParams> }
@@ -8,7 +8,7 @@ type vlrParserParams = { get: Getter; suite?: Check.Suite<manualVlrParams> }
 export const vlrParser: Check.Parser<
   vlrParserParams,
   manualVlrParams
-> = async ({ get, suite = Suite }) => {
+> = async ({ get, suite = manualVlrSuite }) => {
   const { info } = await getterToHeader(get)
   const vlrs = await doWalk({
     get,

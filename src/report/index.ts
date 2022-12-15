@@ -2,10 +2,11 @@ import {
   CopcCollection,
   LasCopcCollection,
   FallbackCollection,
+  // LasDirectCollection,
 } from '../collections/index.js'
 import { invokeCollection, currTime } from '../utils/index.js'
 import { Copc, Getter, Las } from 'copc'
-import { Check, Report } from '../types/index.js'
+import { Report } from '../types/index.js'
 import isEqual from 'lodash.isequal'
 import omit from 'lodash.omit'
 
@@ -28,8 +29,8 @@ export const generateReport = async ({
   source,
   options = defaultOptions,
   collections = defaultCollections,
-}: generateReportParams): // collections: Collections = defaultCollections,
-Promise<Report> => {
+}: generateReportParams): Promise<Report> => {
+  // Options setup
   const { deep, mini, workers, showProgress } = options
   let { name } = options
   if (typeof name === 'undefined')
@@ -37,19 +38,20 @@ Promise<Report> => {
   const type = deep ? 'deep' : 'shallow'
   const start = new Date()
   const startTime = currTime()
+
   // Getter.create() should never throw error outside of bad string
   const get =
     typeof source === 'string'
       ? Getter.create(source)
       : async (b: number, e: number) =>
           new Uint8Array(await source.slice(b, e).arrayBuffer())
-  // Getter for File API
+
   try {
     // Attempt Copc.create()
     const copc = await Copc.create(get)
     // Copc.create() can fail for the following reasons:
-    //   - Las.Header.parse() throws an error (see below, 58)
-    //   - Las.Vlr.walk() throws an error (see below, 64)
+    //   - Las.Header.parse() throws an error (see below, 91)
+    //   - Las.Vlr.walk() throws an error (see below, 97)
     //   - copc info VLR is missing
     //   - Corrupt/bad binary data
 
@@ -61,12 +63,11 @@ Promise<Report> => {
         file: source,
         get,
         copc,
+        showProgress,
         deep,
         workerCount: workers,
-        showProgress,
       }),
-    ) // no need to await CopcCollection since invokeCollection allows promises
-
+    )
     return {
       name,
       scan: {
@@ -97,6 +98,7 @@ Promise<Report> => {
       //   - any vlrHeaderLength !== 54
       //   - any evlrHeaderLength !== 60
       //   - Corrupt/bad binary data
+
       const checks = await invokeCollection(
         collections.las({ get, header, vlrs }),
       )
@@ -121,31 +123,10 @@ Promise<Report> => {
       // Las.* functions failed, try poking around manually with the Getter
       // to determine why Las failed to initialize
 
-      // Should only need to check for the possibilities above (lines 58 & 64),
+      // Should only need to check for the possibilities above (lines 91 & 97),
       // otherwise the Las suite would be running instead
+
       const checks = await invokeCollection(collections.fallback(get))
-      // TODO: Figure out a way to test this function (need specific bad file)
-      const errors = (() =>
-        isEqual(
-          omit(lasError as Error, 'stack'),
-          omit(copcError as Error, 'stack'),
-        )
-          ? {
-              error: {
-                message: (copcError as Error).message,
-                stack: (copcError as Error).stack,
-              },
-            }
-          : {
-              error: {
-                message: (lasError as Error).message,
-                stack: (lasError as Error).stack,
-              },
-              copcError: {
-                message: (copcError as Error).message,
-                stack: (copcError as Error).stack,
-              },
-            })()
       return {
         name,
         scan: {
@@ -156,7 +137,8 @@ Promise<Report> => {
           time: currTime() - startTime,
         },
         checks,
-        ...errors,
+        ...compareErrors(copcError, lasError),
+        // ...errors,
       }
     }
   }
@@ -173,14 +155,37 @@ const defaultOptions = {
   mini: false,
   workers: undefined,
   showProgress: false,
+  // las: false,
 }
 type Collections = {
-  copc: Check.CollectionFn
-  las: Check.CollectionFn
-  fallback: Check.CollectionFn
+  copc: typeof CopcCollection /*Check.CollectionFn*/
+  las: typeof LasCopcCollection /*Check.CollectionFn*/
+  // lasDirect: typeof LasDirectCollection
+  fallback: typeof FallbackCollection /*Check.CollectionFn*/
 }
 const defaultCollections: Collections = {
   copc: CopcCollection,
   las: LasCopcCollection,
+  // lasDirect: LasDirectCollection,
   fallback: FallbackCollection,
 }
+
+// TODO: Figure out a way to test this function (need specific bad file)
+const compareErrors = (copcError: unknown, lasError: unknown) =>
+  isEqual(omit(copcError as Error, 'stack'), omit(lasError as Error, 'stack'))
+    ? {
+        error: {
+          message: (copcError as Error).message,
+          stack: (copcError as Error).stack,
+        },
+      }
+    : {
+        error: {
+          message: (lasError as Error).message,
+          stack: (lasError as Error).stack,
+        },
+        copcError: {
+          message: (copcError as Error).message,
+          stack: (copcError as Error).stack,
+        },
+      }

@@ -21,6 +21,7 @@ export declare namespace Report {
     workers?: number
     mini?: boolean
     showProgress?: boolean
+    // las?: boolean
   }
 
   type copcError = { message: string; stack?: string }

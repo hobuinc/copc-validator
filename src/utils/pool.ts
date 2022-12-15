@@ -2,7 +2,7 @@ import { SingleBar } from 'cli-progress'
 import { Copc, Hierarchy } from 'copc'
 import { spawn, Pool, Worker } from 'threads'
 import { AllNodesChecked, CheckedNode } from 'types'
-import { Paths } from './misc.js'
+import { NodeVsBrowser } from './misc.js'
 
 type workerParams = {
   file: string | File
@@ -22,12 +22,7 @@ export const runTasks = async (
 ) => {
   // setup thread pool
   const pool = Pool(
-    () =>
-      spawn<workerFunction>(
-        new Worker(Paths.worker, {
-          type: 'module',
-        }),
-      ),
+    () => spawn<workerFunction>(new Worker(...NodeVsBrowser.worker)),
     workerCount,
   )
   const results: workerResult[] = []

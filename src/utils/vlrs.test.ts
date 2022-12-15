@@ -22,7 +22,7 @@ test('vlrCheck', async () => {
     status: 'warn',
     info: 'Failed to find recommended VLR: copc-1',
   }
-  const failedDuplicate = { status: 'fail', info: 'Found multiple copc-1 VLRs' }
+  const failedDuplicate = { status: 'warn', info: 'Found multiple copc-1 VLRs' }
   const succeededWithInfo = { status: 'pass', info: infoOnSuccess }
   const failedWithInfo = { status: 'fail', info: infoOnFailure }
 

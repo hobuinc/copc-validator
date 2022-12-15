@@ -44,7 +44,7 @@ export const vlrCheck = ({
       ? Statuses.failureWithInfo(`Failed to find VLR: ${vlrName}`)
       : Statuses.warningWithInfo(`Failed to find recommended VLR: ${vlrName}`)
   if (checkVlrDuplicates(vlrs, userId, recordId))
-    return Statuses.failureWithInfo(`Found multiple ${vlrName} VLRs`)
+    return Statuses.warningWithInfo(`Found multiple ${vlrName} VLRs`)
   return finalCheck
     ? complexCheck({
         source: vlr,

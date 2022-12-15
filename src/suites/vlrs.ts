@@ -8,16 +8,14 @@ import {
 } from '../utils/index.js'
 import proj4 from '@landrush/proj4'
 
+export type vlrSuiteParams = { header: Las.Vlr.OffsetInfo; vlrs: Las.Vlr[] }
 /**
  * Suite of Check Function for checking the VLRs retrieved by `Copc.create` or
  * `Las.Vlr.walk`. Also requires the `Las.Vlr.OffsetInfo` from `copc.header` to
  * confirm `vlrCount` and `evlrCount`. Used in the Copc Suite and the Las and
  * Fallback Collections, in case `Las.Vlr.walk` succeeds after `Copc.create` fails
  */
-export const vlrSuite: Check.Suite<{
-  header: Las.Vlr.OffsetInfo
-  vlrs: Las.Vlr[]
-}> = {
+export const vlrSuite: Check.Suite<vlrSuiteParams> = {
   vlrCount: ({ header: { vlrCount }, vlrs }) =>
     basicCheck(vlrs.filter((v) => !v.isExtended).length, vlrCount),
   evlrCount: ({ header: { evlrCount }, vlrs }) =>
@@ -38,7 +36,7 @@ export const vlrSuite: Check.Suite<{
       vlrs,
       userId: 'laszip encoded',
       recordId: 22204,
-      required: false,
+      required: true,
       finalCheck: (v) => !v.isExtended,
     }),
 }

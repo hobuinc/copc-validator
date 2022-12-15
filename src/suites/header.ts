@@ -1,8 +1,5 @@
 import { Las, Binary, parseBigInt, getBigUint64 } from 'copc'
-import type {
-  Check,
-  manualHeaderParams as manualParams,
-} from '../types/index.js'
+import type { Check, manualHeaderParams } from '../types/index.js'
 import {
   basicCheck,
   complexCheck,
@@ -34,7 +31,7 @@ export const headerSuite: Check.Suite<{ header: Las.Header }> = {
     ),
 }
 
-export const manualHeaderSuite: Check.Suite<manualParams> = {
+export const manualHeaderSuite: Check.Suite<manualHeaderParams> = {
   fileSignature: ({ buffer }) => {
     const fileSignature = Binary.toCString(buffer.slice(0, 4))
     return complexCheck({
