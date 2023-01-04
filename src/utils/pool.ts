@@ -10,7 +10,7 @@ type workerParams = {
   key: string
   node: Hierarchy.Node
   deep: boolean
-  lazPerfWasmFilename: string
+  lazPerfWasmFilename: string | undefined
 }
 type workerResult = [string, CheckedNode]
 type workerFunction = (p: workerParams) => workerResult

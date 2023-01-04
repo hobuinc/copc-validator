@@ -1,7 +1,11 @@
 import { Copc, Hierarchy, Getter } from 'copc'
 import { pointDataSuite } from '../suites/index.js'
 import { Check, AllNodesChecked } from '../types/index.js'
-import { loadAllHierarchyPages, Paths, runTasks } from '../utils/index.js'
+import {
+  loadAllHierarchyPages,
+  NodeVsBrowser,
+  runTasks,
+} from '../utils/index.js'
 
 export type nodeParserParams = {
   get: Getter
@@ -78,7 +82,7 @@ export const readPointDataRecords = (
       node: node || { pointCount: 0, pointDataOffset: 0, pointDataLength: 0 },
       copc,
       deep,
-      lazPerfWasmFilename: Paths.lazPerf,
+      lazPerfWasmFilename: NodeVsBrowser.lazPerf,
     })),
     withBar,
     workerCount,

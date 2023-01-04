@@ -13,13 +13,16 @@ let lazPerfPromise
 expose(async function ({ file, copc, key, node, deep, lazPerfWasmFilename }) {
   // console.log(`Reading ${key}`)
   // console.time(key)
-  if (lazPerfWasmFilename.startsWith('http://')) {
-    lazPerfPromise = LazPerf.create({
-      locateFile: () => lazPerfWasmFilename,
-      INITIAL_MEMORY: 262144,
-      TOTAL_STACK: 65536,
-      FAST_MEMORY: 65536,
-    })
+
+  if (lazPerfWasmFilename) {
+    if (!lazPerfPromise)
+      // console.log('(WORKER) Locating laz-perf:', lazPerfWasmFilename)
+      lazPerfPromise = LazPerf.create({
+        locateFile: () => lazPerfWasmFilename,
+        INITIAL_MEMORY: 262144,
+        TOTAL_STACK: 65536,
+        FAST_MEMORY: 65536,
+      })
   } else {
     lazPerfPromise = undefined // let Copc create its own lazPerf
     // had issues finding the laz-perf.wasm file in NodeJS, so for now I'm ignoring it
