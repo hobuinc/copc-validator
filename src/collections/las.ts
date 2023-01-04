@@ -11,7 +11,7 @@ export const LasCopcCollection = async ({
   header,
   vlrs,
 }: LasCollection): Promise<Check.Suite.Collection> => [
-  { source: header, suite: headerSuite },
+  { source: { header }, suite: headerSuite },
   { source: { header, vlrs }, suite: vlrSuite },
   headerParser({ get, suite: copcHeaderSuite }),
   vlrParser({ get }),
