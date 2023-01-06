@@ -15,98 +15,135 @@ import {
  * `Las.Header.parse()` still succeeds after `Copc.create()` fails
  */
 export const headerSuite: Check.Suite<{ header: Las.Header }> = {
-  minorVersion: ({ header: { minorVersion } }) => basicCheck(minorVersion, 4),
-  pointDataRecordFormat: ({ header: { pointDataRecordFormat } }) =>
-    complexCheck({
-      source: pointDataRecordFormat,
-      checker: [6, 7, 8],
-      infoOnFailure: `(6,7,8) Point Data Record Format: ${pointDataRecordFormat}`,
-    }),
-  headerLength: ({ header: { headerLength } }) =>
-    basicCheck(headerLength, Las.Constants.minHeaderLength),
-  pointCountByReturn: ({ header: { pointCount, pointCountByReturn } }) =>
-    basicCheck(
-      pointCountByReturn.reduce((p, c) => p + c, 0),
-      pointCount,
-    ),
+  minorVersion: {
+    function: ({ header: { minorVersion } }) =>
+      complexCheck({
+        source: minorVersion,
+        checker: 4,
+        infoOnFailure: `Minor Version: ${minorVersion}`,
+      }), //basicCheck(minorVersion, 4),
+    description: 'LAS minor version (in header) is 4',
+  },
+  pointDataRecordFormat: {
+    function: ({ header: { pointDataRecordFormat } }) =>
+      complexCheck({
+        source: pointDataRecordFormat,
+        checker: [6, 7, 8],
+        infoOnFailure: `Point Data Record Format: ${pointDataRecordFormat}`,
+      }),
+    description: 'Point Data Record Format (PDRF) (in header) is 6, 7, or 8',
+  },
+  headerLength: {
+    function: ({ header: { headerLength } }) =>
+      basicCheck(headerLength, Las.Constants.minHeaderLength),
+    description: 'Header Length (in header) is 375',
+  },
+  pointCountByReturn: {
+    function: ({ header: { pointCount, pointCountByReturn } }) =>
+      basicCheck(
+        pointCountByReturn.reduce((p, c) => p + c, 0),
+        pointCount,
+      ),
+    description:
+      'Point Count (in header) matches sum of Point Count by Return (in header)',
+  },
 }
 
 export const manualHeaderSuite: Check.Suite<manualHeaderParams> = {
-  fileSignature: ({ buffer }) => {
-    const fileSignature = Binary.toCString(buffer.slice(0, 4))
-    return complexCheck({
-      source: fileSignature,
-      checker: 'LASF',
-      infoOnFailure: `('LASF') File Signature: '${fileSignature}'`,
-    })
+  fileSignature: {
+    function: ({ buffer }) => {
+      const fileSignature = Binary.toCString(buffer.slice(0, 4))
+      return complexCheck({
+        source: fileSignature,
+        checker: 'LASF',
+        infoOnFailure: `File Signature: '${fileSignature}'`,
+      })
+    },
+    description: 'File signature (first 4 bytes) is "LASF"',
   },
-  majorVersion: ({ dv }) => {
-    const majorVersion = dv.getUint8(24)
-    return complexCheck({
-      source: majorVersion,
-      checker: 1,
-      infoOnFailure: `(1) Major Version: ${majorVersion}`,
-    })
+  majorVersion: {
+    function: ({ dv }) => {
+      const majorVersion = dv.getUint8(24)
+      return complexCheck({
+        source: majorVersion,
+        checker: 1,
+        infoOnFailure: `Major Version: ${majorVersion}`,
+      })
+    },
+    description: 'Major Version (24th byte) is 1',
   },
-  minorVersion: ({ dv }) => {
-    const minorVersion = dv.getUint8(25)
-    return complexCheck({
-      source: minorVersion,
-      checker: 4,
-      infoOnFailure: `(4) Minor Version: ${minorVersion}`,
-    })
+  minorVersion: {
+    function: ({ dv }) => {
+      const minorVersion = dv.getUint8(25)
+      return complexCheck({
+        source: minorVersion,
+        checker: 4,
+        infoOnFailure: `Minor Version: ${minorVersion}`,
+      })
+    },
+    description: 'Minor Version (25th byte) is 4',
   },
-  headerLength: ({ dv }) => {
-    const headerLength = dv.getUint16(94, true)
-    return complexCheck({
-      source: headerLength,
-      checker: (n) => n === Las.Constants.minHeaderLength,
-      infoOnFailure: `(>=375) Header Length: ${headerLength}`,
-    })
+  headerLength: {
+    function: ({ dv }) => {
+      const headerLength = dv.getUint16(94, true)
+      return complexCheck({
+        source: headerLength,
+        checker: Las.Constants.minHeaderLength, //(n) => n === Las.Constants.minHeaderLength,
+        infoOnFailure: `Header Length: ${headerLength}`,
+      })
+    },
+    description: 'Header Length (94th byte) is 375',
   },
-  legacyPointCount: ({ dv }) => {
-    const pointDataRecordFormat = dv.getUint8(104) & 0b1111
-    const legacyPointCount = dv.getUint32(107, true)
-    const pointCount = parseBigInt(getBigUint64(dv, 247, true))
-    const param = {
-      pdrf: pointDataRecordFormat,
-      pc: pointCount,
-      lpc: legacyPointCount,
-    }
-    return basicCheck(
-      param,
-      ({ pdrf, pc, lpc }) =>
-        ([6, 7, 8, 9, 10].includes(pdrf) && lpc === 0) ||
-        (pc < UINT32_MAX && lpc === pc) ||
-        lpc === 0,
-    )
+  legacyPointCount: {
+    function: ({ dv }) => {
+      const pointDataRecordFormat = dv.getUint8(104) & 0b1111
+      const legacyPointCount = dv.getUint32(107, true)
+      const pointCount = parseBigInt(getBigUint64(dv, 247, true))
+      return basicCheck(
+        {
+          pdrf: pointDataRecordFormat,
+          pc: pointCount,
+          lpc: legacyPointCount,
+        },
+        ({ pdrf, pc, lpc }) =>
+          ([6, 7, 8, 9, 10].includes(pdrf) && lpc === 0) ||
+          (pc < UINT32_MAX && lpc === pc) ||
+          lpc === 0,
+      )
+    },
+    description:
+      'Legacy Point Count is set according to PDRF value & LAS 1.4 specifications',
   },
-  legacyPointCountByReturn: ({ dv, buffer }) => {
-    const pointDataRecordFormat = dv.getUint8(104) & 0b1111
-    const legacyPointCount = dv.getUint32(107, true)
-    const legacyPointCountByReturn = parseLegacyNumberOfPointsByReturn(
-      buffer.slice(111, 131),
-    )
-    const pointCount = parseBigInt(getBigUint64(dv, 247, true))
-    // eslint-disable-next-line
-    const pointCountByReturn = parseNumberOfPointsByReturn(
-      buffer.slice(255, 375),
-    ) // not doing anything with this yet, but including it increases jest coverage
-    return complexCheck({
-      source: {
-        pdrf: pointDataRecordFormat,
-        pc: pointCount,
-        lpc: legacyPointCount,
-        lpcr: legacyPointCountByReturn,
-      },
-      checker: ({ pdrf, pc, lpc, lpcr }) =>
-        ([6, 7, 8, 9, 10].includes(pdrf) && lpcr.every((n) => n === 0)) ||
-        (pc < UINT32_MAX &&
-          pc === lpc &&
-          lpcr.reduce((p, c) => p + c, 0) === pc) ||
-        lpcr.reduce((p, c) => p + c, 0) === lpc,
-      infoOnFailure: `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
-      warning: true,
-    })
+  legacyPointCountByReturn: {
+    function: ({ dv, buffer }) => {
+      const pointDataRecordFormat = dv.getUint8(104) & 0b1111
+      const legacyPointCount = dv.getUint32(107, true)
+      const legacyPointCountByReturn = parseLegacyNumberOfPointsByReturn(
+        buffer.slice(111, 131),
+      )
+      const pointCount = parseBigInt(getBigUint64(dv, 247, true))
+      // eslint-disable-next-line
+      const pointCountByReturn = parseNumberOfPointsByReturn(
+        buffer.slice(255, 375),
+      ) // not doing anything with this yet, but including it increases jest coverage
+      return complexCheck({
+        source: {
+          pdrf: pointDataRecordFormat,
+          pc: pointCount,
+          lpc: legacyPointCount,
+          lpcr: legacyPointCountByReturn,
+        },
+        checker: ({ pdrf, pc, lpc, lpcr }) =>
+          ([6, 7, 8, 9, 10].includes(pdrf) && lpcr.every((n) => n === 0)) ||
+          (pc < UINT32_MAX &&
+            pc === lpc &&
+            lpcr.reduce((p, c) => p + c, 0) === pc) ||
+          lpcr.reduce((p, c) => p + c, 0) === lpc,
+        infoOnFailure: `Count: ${legacyPointCount}  ByReturn: ${legacyPointCountByReturn}`,
+        warning: true,
+      })
+    },
+    description:
+      'Legacy Point Count by Return is set according to PDRF value & LAS 1.4 specifications',
   },
 }

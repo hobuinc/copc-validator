@@ -21,7 +21,9 @@ export declare namespace Check {
     export type Collection = (withSource<any> | Nested<any>)[] //withSource<any>[]
     // a.k.a Arrays of Suite.withSource<any> (or Promises)
   }
-  export type Suite<T> = { [id: string]: Check.Function<T> }
+  export type Suite<T> = {
+    [id: string]: { function: Check.Function<T>; description: string }
+  }
   export type Parser<S extends object, P> = (source: S) => Suite.Nested<P>
 
   export type Collection = Suite.Collection
@@ -31,6 +33,7 @@ export declare namespace Check {
 
   export type Check = Status & {
     id: string
+    description: string
   }
 }
 

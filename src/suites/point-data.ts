@@ -1,4 +1,4 @@
-import { Key } from 'copc'
+import { Hierarchy, Key } from 'copc'
 import difference from 'lodash.difference'
 import { Check, AllNodesChecked } from '../types/index.js'
 import { Statuses } from '../utils/index.js'
@@ -14,79 +14,106 @@ export const pointDataSuite: Check.Suite<{
   nonZero: string[]
 }> = {
   // parse data from src/parsers/worker.js (through nodes.ts)
-  rgb: ({ data, nonZero }) => {
-    const badNodes = badNodesFromChecks(data, 'rgb')
-    if (badNodes.length > 0)
-      return data[badNodes[0]].rgb === 'fail' //pdrf === 6
-        ? Statuses.failureWithInfo(
-            `(PDRF 6) RGB data found in: [ ${nodeString(badNodes, nonZero)} ]`,
-          )
-        : Statuses.warningWithInfo(
-            `(PDRF 7,8) Unutilized RGB bytes found in: [ ${nodeString(
-              badNodes,
-              nonZero,
-            )} ]`,
-          )
-    return Statuses.success
-  },
-  rgbi: ({ data, nonZero }) => {
-    const badNodes = badNodesFromChecks(data, 'rgbi')
-    if (badNodes.length > 0) {
-      if (data[badNodes[0]].rgbi === 'warn')
-        return badNodes.length === nonZero.length
-          ? Statuses.warningWithInfo(
-              'All Nodes contain 8-bit RGBI data. Should be scaled to 16-bit.',
+  rgb: {
+    function: ({ data, nonZero }) => {
+      const badNodes = badNodesFromChecks(data, 'rgb')
+      if (badNodes.length > 0)
+        return data[badNodes[0]].rgb === 'fail' //pdrf === 6
+          ? Statuses.failureWithInfo(
+              `(PDRF 6) RGB data found in: [ ${nodeString(
+                badNodes,
+                nonZero,
+              )} ]`,
             )
-          : Statuses.success
-      // better way to check this?
-      else
+          : Statuses.warningWithInfo(
+              `(PDRF 7,8) Unutilized RGB bytes found in: [ ${nodeString(
+                badNodes,
+                nonZero,
+              )} ]`,
+            )
+      return Statuses.success
+    },
+    description: 'RGB values are undefined for PDRF 6, or defined for PDRF 7,8',
+  },
+  rgbi: {
+    function: ({ data, nonZero }) => {
+      const badNodes = badNodesFromChecks(data, 'rgbi')
+      if (badNodes.length > 0) {
+        if (data[badNodes[0]].rgbi === 'warn')
+          return badNodes.length === nonZero.length
+            ? Statuses.warningWithInfo(
+                'All Nodes contain 8-bit RGBI data. Should be scaled to 16-bit.',
+              )
+            : Statuses.success
+        // better way to check this?
+        else
+          return Statuses.failureWithInfo(
+            `Invalid RGB data: ${nodeString(badNodes, nonZero)}`,
+          )
+      }
+      return Statuses.success
+    },
+    description: 'RGBI values are scaled to 16-bit, if present',
+  },
+  xyz: {
+    function: ({ data }) => {
+      const badNodes = badNodesFromChecks(data, 'xyz')
+      if (badNodes.length > 0)
+        return Statuses.failureWithInfo(`Points out of bounds: [ ${badNodes} ]`)
+      return Statuses.success
+    },
+    description: 'XYZ values are within COPC info cube bounds',
+  },
+  gpsTime: {
+    function: ({ data, nonZero }) => {
+      const badNodes = badNodesFromChecks(data, 'gpsTime')
+      if (badNodes.length > 0)
         return Statuses.failureWithInfo(
-          `Invalid RGB data: ${nodeString(badNodes, nonZero)}`,
+          `GpsTime out of bounds: ${nodeString(badNodes, nonZero)}`,
         )
-    }
-    return Statuses.success
+      return Statuses.success
+    },
+    description: 'GpsTime values are within COPC info gpsTimeRange bounds',
   },
-  xyz: ({ data }) => {
-    const badNodes = badNodesFromChecks(data, 'xyz')
-    if (badNodes.length > 0)
-      return Statuses.failureWithInfo(`Points out of bounds: [ ${badNodes} ]`)
-    return Statuses.success
+  sortedGpsTime: {
+    function: ({ data, nonZero }) => {
+      const warnNodes = badNodesFromChecks(data, 'sortedGpsTime')
+      if (warnNodes.length > 0)
+        return Statuses.warningWithInfo(
+          `GpsTime is unsorted: ${nodeString(warnNodes, nonZero)}`,
+        )
+      return Statuses.success
+    },
+    description: 'GpsTime values are sorted, per node',
   },
-  gpsTime: ({ data, nonZero }) => {
-    const badNodes = badNodesFromChecks(data, 'gpsTime')
-    if (badNodes.length > 0)
-      return Statuses.failureWithInfo(
-        `GpsTime out of bounds: ${nodeString(badNodes, nonZero)}`,
-      )
-    return Statuses.success
+  returnNumber: {
+    function: ({ data }) => {
+      const badNodes = badNodesFromChecks(data, 'returnNumber')
+      if (badNodes.length > 0)
+        return Statuses.failureWithInfo(`Invalid data in: [ ${badNodes} ]`)
+      return Statuses.success
+    },
+    description: 'ReturnNumber value is less than NumberOfReturns value',
   },
-  sortedGpsTime: ({ data, nonZero }) => {
-    const warnNodes = badNodesFromChecks(data, 'sortedGpsTime')
-    if (warnNodes.length > 0)
-      return Statuses.warningWithInfo(
-        `GpsTime is unsorted: ${nodeString(warnNodes, nonZero)}`,
-      )
-    return Statuses.success
-  },
-  returnNumber: ({ data }) => {
-    const badNodes = badNodesFromChecks(data, 'returnNumber')
-    if (badNodes.length > 0)
-      return Statuses.failureWithInfo(`Invalid data in: [ ${badNodes} ]`)
-    return Statuses.success
-  },
-  zeroPoint: ({ data }) => {
-    const zeroPointNodes = badNodesFromChecks(data, 'zeroPoints')
-    if (zeroPointNodes.length > 0)
-      return Statuses.warningWithInfo(`Zero Point Nodes: [ ${zeroPointNodes} ]`)
-    return Statuses.success
+  zeroPoint: {
+    function: ({ data }) => {
+      const zeroPointNodes = badNodesFromChecks(data, 'zeroPoints')
+      if (zeroPointNodes.length > 0)
+        return Statuses.warningWithInfo(
+          `Zero Point Nodes: [ ${zeroPointNodes} ]`,
+        )
+      return Statuses.success
+    },
+    description: 'Warns with list of nodes containing zero (0) points',
   },
   // other Node checks
-  nodesReachable: ({ data }) => checkNodesReachable(data),
+  nodesReachable: {
+    function: ({ data }) => checkNodesReachable(data),
+    description: 'All nodes in Hierarchy are reachable by key traversal',
+  },
 }
 
 // ========== CHECK FUNCTION ==========
-const keyCompare = (a: Key, b: Key): boolean =>
-  a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3]
 
 export const checkNodesReachable = (nodes: AllNodesChecked) => {
   const keys = Object.keys(nodes).map((s) => Key.create(s))
@@ -162,3 +189,6 @@ export const nodeString = (bad: string[], nonZero: string[]) =>
       ? 'ALL-BUT-ONE-NODE: ' + difference(nonZero, bad)
       : bad
   } ]` // TODO: Is this better than a massive string of >13000 node keys?
+
+const keyCompare = (a: Key, b: Key): boolean =>
+  a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3]

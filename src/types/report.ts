@@ -57,4 +57,11 @@ export const isLas = (r: Report): r is Report.SuccessLas =>
   r.scan.filetype === 'LAS'
 export const isFail = (r: Report): r is Report.Failure =>
   r.scan.filetype === 'Unknown'
-export const Report = { isCopc, isLas, isFail }
+export const Report = {
+  isCopc,
+  isLas,
+  isFail,
+  is: { copc: isCopc, las: isLas, fail: isFail },
+}
+
+// export const Report = { is: { copc: isCopc, las: isLas, fail: isFail } }

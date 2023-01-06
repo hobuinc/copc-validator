@@ -50,6 +50,10 @@
             "type": "string",
             "description": "Property name of Check Function in Suite"
           },
+          "description": {
+            "type": "string",
+            "description": "Human readable description of what Check Function is doing"
+          },
           "status": {
             "type": "string",
             "description": "Status on if data is valid according to specifications",
@@ -60,7 +64,7 @@
             "description": "Additional information about the performed check"
           }
         },
-        "required": ["id", "status"],
+        "required": ["id", "status", "description"],
         "additionalProperties": false
       }
     }

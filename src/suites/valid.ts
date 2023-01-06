@@ -13,20 +13,24 @@ import { vlrSuite } from './vlrs.js'
 export const copcSuite: Check.Suite<Copc> = {
   ...headerSuite,
   ...vlrSuite,
-  'bounds within cube': ({ info: { cube }, header: { min, max, scale } }) => {
-    const badBounds = min.reduce<string[]>(
-      (prev, minValue, idx) =>
-        cube[idx] - scale[idx] <= minValue &&
-        max[idx] <= cube[idx + 3] + scale[idx]
-          ? [...prev]
-          : [...prev, PointIdx[idx]],
-      [],
-    )
-    if (badBounds.length > 0)
-      return Statuses.failureWithInfo(
-        `Las bound(s) falls outside of Copc cube: ${badBounds}`,
+  'bounds within cube': {
+    function: ({ info: { cube }, header: { min, max, scale } }) => {
+      const badBounds = min.reduce<string[]>(
+        (prev, minValue, idx) =>
+          cube[idx] - scale[idx] <= minValue &&
+          max[idx] <= cube[idx + 3] + scale[idx]
+            ? [...prev]
+            : [...prev, PointIdx[idx]],
+        [],
       )
-    return Statuses.success
+      if (badBounds.length > 0)
+        return Statuses.failureWithInfo(
+          `Las bound(s) falls outside of Copc cube: ${badBounds}`,
+        )
+      return Statuses.success
+    },
+    description:
+      'LAS header min & max bounds are contained by COPC info cube bounds',
   },
 }
 

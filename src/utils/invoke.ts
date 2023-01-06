@@ -27,13 +27,17 @@ export const invokeAllChecks = async (
           flatMapDeep(
             suites,
             ({ source, suite }) =>
-              map(suite, (f, id) => performCheck(source, f, id)), //checkPromise(source, f, id)),
+              map(suite, ({ function: f, description }, id) =>
+                performCheck(source, f, id, description),
+              ), //checkPromise(source, f, id)),
           ),
         )
       ).flat()
     : (
         await Promise.all(
-          map(suites.suite, (f, id) => performCheck(suites.source, f, id)), //checkPromise(suites.source, f, id)),
+          map(suites.suite, ({ function: f, description }, id) =>
+            performCheck(suites.source, f, id, description),
+          ), //checkPromise(suites.source, f, id)),
         )
       ).flat()
 
@@ -55,8 +59,9 @@ export const invokeCollection = async (
         ).flatMap(async (suiteWSource, i) => {
           try {
             const { suite, source } = await suiteWSource
-            const suiteChecks = Object.entries(suite).map(([id, f]) =>
-              performCheck(source, f, id),
+            const suiteChecks = Object.entries(suite).map(
+              ([id, { function: f, description }]) =>
+                performCheck(source, f, id, description),
             )
             return suiteChecks
           } catch (error) {
@@ -78,6 +83,7 @@ const performCheck = async (
   source: unknown,
   f: Check.Function<unknown>,
   id: string,
+  description: string,
 ): Promise<Check> => {
   // console.log(`Performing ${id}...`)
   // console.time(id)
@@ -89,7 +95,7 @@ const performCheck = async (
     }
   })()
   // console.timeEnd(id)
-  return { id, ...result }
+  return { id, description, ...result }
 }
 
 // eslint-disable-next-line
