@@ -155,7 +155,6 @@ const defaultOptions = {
   mini: false,
   workers: undefined,
   showProgress: false,
-  // las: false,
 }
 type Collections = {
   copc: typeof CopcCollection /*Check.CollectionFn*/

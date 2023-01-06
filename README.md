@@ -300,6 +300,7 @@ const generateReport = async ({
 | `returnNumber`             | Each point has `ReturnNumber <= NumberOfReturns`                        | Shallow | `PointData`    |
 | `zeroPoint`                | Warns with list of all `pointCount: 0` nodes in the Hierarchy           | Deep\*  | `PointData`    |
 | `nodesReachable`           | Every `Node` (`'D-X-Y-Z'`) in the `Hierarchy` is reachable              | Shallow | `PointData`    |
+| `pointsReachable`          | Each Node pageOffset + pageLength leads into another Node page          | Shallow | `PointData`    |
 | `...ID`                    | ...Description                                                          | Shallow | `...`          |
 
 Checks and their IDs are subject to change as I see fit

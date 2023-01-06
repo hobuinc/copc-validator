@@ -52,7 +52,13 @@ test('manualVlrSuite failures', async () => {
     suite: manualVlrSuite,
   })
   expect(emptyVlrChecks).toEqual([
-    { id: 'wkt', status: 'fail', info: 'Failed to find WKT SRS VLR' },
+    {
+      id: 'wkt',
+      status: 'fail',
+      info: 'Failed to find WKT SRS VLR',
+      description:
+        'WKT VLR (string) exists and successfully initializes proj4js',
+    },
   ])
 
   const doubleVlrChecks = await invokeAllChecks({
@@ -60,7 +66,13 @@ test('manualVlrSuite failures', async () => {
     suite: manualVlrSuite,
   })
   expect(doubleVlrChecks).toEqual([
-    { id: 'wkt', status: 'fail', info: 'Found multiple WKT SRS VLRs' },
+    {
+      id: 'wkt',
+      status: 'fail',
+      info: 'Found multiple WKT SRS VLRs',
+      description:
+        'WKT VLR (string) exists and successfully initializes proj4js',
+    },
   ])
   // checkAll(doubleVlrChecks, false)
 })

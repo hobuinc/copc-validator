@@ -1,4 +1,5 @@
 import { Hierarchy, Key } from 'copc'
+import { indexOf } from 'lodash'
 import difference from 'lodash.difference'
 import { Check, AllNodesChecked } from '../types/index.js'
 import { Statuses } from '../utils/index.js'
@@ -111,14 +112,19 @@ export const pointDataSuite: Check.Suite<{
     function: ({ data }) => checkNodesReachable(data),
     description: 'All nodes in Hierarchy are reachable by key traversal',
   },
+  pointsReachable: {
+    function: ({ data }) => checkPointsReachable(data),
+    description:
+      'All points in Hierarchy are reachable by offset + length traversal',
+  },
 }
 
 // ========== CHECK FUNCTION ==========
 
-export const checkNodesReachable = (nodes: AllNodesChecked) => {
+export const checkNodesReachable = (nodes: AllNodesChecked): Check.Status => {
   const keys = Object.keys(nodes).map((s) => Key.create(s))
 
-  const traverseNodes = (key: Key) => {
+  const traverseChildNodes = (key: Key) => {
     keys.splice(
       keys.findIndex((k) => keyCompare(key, k)),
       1,
@@ -145,13 +151,13 @@ export const checkNodesReachable = (nodes: AllNodesChecked) => {
     possibleChildren.forEach((k) => {
       if (keys.find((l) => keyCompare(k, l))) {
         // if a child from here is found, go there next
-        traverseNodes(k)
+        traverseChildNodes(k)
       }
     })
   }
 
   // start traversal at 0-0-0-0
-  traverseNodes([0, 0, 0, 0])
+  traverseChildNodes([0, 0, 0, 0])
   if (keys.length > 0)
     return Statuses.failureWithInfo(
       `Unreachable Nodes in Hierarchy: [ ${keys.map((k) => Key.toString(k))} ]`,
@@ -159,6 +165,39 @@ export const checkNodesReachable = (nodes: AllNodesChecked) => {
   return Statuses.success
 }
 
+type NodeMapEntry = [string, Hierarchy.Node]
+const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
+  const entries = Object.entries(nodes)
+  const visited: string[] = []
+
+  const findNextOffset = ([key, node]: NodeMapEntry) => {
+    visited.push(key)
+    const next = entries.find(
+      ([k, n]) =>
+        typeof n !== 'undefined' &&
+        node.pointDataOffset + node.pointDataLength === n.pointDataOffset,
+    )
+    //couldn't find next chunk
+    if (!next) return
+    findNextOffset(next as NodeMapEntry)
+  }
+
+  const start = entries.reduce<NodeMapEntry>(
+    ([k, lowest], [key, node]) => {
+      if (!node || node.pointDataOffset > lowest.pointDataOffset)
+        return [k, lowest]
+      return [key, node]
+    },
+    ['', { pointDataOffset: Infinity } as Hierarchy.Node],
+  )
+  findNextOffset(start)
+  if (visited.length < entries.length)
+    return Statuses.failureWithInfo(
+      `Unreachable point data: [ ${difference(Object.keys(nodes), visited)} ]`,
+    )
+
+  return Statuses.success
+}
 // ========== UTILITIES ==========
 /**
  *

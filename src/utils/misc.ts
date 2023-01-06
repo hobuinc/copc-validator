@@ -18,8 +18,14 @@ export const NodeVsBrowser: {
 } = {
   lazPerf:
     typeof process === 'object'
-      ? undefined //'laz-perf.wasm'
-      : getWasmFilename(), //window.origin + '/laz-perf.wasm',
+      ? undefined
+      : (function () {
+          let origin = window.origin + window.location.pathname
+          if (origin.endsWith('index.html')) {
+            origin = origin.slice(0, origin.lastIndexOf('index.html'))
+          }
+          return origin + 'laz-perf.wasm'
+        })(),
   worker:
     typeof process === 'object'
       ? ['./workers/worker.js', { type: 'module' }] //module worker in node
@@ -27,12 +33,4 @@ export const NodeVsBrowser: {
           new URL('./workers/worker.umd.js', import.meta.url).href,
           { type: 'classic' },
         ], //classic worker in browser (for non-Chrome support)
-}
-
-function getWasmFilename() {
-  let origin = window.origin + window.location.pathname
-  if (origin.endsWith('index.html')) {
-    origin = origin.slice(0, origin.lastIndexOf('index.html'))
-  }
-  return origin + 'laz-perf.wasm'
 }
