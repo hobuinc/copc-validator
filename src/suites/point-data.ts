@@ -184,7 +184,11 @@ const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
 
   const start = entries.reduce<NodeMapEntry>(
     ([k, lowest], [key, node]) => {
-      if (!node || node.pointDataOffset > lowest.pointDataOffset)
+      if (
+        !node ||
+        node.pointDataOffset > lowest.pointDataOffset ||
+        node.pointDataOffset === 0
+      )
         return [k, lowest]
       return [key, node]
     },

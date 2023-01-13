@@ -1,22 +1,69 @@
 import { expose } from 'threads/worker'
 import { LazPerf } from 'laz-perf/lib/worker/index.js'
-import { Getter, Copc, Bounds, Key } from 'copc'
+import { Getter, Copc, Bounds, Key, Las, Binary } from 'copc'
+// import { Extractor } from 'copc/lib/las'
 const { stepTo } = Bounds
 const { parse } = Key
-const { loadPointDataView } = Copc
+// const { loadPointDataView } = Copc
+// const {Extractor, Dimensions} = Las
 
 const boolToStatus = (b, warning = false) =>
   !b ? 'pass' : warning ? 'warn' : 'fail'
 
+const getGetDimensions = async ({
+  get,
+  copc,
+  deep,
+  node, //: { pointDataOffset, pointDataLength, pointCount },
+  lazPerf,
+}) => {
+  if (deep) {
+    const view = await Copc.loadPointDataView(get, copc, node, {
+      lazPerf: await lazPerf,
+    })
+    const dimensions = Object.keys(view.dimensions)
+
+    const getDimensions = (idx) =>
+      dimensions.reduce((acc, dimension) => {
+        acc[dimension] = view.getter(dimension)(idx)
+        return acc
+      }, {})
+    return getDimensions
+  }
+
+  const extractors = Las.Extractor.create(copc.header, copc.eb)
+  const dimensions = Object.keys(Las.Dimensions.create(extractors, copc.eb))
+  const dv = Binary.toDataView(
+    await get(
+      node.pointDataOffset,
+      node.pointDataOffset + node.pointDataLength,
+    ),
+  )
+  function getter(name) {
+    const extractor = extractors[name]
+    if (!extractor) throw new Error(`No extractor for dimension: ${name}`)
+    return function (index) {
+      if (index >= node.pointCount) {
+        throw new RangeError(
+          `View index (${index}) out of range: ${node.pointCount}`,
+        )
+      }
+      return extractor(dv, index)
+    }
+  }
+  const getDimensions = (idx) =>
+    dimensions.reduce((acc, dimension) => {
+      acc[dimension] = getter(dimension)(idx)
+      return acc
+    }, {})
+  return getDimensions
+}
+
 let lazPerfPromise
 
 expose(async function ({ file, copc, key, node, deep, lazPerfWasmFilename }) {
-  // console.log(`Reading ${key}`)
-  // console.time(key)
-
   if (lazPerfWasmFilename) {
     if (!lazPerfPromise)
-      // console.log('(WORKER) Locating laz-perf:', lazPerfWasmFilename)
       lazPerfPromise = LazPerf.create({
         locateFile: () => lazPerfWasmFilename,
         INITIAL_MEMORY: 262144,
@@ -24,45 +71,38 @@ expose(async function ({ file, copc, key, node, deep, lazPerfWasmFilename }) {
         FAST_MEMORY: 65536,
       })
   } else {
-    lazPerfPromise = undefined // let Copc create its own lazPerf
-    // had issues finding the laz-perf.wasm file in NodeJS, so for now I'm ignoring it
+    lazPerfPromise = undefined
   }
   let prevGpsTime = 0
+
   if (node.pointCount === 0) {
-    const checks = {
-      ...node,
-      rgb: 'pass',
-      rgbi: 'pass',
-      xyz: 'pass',
-      gpsTime: 'pass',
-      sortedGpsTime: 'pass',
-      returnNumber: 'pass',
-      zeroPoints: 'warn',
-    }
-    return [key, checks]
+    return [
+      key,
+      {
+        ...node,
+        rgb: 'pass',
+        rgbi: 'pass',
+        xyz: 'pass',
+        gpsTime: 'pass',
+        sortedGpsTime: 'pass',
+        returnNumber: 'pass',
+        zeroPoints: 'warn',
+      },
+    ]
   }
+
   const get =
     typeof file === 'string'
       ? Getter.create(file)
       : async (b, e) => new Uint8Array(await file.slice(b, e).arrayBuffer())
-  const view = await loadPointDataView(get, copc, node, {
-    lazPerf: await lazPerfPromise,
-  }) //Copc.
-  const dimensions = Object.keys(view.dimensions)
-  const getters = dimensions.reduce((acc, dimension) => {
-    acc[dimension] = view.getter(dimension)
-    return acc
-  }, {})
-  /**
-   * Function mapping an index to an object of dimensions
-   * @param {number} idx Point index (within Node) to get dimensions
-   * @returns {Record<string, number>} Object matching type `{ [dimension]: number }`
-   */
-  const getDimensions = (idx) =>
-    dimensions.reduce((acc, dimension) => {
-      acc[dimension] = getters[dimension](idx)
-      return acc
-    }, {})
+
+  const getDimensions = await getGetDimensions({
+    get,
+    copc,
+    deep,
+    node,
+    lazPerf: lazPerfPromise,
+  })
 
   const {
     info: {
@@ -77,7 +117,7 @@ expose(async function ({ file, copc, key, node, deep, lazPerfWasmFilename }) {
     parse(key), //Key.
   )
 
-  const length = deep ? view.pointCount : 1
+  const length = deep ? node.pointCount : 1
 
   let checks = node
   //using for loop over Array.reduce so we can early exit if all checks are fails

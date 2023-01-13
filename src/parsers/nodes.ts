@@ -5,6 +5,7 @@ import {
   loadAllHierarchyPages,
   NodeVsBrowser,
   runTasks,
+  workerParams,
 } from '../utils/index.js'
 
 export type nodeParserParams = {
@@ -28,24 +29,15 @@ export const nodeParser: Check.Parser<
 }: nodeParserParams) => {
   const nodes = await loadAllHierarchyPages(get, copc)
   return {
-    source: {
-      data: await readPointDataRecords(
-        {
-          nodes,
-          file,
-          copc,
-          deep,
-          workerCount,
-        },
-        showProgress,
-      ),
-      nonZero: nonZeroNodes(nodes),
-    },
+    source: await createPointDataSuiteSource(
+      { nodes, file, copc, deep },
+      { workerCount, withBar: showProgress },
+    ),
     suite: pointDataSuite,
   }
 }
 
-// ========== UTILITIES ============
+// ========== A MESSY NEST OF UTILITIES ============
 /**
  *
  * @param nodes
@@ -87,4 +79,38 @@ export const readPointDataRecords = (
     withBar,
     workerCount,
   )
+}
+
+type createPointDataSuiteSourceData = {
+  nodes: Hierarchy.Node.Map
+  file: string | File
+  copc: Copc
+  deep: boolean
+}
+type createPointDataSuiteSourceOptions = {
+  workerCount?: number
+  withBar?: boolean
+}
+const createPointDataSuiteSource = async (
+  { nodes, file, copc, deep }: createPointDataSuiteSourceData,
+  { workerCount, withBar = false }: createPointDataSuiteSourceOptions,
+) => {
+  const [nonZero, data] = Object.entries(nodes).reduce<
+    [string[], workerParams[]]
+  >(
+    (acc, [key, node]) => {
+      if (node && node.pointCount !== 0) acc[0].push(key)
+      acc[1].push({
+        file,
+        key,
+        node: node || { pointCount: 0, pointDataOffset: 0, pointDataLength: 0 },
+        copc,
+        deep,
+        lazPerfWasmFilename: NodeVsBrowser.lazPerf,
+      })
+      return acc
+    },
+    [[], []],
+  )
+  return { data: await runTasks(data, withBar, workerCount), nonZero }
 }

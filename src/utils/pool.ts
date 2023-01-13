@@ -4,7 +4,7 @@ import { spawn, Pool, Worker } from 'threads'
 import { AllNodesChecked, CheckedNode } from 'types'
 import { NodeVsBrowser } from './misc.js'
 
-type workerParams = {
+export type workerParams = {
   file: string | File
   copc: Copc
   key: string
