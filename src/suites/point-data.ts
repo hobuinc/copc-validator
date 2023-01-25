@@ -1,5 +1,4 @@
 import { Hierarchy, Key } from 'copc'
-import { indexOf } from 'lodash'
 import difference from 'lodash.difference'
 import { Check, AllNodesChecked } from '../types/index.js'
 import { Statuses } from '../utils/index.js'
@@ -173,7 +172,7 @@ const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
   const findNextOffset = ([key, node]: NodeMapEntry) => {
     visited.push(key)
     const next = entries.find(
-      ([k, n]) =>
+      ([, n]) =>
         typeof n !== 'undefined' &&
         node.pointDataOffset + node.pointDataLength === n.pointDataOffset,
     )

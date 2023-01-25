@@ -151,7 +151,7 @@ export const headerToMetadata = async ({
   const srs: SrsData | undefined = (() => {
     if (!wkt) return
     const wktParsed = wktparser(wkt)
-    let { units, vunits } = wktParsed
+    const { units, vunits } = wktParsed
     if (units === 'meter') units === 'metre'
     if (vunits === 'meter') vunits === 'metre'
     return {
@@ -260,6 +260,7 @@ export const headerToMetadata = async ({
 
 //http://geotiff.maptools.org/spec/geotiff2.4.html
 //https://www.asprs.org/wp-content/uploads/2019/07/LAS_1_4_r15.pdf
+/* eslint-disable-next-line */
 export const parseGeoTiff = (dv: DataView, ascii?: Buffer, double?: Buffer) => {
   const getValue = (offset: number) => dv.getUint16(offset, true)
   const readAscii = (start: number, end?: number): string => {
@@ -281,7 +282,7 @@ export const parseGeoTiff = (dv: DataView, ascii?: Buffer, double?: Buffer) => {
       valueOffset: getValue(i + 6),
     })
   }
-  let message: string = `Geotiff_Information:\n   Version: ${header.keyDirectoryVersion}\n   Key_Revision: ${header.keyRevision}.${header.minorRevision}\n   Tagged_Information:\n      End_Of_Tags.\n   Keyed_Information:`
+  let message = `Geotiff_Information:\n   Version: ${header.keyDirectoryVersion}\n   Key_Revision: ${header.keyRevision}.${header.minorRevision}\n   Tagged_Information:\n      End_Of_Tags.\n   Keyed_Information:`
   keyEntries.forEach(({ keyId, tiffTagLocation, count, valueOffset }) => {
     let value: number | string = valueOffset
     let prefix: 'Short' | 'Ascii' = 'Short'

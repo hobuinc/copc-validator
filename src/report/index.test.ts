@@ -1,4 +1,4 @@
-import { Binary, Getter, Las } from 'copc'
+import { Binary, Las } from 'copc'
 import omit from 'lodash.omit'
 import { generateReport } from 'report'
 import { ellipsoidFiles, getCopcItems, getLasItems } from 'test'
@@ -61,6 +61,7 @@ test('shallow COPC', async () => {
     source: ellipsoidFiles.laz14,
     options: { pdal: true },
   })
+  /* eslint-disable-next-line */
   expect((shallowWithPdal as Report.SuccessLas).pdal!).toMatchObject(
     headerToMetadata({
       ...copc,
@@ -92,6 +93,7 @@ test('shallow LAS', async () => {
     source: ellipsoidFiles.laz14,
     options: { pdal: true },
   })
+  /* eslint-disable-next-line */
   expect((shallowWithPdal as Report.SuccessLas).pdal!).toMatchObject(
     headerToMetadata({
       header,
@@ -217,7 +219,6 @@ test('parseGeoTiff', async () => {
       }),
     ),
   )
-  console.log(vlrMap)
   const [GeoKeyDirectoryTag, GeoDoubleParamsTag, GeoAsciiParamsTag] =
     vlrMap.reduce<
       [VlrData | undefined, VlrData | undefined, VlrData | undefined]

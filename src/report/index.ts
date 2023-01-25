@@ -5,7 +5,7 @@ import {
   // LasDirectCollection,
 } from '../collections/index.js'
 import { invokeCollection, currTime } from '../utils/index.js'
-import { Binary, Copc, Getter, Las } from 'copc'
+import { Copc, Getter, Las } from 'copc'
 import { Report } from '../types/index.js'
 import isEqual from 'lodash.isequal'
 import omit from 'lodash.omit'
@@ -70,7 +70,7 @@ export const generateReport = async ({
       }),
     )
     const data = await (async () => {
-      let o: { copc?: Copc; pdal?: { metadata: Metadata } } = {}
+      const o: { copc?: Copc; pdal?: { metadata: Metadata } } = {}
       if (!mini) o.copc = copc
       if (pdal) o.pdal = await headerToMetadata({ ...copc, get })
       return o
@@ -112,7 +112,7 @@ export const generateReport = async ({
         collections.las({ get, header, vlrs }),
       )
       const data = await (async () => {
-        let o: {
+        const o: {
           las?: { header: Las.Header; vlrs: Las.Vlr[] }
           pdal?: { metadata: Metadata }
         } = {}
