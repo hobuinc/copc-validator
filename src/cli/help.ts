@@ -22,6 +22,12 @@ const flags: flag[] = [
     default: 'false',
   },
   {
+    flag: '-P, --pdal',
+    description:
+      'Display Header, VLR, and SRS data as pdal info metadata format',
+    default: 'false',
+  },
+  {
     flag: '-p, --progress',
     description: 'Show a progress bar while reading the point data',
     default: 'false',

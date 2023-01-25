@@ -5,10 +5,11 @@ import {
   // LasDirectCollection,
 } from '../collections/index.js'
 import { invokeCollection, currTime } from '../utils/index.js'
-import { Copc, Getter, Las } from 'copc'
+import { Binary, Copc, Getter, Las } from 'copc'
 import { Report } from '../types/index.js'
 import isEqual from 'lodash.isequal'
 import omit from 'lodash.omit'
+import { headerToMetadata, Metadata } from './format.js'
 
 /**
  * Main function for scanning a given file. Attempts to use `copc.js` parse functions
@@ -31,7 +32,7 @@ export const generateReport = async ({
   collections = defaultCollections,
 }: generateReportParams): Promise<Report> => {
   // Options setup
-  const { deep, mini, workers, showProgress } = options
+  const { deep, mini, pdal, workers, showProgress } = options
   let { name } = options
   if (typeof name === 'undefined')
     name = typeof source === 'string' ? source : defaultOptions.name
@@ -68,6 +69,12 @@ export const generateReport = async ({
         workerCount: workers,
       }),
     )
+    const data = await (async () => {
+      let o: { copc?: Copc; pdal?: { metadata: Metadata } } = {}
+      if (!mini) o.copc = copc
+      if (pdal) o.pdal = await headerToMetadata({ ...copc, get })
+      return o
+    })()
     return {
       name,
       scan: {
@@ -78,7 +85,9 @@ export const generateReport = async ({
         time: currTime() - startTime,
       },
       checks,
-      copc: mini ? undefined : copc,
+      ...data,
+      // copc: mini ? undefined : copc,
+      // pdal: pdal ? await headerToMetadata({ ...copc, get }) : undefined,
     }
   } catch (copcError) {
     // Copc.create() failed, definitely not valid COPC...
@@ -102,6 +111,15 @@ export const generateReport = async ({
       const checks = await invokeCollection(
         collections.las({ get, header, vlrs }),
       )
+      const data = await (async () => {
+        let o: {
+          las?: { header: Las.Header; vlrs: Las.Vlr[] }
+          pdal?: { metadata: Metadata }
+        } = {}
+        if (!mini) o.las = { header, vlrs }
+        if (pdal) o.pdal = await headerToMetadata({ header, vlrs, get })
+        return o
+      })()
 
       return {
         name,
@@ -113,7 +131,9 @@ export const generateReport = async ({
           time: currTime() - startTime,
         },
         checks,
-        las: mini ? undefined : { header, vlrs },
+        ...data,
+        // las: mini ? undefined : { header, vlrs },
+        // pdal: pdal ? await headerToMetadata({ header, vlrs, get }) : undefined,
         error: {
           message: (copcError as Error).message,
           stack: (copcError as Error).stack,
@@ -153,6 +173,7 @@ const defaultOptions = {
   name: 'COPC Validator Report',
   deep: false,
   mini: false,
+  pdal: false,
   workers: undefined,
   showProgress: false,
 }

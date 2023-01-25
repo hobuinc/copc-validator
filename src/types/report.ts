@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-explicit-any */
 import { Copc, Las } from 'copc'
+import { Metadata } from 'report/format'
 import { Check } from './check'
 
 export declare namespace Report {
@@ -21,6 +22,7 @@ export declare namespace Report {
     workers?: number
     mini?: boolean
     showProgress?: boolean
+    pdal?: boolean
     // las?: boolean
   }
 
@@ -32,6 +34,7 @@ export declare namespace Report {
   type SuccessCopc = Base & {
     scan: Scans.SuccessCopc
     copc?: Copc
+    pdal?: { metadata: Metadata }
   }
   type SuccessLas = Base & {
     scan: Scans.SuccessLas
@@ -39,6 +42,7 @@ export declare namespace Report {
       header: Las.Header
       vlrs: Las.Vlr[]
     }
+    pdal?: { metadata: Metadata }
     error: copcError //Error //unknown
   }
   type Success = SuccessCopc | SuccessLas

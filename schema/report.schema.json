@@ -248,6 +248,163 @@
             },
             "required": ["header", "vlrs", "info", "eb"],
             "additionalProperties": false
+          },
+          "pdal": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "comp_spacialreference": { "type": "string" },
+                  "copc": { "type": "boolean" },
+                  "count": { "type": "integer" },
+                  "creation_doy": { "type": "integer" },
+                  "creation_year": { "type": "integer" },
+                  "dataformat_id": { "type": "integer" },
+                  "dataoffset": { "type": "integer" },
+                  "filesource_id": { "type": "integer" },
+                  "global_encoding": { "type": "integer" },
+                  "global_encoding_base64": { "type": "string" },
+                  "gtiff": { "type": "string" },
+                  "header_size": { "type": "integer" },
+                  "major_version": { "type": "integer" },
+                  "maxx": { "type": "number" },
+                  "maxy": { "type": "number" },
+                  "maxz": { "type": "number" },
+                  "minor_version": { "type": "integer" },
+                  "minx": { "type": "number" },
+                  "miny": { "type": "number" },
+                  "minz": { "type": "number" },
+                  "offset_x": { "type": "number" },
+                  "offset_y": { "type": "number" },
+                  "offset_z": { "type": "number" },
+                  "point_length": { "type": "integer" },
+                  "project_id": { "type": "string" },
+                  "scale_x": { "type": "number" },
+                  "scale_y": { "type": "number" },
+                  "scale_z": { "type": "number" },
+                  "software_id": { "type": "string" },
+                  "spacial_reference": { "type": "string" },
+                  "srs": {
+                    "type": "object",
+                    "properties": {
+                      "compoundwkt": { "type": "string" },
+                      "horizontal": { "type": "string" },
+                      "isgeocentric": { "type": "boolean" },
+                      "isgeographic": { "type": "boolean" },
+                      "json": { "type": "string" },
+                      "prettycompoundwkt": { "type": "string" },
+                      "prettywkt": { "type": "string" },
+                      "proj4": { "type": "string" },
+                      "units": {
+                        "type": "object",
+                        "properties": {
+                          "horizontal": { "type": "string" },
+                          "vertical": { "type": "string" }
+                        },
+                        "required": ["horizontal", "vertical"]
+                      },
+                      "vertical": { "type": "string" },
+                      "wkt": { "type": "string" }
+                    },
+                    "required": [
+                      "compoundwkt",
+                      "horizontal",
+                      "isgeocentric",
+                      "isgeographic",
+                      "json",
+                      "prettycompoundwkt",
+                      "prettywkt",
+                      "proj4",
+                      "units",
+                      "vertical",
+                      "wkt"
+                    ]
+                  },
+                  "system_id": { "type": "string" }
+                },
+                "patternProperties": {
+                  "^vlr_[0-9]+$": {
+                    "type": "object",
+                    "properties": {
+                      "data": { "type": "string" },
+                      "description": { "type": "string" },
+                      "record_id": { "type": "integer" },
+                      "user_id": { "type": "string" }
+                    },
+                    "required": ["data", "description", "record_id", "user_id"]
+                  }
+                },
+                "required": [
+                  "comp_spacialreference",
+                  "copc",
+                  "count",
+                  "creation_doy",
+                  "creation_year",
+                  "dataformat_id",
+                  "dataoffset",
+                  "filesource_id",
+                  "global_encoding",
+                  "global_encoding_base64",
+                  "header_size",
+                  "major_version",
+                  "maxx",
+                  "maxy",
+                  "maxz",
+                  "minor_version",
+                  "minx",
+                  "miny",
+                  "minz",
+                  "offset_x",
+                  "offset_y",
+                  "offset_z",
+                  "point_length",
+                  "project_id",
+                  "scale_x",
+                  "scale_y",
+                  "scale_z",
+                  "software_id",
+                  "spacial_reference",
+                  "system_id"
+                ],
+                "if": {
+                  "properties": { "copc": { "const": true } }
+                },
+                "then": {
+                  "properties": {
+                    "copc_info": {
+                      "type": "object",
+                      "properties": {
+                        "center_x": { "type": "number" },
+                        "center_y": { "type": "number" },
+                        "center_z": { "type": "number" },
+                        "gpstime_maximum": { "type": "number" },
+                        "gpstime_minimum": { "type": "number" },
+                        "halfsize": { "type": "number" },
+                        "root_hier_offset": { "type": "integer" },
+                        "root_hier_size": { "type": "integer" },
+                        "spacing": { "type": "number" }
+                      },
+                      "required": [
+                        "center_x",
+                        "center_y",
+                        "center_z",
+                        "gpstime_maximum",
+                        "gpstime_minimum",
+                        "halfsize",
+                        "root_hier_offset",
+                        "root_hier_size",
+                        "spacing"
+                      ]
+                    }
+                  },
+                  "required": ["copc_info"]
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["metadata"],
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -384,6 +541,163 @@
               }
             },
             "required": ["message"]
+          },
+          "pdal": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "comp_spacialreference": { "type": "string" },
+                  "copc": { "type": "boolean" },
+                  "count": { "type": "integer" },
+                  "creation_doy": { "type": "integer" },
+                  "creation_year": { "type": "integer" },
+                  "dataformat_id": { "type": "integer" },
+                  "dataoffset": { "type": "integer" },
+                  "filesource_id": { "type": "integer" },
+                  "global_encoding": { "type": "integer" },
+                  "global_encoding_base64": { "type": "string" },
+                  "gtiff": { "type": "string" },
+                  "header_size": { "type": "integer" },
+                  "major_version": { "type": "integer" },
+                  "maxx": { "type": "number" },
+                  "maxy": { "type": "number" },
+                  "maxz": { "type": "number" },
+                  "minor_version": { "type": "integer" },
+                  "minx": { "type": "number" },
+                  "miny": { "type": "number" },
+                  "minz": { "type": "number" },
+                  "offset_x": { "type": "number" },
+                  "offset_y": { "type": "number" },
+                  "offset_z": { "type": "number" },
+                  "point_length": { "type": "integer" },
+                  "project_id": { "type": "string" },
+                  "scale_x": { "type": "number" },
+                  "scale_y": { "type": "number" },
+                  "scale_z": { "type": "number" },
+                  "software_id": { "type": "string" },
+                  "spacial_reference": { "type": "string" },
+                  "srs": {
+                    "type": "object",
+                    "properties": {
+                      "compoundwkt": { "type": "string" },
+                      "horizontal": { "type": "string" },
+                      "isgeocentric": { "type": "boolean" },
+                      "isgeographic": { "type": "boolean" },
+                      "json": { "type": "string" },
+                      "prettycompoundwkt": { "type": "string" },
+                      "prettywkt": { "type": "string" },
+                      "proj4": { "type": "string" },
+                      "units": {
+                        "type": "object",
+                        "properties": {
+                          "horizontal": { "type": "string" },
+                          "vertical": { "type": "string" }
+                        },
+                        "required": ["horizontal", "vertical"]
+                      },
+                      "vertical": { "type": "string" },
+                      "wkt": { "type": "string" }
+                    },
+                    "required": [
+                      "compoundwkt",
+                      "horizontal",
+                      "isgeocentric",
+                      "isgeographic",
+                      "json",
+                      "prettycompoundwkt",
+                      "prettywkt",
+                      "proj4",
+                      "units",
+                      "vertical",
+                      "wkt"
+                    ]
+                  },
+                  "system_id": { "type": "string" }
+                },
+                "patternProperties": {
+                  "^vlr_[0-9]+$": {
+                    "type": "object",
+                    "properties": {
+                      "data": { "type": "string" },
+                      "description": { "type": "string" },
+                      "record_id": { "type": "integer" },
+                      "user_id": { "type": "string" }
+                    },
+                    "required": ["data", "description", "record_id", "user_id"]
+                  }
+                },
+                "required": [
+                  "comp_spacialreference",
+                  "copc",
+                  "count",
+                  "creation_doy",
+                  "creation_year",
+                  "dataformat_id",
+                  "dataoffset",
+                  "filesource_id",
+                  "global_encoding",
+                  "global_encoding_base64",
+                  "header_size",
+                  "major_version",
+                  "maxx",
+                  "maxy",
+                  "maxz",
+                  "minor_version",
+                  "minx",
+                  "miny",
+                  "minz",
+                  "offset_x",
+                  "offset_y",
+                  "offset_z",
+                  "point_length",
+                  "project_id",
+                  "scale_x",
+                  "scale_y",
+                  "scale_z",
+                  "software_id",
+                  "spacial_reference",
+                  "system_id"
+                ],
+                "if": {
+                  "properties": { "copc": { "const": true } }
+                },
+                "then": {
+                  "properties": {
+                    "copc_info": {
+                      "type": "object",
+                      "properties": {
+                        "center_x": { "type": "number" },
+                        "center_y": { "type": "number" },
+                        "center_z": { "type": "number" },
+                        "gpstime_maximum": { "type": "number" },
+                        "gpstime_minimum": { "type": "number" },
+                        "halfsize": { "type": "number" },
+                        "root_hier_offset": { "type": "integer" },
+                        "root_hier_size": { "type": "integer" },
+                        "spacing": { "type": "number" }
+                      },
+                      "required": [
+                        "center_x",
+                        "center_y",
+                        "center_z",
+                        "gpstime_maximum",
+                        "gpstime_minimum",
+                        "halfsize",
+                        "root_hier_offset",
+                        "root_hier_size",
+                        "spacing"
+                      ]
+                    }
+                  },
+                  "required": ["copc_info"]
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["metadata"],
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

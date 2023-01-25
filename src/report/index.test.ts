@@ -1,13 +1,16 @@
+import { Binary, Getter, Las } from 'copc'
+import omit from 'lodash.omit'
 import { generateReport } from 'report'
 import { ellipsoidFiles, getCopcItems, getLasItems } from 'test'
 import { Report } from 'types'
+import { headerToMetadata, parseGeoTiff, VlrData } from './format'
 
 const copcFile = ellipsoidFiles.copc
 const copcItems = getCopcItems()
 const lasItems = getLasItems()
 
 test('shallow COPC', async () => {
-  const { copc } = await copcItems
+  const { copc, get } = await copcItems
   const shallow = await generateReport({
     source: copcFile,
     options: { showProgress: true },
@@ -42,9 +45,9 @@ test('shallow COPC', async () => {
   // testing minified report
   expect(miniShallowWithName).toMatchObject(
     expect.objectContaining({
-      ...shallow,
+      ...omit(shallow, 'copc'),
       name: reportName,
-      copc: undefined,
+      // copc: undefined,
       scan: {
         ...shallow.scan,
         end: expect.any(Date),
@@ -53,10 +56,21 @@ test('shallow COPC', async () => {
       },
     }),
   )
+
+  const shallowWithPdal = await generateReport({
+    source: ellipsoidFiles.laz14,
+    options: { pdal: true },
+  })
+  expect((shallowWithPdal as Report.SuccessLas).pdal!).toMatchObject(
+    headerToMetadata({
+      ...copc,
+      get, //: Getter.create(ellipsoidFiles.copc),
+    }),
+  )
 })
 
 test('shallow LAS', async () => {
-  const { header, vlrs } = await lasItems
+  const { header, vlrs, get } = await lasItems
   const shallow = await generateReport({
     source: ellipsoidFiles.laz14,
     options: { deep: false },
@@ -73,6 +87,18 @@ test('shallow LAS', async () => {
   expect(shallow.las!.header).toEqual(header)
   /* eslint-disable-next-line */
   expect(shallow.las!.vlrs).toEqual(vlrs)
+
+  const shallowWithPdal = await generateReport({
+    source: ellipsoidFiles.laz14,
+    options: { pdal: true },
+  })
+  expect((shallowWithPdal as Report.SuccessLas).pdal!).toMatchObject(
+    headerToMetadata({
+      header,
+      vlrs,
+      get, //: Getter.create(ellipsoidFiles.laz14),
+    }),
+  )
 })
 
 test('shallow Unknown', async () => {
@@ -166,4 +192,56 @@ test('deep Unknown', async () => {
   expect((deep.error as Error).message).toContain('Invalid header:')
   // copcError undefined since both lasError & copcError fail for same reason
   expect(deep.copcError).toBeUndefined()
+})
+
+test('parseGeoTiff', async () => {
+  const { vlrs, get } = await getLasItems(ellipsoidFiles.laz)
+  const vlrMap = await Promise.all(
+    vlrs.map<Promise<VlrData>>(
+      async ({
+        userId: user_id,
+        recordId: record_id,
+        description,
+        contentOffset,
+        contentLength,
+      }) => ({
+        data: Buffer.from(
+          await Las.Vlr.fetch(get, {
+            contentOffset,
+            contentLength,
+          } as Las.Vlr),
+        ).toString('base64'),
+        description,
+        record_id,
+        user_id,
+      }),
+    ),
+  )
+  console.log(vlrMap)
+  const [GeoKeyDirectoryTag, GeoDoubleParamsTag, GeoAsciiParamsTag] =
+    vlrMap.reduce<
+      [VlrData | undefined, VlrData | undefined, VlrData | undefined]
+    >(
+      (acc, vlr) => {
+        if (vlr.user_id !== 'LASF_Projection') return acc
+        if (vlr.record_id === 34735) acc[0] = vlr
+        if (vlr.record_id === 34736) acc[1] = vlr
+        if (vlr.record_id === 34737) acc[2] = vlr
+        // console.log(acc)
+        return acc
+      },
+      [undefined, undefined, undefined],
+    )
+  // console.log(GeoKeyDirectoryTag)
+  if (!GeoKeyDirectoryTag) throw new Error('Error retrieving GeoTIFF VLRs')
+
+  expect(
+    parseGeoTiff(
+      Binary.toDataView(Buffer.from(GeoKeyDirectoryTag.data, 'base64')),
+      GeoAsciiParamsTag && Buffer.from(GeoAsciiParamsTag.data, 'base64'),
+      GeoDoubleParamsTag && Buffer.from(GeoDoubleParamsTag.data, 'base64'),
+    ),
+  ).toBe(
+    'Geotiff_Information:\n   Version: 1\n   Key_Revision: 1.0\n   Tagged_Information:\n      End_Of_Tags.\n   Keyed_Information:\n      GTModelTypeGeoKey (Short,1): ModelTypeProjected\n      GTRasterTypeGeoKey (Short,1): RasterPixelIsArea\n      GTCitationGeoKey (Ascii,25): "WGS 84 / Pseudo-Mercator"\n      GeogCitationGeoKey (Ascii,7): "WGS 84"\n      GeogAngularUnitsGeoKey (Short,1): Angular_Degree\n      ProjectedCSTypeGeoKey (Short,1): Code-3857\n      ProjLinearUnitsGeoKey (Short,1): Linear_Meter\n     End_Of_Keys.\n   End_Of_Geotiff.\n',
+  )
 })

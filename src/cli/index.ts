@@ -19,6 +19,8 @@ type ExpectedArgv = {
   d: boolean //alias
   mini: boolean
   m: boolean //alias
+  pdal: boolean
+  P: boolean //alias
   progress: boolean
   p: boolean //alias
   output?: string
@@ -52,6 +54,7 @@ export const copcc = async (argv: string[]) => {
       name: 'n',
       workers: 'w',
       mini: 'm',
+      pdal: 'P',
       help: 'h',
       version: 'v',
       progress: 'p',
@@ -66,6 +69,7 @@ export const copcc = async (argv: string[]) => {
     name: givenName,
     workers,
     mini,
+    pdal,
     progress,
   } = args
 
@@ -104,6 +108,7 @@ export const copcc = async (argv: string[]) => {
       deep,
       workers,
       mini,
+      pdal,
       showProgress: progress,
     },
   })
