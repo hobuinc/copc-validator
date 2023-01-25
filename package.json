@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "@landrush/proj4": "^2.7.7",
+    "buffer": "^6.0.3",
     "cli-progress": "^3.11.2",
     "copc": "^0.0.4",
     "lodash.difference": "^4.5.0",

@@ -1,4 +1,5 @@
 import { Binary, Bounds, Getter, Info, Las } from 'copc'
+import { Buffer } from 'buffer/'
 // import proj4 from '@landrush/proj4'
 import wktparser from '@landrush/wkt-parser'
 
@@ -177,14 +178,12 @@ export const headerToMetadata = async ({
         userId: user_id,
         recordId: record_id,
         description,
-        contentOffset,
-        contentLength,
+        ...content
+        // contentOffset,
+        // contentLength,
       }) => ({
         data: Buffer.from(
-          await Las.Vlr.fetch(get, {
-            contentOffset,
-            contentLength,
-          } as Las.Vlr),
+          await Las.Vlr.fetch(get, content as Las.Vlr),
         ).toString('base64'),
         description,
         record_id,

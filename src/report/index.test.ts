@@ -1,4 +1,5 @@
 import { Binary, Las } from 'copc'
+import { Buffer } from 'buffer/'
 import omit from 'lodash.omit'
 import { generateReport } from 'report'
 import { ellipsoidFiles, getCopcItems, getLasItems } from 'test'
