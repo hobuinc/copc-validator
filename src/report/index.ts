@@ -4,7 +4,11 @@ import {
   FallbackCollection,
   // LasDirectCollection,
 } from '../collections/index.js'
-import { invokeCollection, currTime } from '../utils/index.js'
+import {
+  invokeCollection,
+  currTime,
+  loadAllHierarchyPages,
+} from '../utils/index.js'
 import { Copc, Getter, Las } from 'copc'
 import { Report } from '../types/index.js'
 import isEqual from 'lodash.isequal'
@@ -32,11 +36,13 @@ export const generateReport = async ({
   collections = defaultCollections,
 }: generateReportParams): Promise<Report> => {
   // Options setup
-  const { deep, mini, pdal, workers, showProgress } = options
-  let { name } = options
+  const { deep, mini, pdal, workers, queueLimit, showProgress } = options
+  // if(sampleSize)
+  //   console.warn('')
+  let { name, sampleSize } = options
   if (typeof name === 'undefined')
     name = typeof source === 'string' ? source : defaultOptions.name
-  const type = deep ? 'deep' : 'shallow'
+  let type = deep ? 'deep' : 'shallow'
   const start = new Date()
   const startTime = currTime()
 
@@ -67,8 +73,20 @@ export const generateReport = async ({
         showProgress,
         deep,
         workerCount: workers,
+        queueLimit,
+        sampleSize,
       }),
     )
+    if (sampleSize) {
+      const nodeCount = Object.entries(
+        await loadAllHierarchyPages(get, copc),
+      ).length
+      if (sampleSize < nodeCount) {
+        if (sampleSize < 1) sampleSize = 1
+        type = `${type}-${sampleSize}/${nodeCount}`
+      }
+    }
+
     const data = await (async () => {
       const o: { copc?: Copc; pdal?: { metadata: Metadata } } = {}
       if (!mini) o.copc = copc
@@ -175,6 +193,8 @@ const defaultOptions = {
   mini: false,
   pdal: false,
   workers: undefined,
+  queueLimit: undefined,
+  sampleSize: undefined,
   showProgress: false,
 }
 type Collections = {

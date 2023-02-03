@@ -7,7 +7,7 @@ import { helpString } from './help.js'
 export * from './help.js'
 
 export const fs = { writeFileSync }
-const copcVersion: string = process.env.npm_package_version || 'vX.X.X'
+const copcVersion: string = process.env.npm_package_version || 'v0.4.0'
 
 type ExpectedArgv = {
   _: string[]
@@ -29,6 +29,10 @@ type ExpectedArgv = {
   n?: string //alias
   workers?: number
   w?: number //alias
+  queue?: number
+  q?: number //alias
+  sample?: number
+  s?: number //alias
 }
 
 const stdoutWrite = (str: string) => process.stdout.write(str)
@@ -53,6 +57,8 @@ export const copcc = async (argv: string[]) => {
       deep: 'd',
       name: 'n',
       workers: 'w',
+      queue: 'q',
+      sample: 's',
       mini: 'm',
       pdal: 'P',
       help: 'h',
@@ -68,6 +74,8 @@ export const copcc = async (argv: string[]) => {
     output,
     name: givenName,
     workers,
+    queue,
+    sample,
     mini,
     pdal,
     progress,
@@ -107,6 +115,8 @@ export const copcc = async (argv: string[]) => {
       name,
       deep,
       workers,
+      queueLimit: queue,
+      sampleSize: sample,
       mini,
       pdal,
       showProgress: progress,

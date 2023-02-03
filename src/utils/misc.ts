@@ -28,7 +28,7 @@ export const NodeVsBrowser: {
         })(),
   worker:
     typeof process === 'object'
-      ? ['./workers/worker.js', { type: 'module' }] //module worker in node
+      ? ['./workers/worker', { type: 'module' }] //module worker in node
       : [
           new URL('./workers/worker.umd.js', import.meta.url).href,
           { type: 'classic' },

@@ -6,11 +6,7 @@ const flags: flag[] = [
     description: 'Scan all (versus root) points of each node',
     default: 'false',
   },
-  {
-    flag: '-w, --workers',
-    description: 'Max thread count for scanning Hierarchy Nodes',
-    default: 'CPU-count',
-  },
+
   {
     flag: '-n, --name',
     description: 'Title for report output',
@@ -26,6 +22,22 @@ const flags: flag[] = [
     description:
       'Display Header, VLR, and SRS data as pdal info metadata format',
     default: 'false',
+  },
+  {
+    flag: '-w, --workers',
+    description: 'Max thread count for scanning Hierarchy Nodes',
+    default: 'CPU-count',
+  },
+  {
+    flag: '-q, --queue',
+    description: 'Max number of nodes to be queued at a time', // (recommended: multiple of 'workers')
+    default: 'Unlimited',
+  },
+  {
+    flag: '-s, --sample',
+    description:
+      'Select a random sample of <n> nodes to perform PDR checks [NOTE: Not a comprehensive validation report]',
+    default: 'All nodes', //\n                    /
   },
   {
     flag: '-p, --progress',

@@ -1,4 +1,4 @@
-import { Binary, Las } from 'copc'
+import { Las } from 'copc'
 import { Buffer } from 'buffer/'
 import omit from 'lodash.omit'
 import { generateReport } from 'report'
@@ -239,7 +239,7 @@ test('parseGeoTiff', async () => {
 
   expect(
     parseGeoTiff(
-      Binary.toDataView(Buffer.from(GeoKeyDirectoryTag.data, 'base64')),
+      Buffer.from(GeoKeyDirectoryTag.data, 'base64'),
       GeoAsciiParamsTag && Buffer.from(GeoAsciiParamsTag.data, 'base64'),
       GeoDoubleParamsTag && Buffer.from(GeoDoubleParamsTag.data, 'base64'),
     ),

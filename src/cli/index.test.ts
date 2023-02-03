@@ -168,9 +168,15 @@ test('cli errors', async () => {
 test('cli named-reports', async () => {
   import.meta.jest.setTimeout(10000)
   const expectedShallow = expectScan(
-    await generateReport({ source: filename, options: { name: reportName } }),
+    await generateReport({
+      source: filename,
+      options: { name: reportName, queueLimit: 10 },
+    }),
   )
-  await validateGoodScan([filename, '--name', reportName], expectedShallow)
+  await validateGoodScan(
+    [filename, '--name', reportName, '-q10'],
+    expectedShallow,
+  )
 
   const expectedDeep = expectScan(
     await generateReport({
@@ -179,6 +185,26 @@ test('cli named-reports', async () => {
     }),
   )
   await validateGoodScan([filename, '-d', `--name=${reportName}`], expectedDeep)
+
+  const mockConsoleWarn = import.meta.jest
+    .spyOn(console, 'warn')
+    .mockImplementation(() => {}) //eslint-disable-line
+
+  const expectedPartialShallow = expectScan(
+    await generateReport({ source: filename, options: { sampleSize: 4 } }),
+  )
+  await validateGoodScan([filename, '-s4'], expectedPartialShallow)
+  expect(mockConsoleWarn).toBeCalledTimes(2)
+  mockConsoleWarn.mockClear()
+
+  const expectedPartialDeep = expectScan(
+    await generateReport({
+      source: filename,
+      options: { sampleSize: -Infinity },
+    }),
+  )
+  await validateGoodScan([filename, '--sample', '1'], expectedPartialDeep)
+  expect(mockConsoleWarn).toBeCalledTimes(2)
 })
 
 // ========== MOCKS ==========

@@ -3,16 +3,18 @@ import difference from 'lodash.difference'
 import { Check, AllNodesChecked } from '../types/index.js'
 import { Statuses } from '../utils/index.js'
 
+export type pointDataSuiteSource = {
+  data: AllNodesChecked
+  nonZero: string[]
+  allNodes?: Hierarchy.Node.Map
+}
 /**
  * Suite of Check Functions for parsing the checks returned by Workers (from
  * ./parsers/nodes.ts). The first set of functions are each for checking the
  * different Check `id`s in each object across all the Nodes. And below, there
  * are other (currently one) check functions for the AllNodesChecked object
  */
-export const pointDataSuite: Check.Suite<{
-  data: AllNodesChecked
-  nonZero: string[]
-}> = {
+export const pointDataSuite: Check.Suite<pointDataSuiteSource> = {
   // parse data from src/parsers/worker.js (through nodes.ts)
   rgb: {
     function: ({ data, nonZero }) => {
@@ -20,16 +22,13 @@ export const pointDataSuite: Check.Suite<{
       if (badNodes.length > 0)
         return data[badNodes[0]].rgb === 'fail' //pdrf === 6
           ? Statuses.failureWithInfo(
-              `(PDRF 6) RGB data found in: [ ${nodeString(
-                badNodes,
-                nonZero,
-              )} ]`,
+              `(PDRF 6) RGB data found in: ${nodeString(badNodes, nonZero)}`,
             )
           : Statuses.warningWithInfo(
-              `(PDRF 7,8) Unutilized RGB bytes found in: [ ${nodeString(
+              `(PDRF 7,8) Unutilized RGB bytes found in: ${nodeString(
                 badNodes,
                 nonZero,
-              )} ]`,
+              )}`,
             )
       return Statuses.success
     },
@@ -84,7 +83,8 @@ export const pointDataSuite: Check.Suite<{
         )
       return Statuses.success
     },
-    description: 'GpsTime values are sorted, per node',
+    description:
+      'GpsTime values are sorted, per node (only works on Deep scan)',
   },
   returnNumber: {
     function: ({ data }) => {
@@ -108,11 +108,11 @@ export const pointDataSuite: Check.Suite<{
   },
   // other Node checks
   nodesReachable: {
-    function: ({ data }) => checkNodesReachable(data),
+    function: ({ data, allNodes }) => checkNodesReachable(allNodes || data),
     description: 'All nodes in Hierarchy are reachable by key traversal',
   },
   pointsReachable: {
-    function: ({ data }) => checkPointsReachable(data),
+    function: ({ data, allNodes }) => checkPointsReachable(allNodes || data),
     description:
       'All points in Hierarchy are reachable by offset + length traversal',
   },
@@ -120,7 +120,9 @@ export const pointDataSuite: Check.Suite<{
 
 // ========== CHECK FUNCTION ==========
 
-export const checkNodesReachable = (nodes: AllNodesChecked): Check.Status => {
+export const checkNodesReachable = (
+  nodes: Hierarchy.Node.Map,
+): Check.Status => {
   const keys = Object.keys(nodes).map((s) => Key.create(s))
 
   const traverseChildNodes = (key: Key) => {
@@ -164,6 +166,49 @@ export const checkNodesReachable = (nodes: AllNodesChecked): Check.Status => {
   return Statuses.success
 }
 
+// type NodeMapEntry = [string, Hierarchy.Node]
+// const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
+//   const entries = Object.entries(nodes)
+//   // const visited: string[] = []
+
+//   const findNextOffset = (node: Hierarchy.Node, index: number) => {
+//     // visited.push(key)
+//     entries.splice(index, 1)
+//     // console.log(entries.length)
+//     const next = entries.findIndex(
+//       ([, n]) =>
+//         typeof n !== 'undefined' &&
+//         node.pointDataOffset + node.pointDataLength === n.pointDataOffset,
+//     )
+//     //couldn't find next chunk
+//     if (!next) return
+//     findNextOffset(entries[next][1] as Hierarchy.Node, next)
+//   }
+
+//   let startIndex = 0
+//   const start = entries.reduce(
+//     (lowest, [, node], index) => {
+//       if (
+//         !node ||
+//         node.pointDataOffset > lowest.pointDataOffset ||
+//         node.pointDataOffset === 0
+//       )
+//         return lowest
+//       startIndex = index
+//       return node
+//     },
+//     { pointDataOffset: Infinity } as Hierarchy.Node,
+//   )
+//   console.log(start, startIndex)
+//   findNextOffset(start, startIndex)
+//   // if (visited.length < entries.length)
+//   if (entries.length > 0)
+//     return Statuses.failureWithInfo(
+//       `Unreachable point data: [ ${entries.map(([k]) => k)} ]`,
+//     )
+
+//   return Statuses.success
+// }
 type NodeMapEntry = [string, Hierarchy.Node]
 const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
   const entries = Object.entries(nodes)
@@ -193,6 +238,7 @@ const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
     },
     ['', { pointDataOffset: Infinity } as Hierarchy.Node],
   )
+  // console.log(start)
   findNextOffset(start)
   if (visited.length < entries.length)
     return Statuses.failureWithInfo(

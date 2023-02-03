@@ -9,6 +9,8 @@ type CopcCollection = {
   get: Getter
   deep?: boolean
   workerCount?: number
+  queueLimit?: number
+  sampleSize?: number
   showProgress?: boolean
 }
 /* eslint-disable-next-line */
@@ -19,6 +21,8 @@ export const CopcCollection = async ({
   showProgress = false,
   deep = false,
   workerCount,
+  queueLimit,
+  sampleSize,
 }: CopcCollection): Promise<Check.Suite.Collection> => [
   { source: copc, suite: copcSuite },
   headerParser({ get, suite: copcHeaderSuite }),
@@ -29,7 +33,9 @@ export const CopcCollection = async ({
     file,
     deep,
     workerCount,
+    queueLimit,
     showProgress,
+    sampleSize,
   }),
 ]
 

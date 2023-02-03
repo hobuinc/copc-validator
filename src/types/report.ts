@@ -5,9 +5,9 @@ import { Check } from './check'
 
 export declare namespace Report {
   namespace Scans {
-    type types = 'shallow' | 'deep' | 'custom'
+    // type types = 'shallow' | 'deep' | 'custom'
     type scan = {
-      type: types
+      type: string //types
       start: Date
       end: Date
       time: number
@@ -20,6 +20,8 @@ export declare namespace Report {
     name?: string
     deep?: boolean
     workers?: number
+    queueLimit?: number
+    sampleSize?: number
     mini?: boolean
     showProgress?: boolean
     pdal?: boolean

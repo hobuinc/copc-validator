@@ -1,5 +1,5 @@
 import { Binary, Bounds, Getter, Info, Las } from 'copc'
-import { Buffer } from 'buffer/'
+import { Buffer } from 'buffer/index.js'
 // import proj4 from '@landrush/proj4'
 import wktparser from '@landrush/wkt-parser'
 
@@ -207,7 +207,7 @@ export const headerToMetadata = async ({
       )
     if (!GeoKeyDirectoryTag) return
     return parseGeoTiff(
-      Binary.toDataView(Buffer.from(GeoKeyDirectoryTag.data, 'base64')),
+      Buffer.from(GeoKeyDirectoryTag.data, 'base64'),
       GeoAsciiParamsTag && Buffer.from(GeoAsciiParamsTag.data, 'base64'),
       GeoDoubleParamsTag && Buffer.from(GeoDoubleParamsTag.data, 'base64'),
     )
@@ -259,8 +259,12 @@ export const headerToMetadata = async ({
 
 //http://geotiff.maptools.org/spec/geotiff2.4.html
 //https://www.asprs.org/wp-content/uploads/2019/07/LAS_1_4_r15.pdf
-/* eslint-disable-next-line */
-export const parseGeoTiff = (dv: DataView, ascii?: Buffer, double?: Buffer) => {
+export const parseGeoTiff = (
+  keyDirectory: Buffer,
+  ascii?: Buffer,
+  double?: Buffer /* eslint-disable-line */,
+) => {
+  const dv = Binary.toDataView(keyDirectory)
   const getValue = (offset: number) => dv.getUint16(offset, true)
   const readAscii = (start: number, end?: number): string => {
     if (!ascii) return ''
@@ -373,21 +377,3 @@ const KeyIdDictionary: Record<number, KeyData> = {
     translate: (n) => LinearUnitsCodes[n],
   },
 }
-
-//"
-//Geotiff_Information:
-//   Version: 1
-//   Key_Revision: 1.0
-//   Tagged_Information:
-//     End_Of_Tags.
-//   Keyed_Information:
-//     GTModelTypeGeoKey (Short,1): ModelTypeProjected
-//     GTRasterTypeGeoKey (Short,1): RasterPixelIsArea
-//     GTCitationGeoKey (Ascii,25): \"WGS 84 / Pseudo-Mercator\"
-//     GeogCitationGeoKey (Ascii,7): \"WGS 84\"
-//     GeogAngularUnitsGeoKey (Short,1): Angular_Degree
-//     ProjectedCSTypeGeoKey (Short,1): Code-3857 (WGS 84 / Pseudo-Mercator)
-//     ProjLinearUnitsGeoKey (Short,1): Linear_Meter
-//     End_Of_Keys.\n
-//   End_Of_Geotiff.\n
-//",

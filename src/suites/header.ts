@@ -39,11 +39,15 @@ export const headerSuite: Check.Suite<{ header: Las.Header }> = {
     description: 'Header Length (in header) is 375',
   },
   pointCountByReturn: {
-    function: ({ header: { pointCount, pointCountByReturn } }) =>
-      basicCheck(
-        pointCountByReturn.reduce((p, c) => p + c, 0),
-        pointCount,
-      ),
+    function: ({ header: { pointCount, pointCountByReturn } }) => {
+      const sum = pointCountByReturn.reduce((p, c) => p + c, 0)
+      return complexCheck({
+        source: sum,
+        checker: pointCount,
+        infoOnFailure: `pointCountByReturn sum: ${sum}`,
+      })
+    },
+
     description:
       'Point Count (in header) matches sum of Point Count by Return (in header)',
   },
