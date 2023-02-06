@@ -59,6 +59,20 @@ test('pointDataSuite failures', async () => {
             zeroPoints: 'warn',
           } as unknown as CheckedNode,
         ],
+        [
+          '6-2-4-8',
+          {
+            pointCount: 1,
+            pointDataOffset: 0,
+            pointDataLength: 0,
+            rgb: 'pass',
+            rgbi: 'pass',
+            xyz: 'pass',
+            gpsTime: 'pass',
+            sortedGpsTime: 'pass',
+            returnNumber: 'pass',
+          } as unknown as CheckedNode,
+        ],
       ]),
   )
   const nonZero = nonZeroNodes(nodeMap)

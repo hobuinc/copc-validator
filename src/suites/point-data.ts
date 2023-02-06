@@ -112,7 +112,8 @@ export const pointDataSuite: Check.Suite<pointDataSuiteSource> = {
     description: 'All nodes in Hierarchy are reachable by key traversal',
   },
   pointsReachable: {
-    function: ({ data, allNodes }) => checkPointsReachable(allNodes || data),
+    function: ({ data, allNodes, nonZero }) =>
+      checkPointsReachable(allNodes || data, nonZero),
     description:
       'All points in Hierarchy are reachable by offset + length traversal',
   },
@@ -166,51 +167,11 @@ export const checkNodesReachable = (
   return Statuses.success
 }
 
-// type NodeMapEntry = [string, Hierarchy.Node]
-// const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
-//   const entries = Object.entries(nodes)
-//   // const visited: string[] = []
-
-//   const findNextOffset = (node: Hierarchy.Node, index: number) => {
-//     // visited.push(key)
-//     entries.splice(index, 1)
-//     // console.log(entries.length)
-//     const next = entries.findIndex(
-//       ([, n]) =>
-//         typeof n !== 'undefined' &&
-//         node.pointDataOffset + node.pointDataLength === n.pointDataOffset,
-//     )
-//     //couldn't find next chunk
-//     if (!next) return
-//     findNextOffset(entries[next][1] as Hierarchy.Node, next)
-//   }
-
-//   let startIndex = 0
-//   const start = entries.reduce(
-//     (lowest, [, node], index) => {
-//       if (
-//         !node ||
-//         node.pointDataOffset > lowest.pointDataOffset ||
-//         node.pointDataOffset === 0
-//       )
-//         return lowest
-//       startIndex = index
-//       return node
-//     },
-//     { pointDataOffset: Infinity } as Hierarchy.Node,
-//   )
-//   console.log(start, startIndex)
-//   findNextOffset(start, startIndex)
-//   // if (visited.length < entries.length)
-//   if (entries.length > 0)
-//     return Statuses.failureWithInfo(
-//       `Unreachable point data: [ ${entries.map(([k]) => k)} ]`,
-//     )
-
-//   return Statuses.success
-// }
 type NodeMapEntry = [string, Hierarchy.Node]
-const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
+const checkPointsReachable = (
+  nodes: Hierarchy.Node.Map,
+  nonZeroNodes: string[],
+): Check.Status => {
   const entries = Object.entries(nodes)
   const visited: string[] = []
 
@@ -240,9 +201,9 @@ const checkPointsReachable = (nodes: Hierarchy.Node.Map): Check.Status => {
   )
   // console.log(start)
   findNextOffset(start)
-  if (visited.length < entries.length)
+  if (visited.length < nonZeroNodes.length)
     return Statuses.failureWithInfo(
-      `Unreachable point data: [ ${difference(Object.keys(nodes), visited)} ]`,
+      `Unreachable point data: [ ${difference(nonZeroNodes, visited)} ]`,
     )
 
   return Statuses.success

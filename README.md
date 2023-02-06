@@ -65,16 +65,19 @@ _The usage and implementation of **COPC Validator** is meant to be as simple as 
 
 ### Options
 
-| Option     | Alias | Description                                                                     |   Type    |  Default  |
-| :--------- | :---: | ------------------------------------------------------------------------------- | :-------: | :-------: |
-| `deep`     |  `d`  | Read all points of each node; Otherwise, read only root point                   | `boolean` |  `false`  |
-| `workers`  |  `w`  | Number of Workers to create - _Use at own (performance) risk_                   | `number`  | CPU-count |
-| `name`     |  `n`  | Replace `name` in Report with provided string                                   | `string`  | `<path>`  |
-| `mini`     |  `m`  | Omit Copc or Las from Report, leaving `checks` and `scan` info                  | `boolean` |  `false`  |
-| `progress` |  `p`  | Show a progress bar while reading the point data                                | `boolean` |  `false`  |
-| `ouput`    |  `o`  | Writes the Report out to provided filepath; Otherwise, writes to `stdout`       | `string`  |    N/A    |
-| `help`     |  `h`  | Displays help information for the `copcc` command; Overwrites all other options | `boolean` |    N/A    |
-| `version`  |  `v`  | Displays `copc-validator` version (from `package.json`)                         | `boolean` |    N/A    |
+| Option     | Alias | Description                                                                        |   Type    |  Default  |
+| :--------- | :---: | ---------------------------------------------------------------------------------- | :-------: | :-------: |
+| `deep`     |  `d`  | Read all points of each node; Otherwise, read only root point                      | `boolean` |  `false`  |
+| `name`     |  `n`  | Replace `name` in Report with provided string                                      | `string`  | `<path>`  |
+| `mini`     |  `m`  | Omit Copc or Las from Report, leaving `checks` and `scan` info                     | `boolean` |  `false`  |
+| `pdal`     |  `P`  | Output a `pdal.metadata` object containing header & vlr data in `pdal info` format | `boolean` |  `false`  |
+| `workers`  |  `w`  | Number of Workers to create - _Use at own (performance) risk_                      | `number`  | CPU-count |
+| `queue`    |  `q`  | Queue size limit for reading PDR data. Useful for very high node counts (>10000)   | `number`  | Unlimited |
+| `sample`   |  `s`  | Select a random sample of nodes to read & validate                                 | `number`  | All nodes |
+| `progress` |  `p`  | Show a progress bar while reading the point data                                   | `boolean` |  `false`  |
+| `output`   |  `o`  | Writes the Report out to provided filepath; Otherwise, writes to `stdout`          | `string`  |    N/A    |
+| `help`     |  `h`  | Displays help information for the `copcc` command; Overwrites all other options    | `boolean` |    N/A    |
+| `version`  |  `v`  | Displays `copc-validator` version (from `package.json`)                            | `boolean` |    N/A    |
 
 ## Import
 
@@ -113,13 +116,16 @@ TypeScript:
 
 ```TypeScript
 const generateReport = ({
-  source: string | File,
+  source: string | File
   options?: {
-    name?: string,          //default: source | 'COPC Validator Report'
-    mini?: boolean,         //default: false
-    deep?: boolean,         //default: false
-    workers?: number,       //default: CPU Thread Count
-    showProgress?: boolean, //default: false
+    name?: string          //default: source | 'COPC Validator Report'
+    mini?: boolean         //default: false
+    pdal?: boolean         //default: false
+    deep?: boolean         //default: false
+    workers?: number       //default: CPU Thread Count
+    queueLimit?: number    //default: Infinity
+    sampleSize?: number    //default: All nodes
+    showProgress?: boolean //default: false
   },
   collections?: {copc, las, fallback}
 })
@@ -127,11 +133,11 @@ const generateReport = ({
 
 _[See below]() for `collections` information_
 
-**UPDATE: Version 0.1.0 introduces the ability to pass a `File` as the `source`, more easily enabling web browser validation**
-
 > \* **Key option differences:**
 >
 > - No `output`, `help`, or `version` options
+> - `queue` is renamed to `queueLimit`
+> - `sample` is renamed to `sampleSize`
 > - `progress` is renamed to `showProgress`
 >   - Not usable in a browser
 > - Any **Alias** (listed [above](###options)) will not work
@@ -170,6 +176,7 @@ Pseudo-TypeScript:
 namespace Check {
   type Status = {
     status: 'pass' | 'fail' | 'warn'
+    description: string
     info?: string
   }
   type Check = Status & { id: string }
@@ -319,7 +326,7 @@ import * as Copc from 'copc'
 type Report = {
   name: string
   scan: {
-    type: 'quick' | 'full' | 'custom'
+    type: 'shallow' | 'deep' | 'custom' | string  //| 'shallow-X/N' | 'deep-X/N'
     filetype: 'COPC' | 'LAS' | 'Unknown'
     start: Date
     end: Date
@@ -365,7 +372,7 @@ type Report = {
 # Future Plans
 
 - Add more `Check.Function`s - waiting on laz-perf chunk table
-- Implement `--las` option to validate file against Las 1.4 specifications
+- Rewrite LAS `Check.Collection` to validate LAS 1.4 specifications
 - Continue to optimize for speed, especially large (1.5GB+) files
 
 <!--for styling the Table of Contents-->

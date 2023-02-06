@@ -45,7 +45,6 @@ export const copcc = async (argv: string[]) => {
     writeHelp(process.stdout.columns)
     process.exitCode = 1
     return
-    // throw new Error('Not enough argument(s) provided')
   }
 
   // PARSE ARGS
@@ -94,14 +93,12 @@ export const copcc = async (argv: string[]) => {
   if (!file) {
     stdoutWrite('ERROR: Must provide a filepath to be validated\n')
     writeHelp(process.stdout.columns)
-    // throw new Error('Must provide a filepath to be validated')
     process.exitCode = 1
     return
   }
   if (rest.length > 0) {
     stdoutWrite('ERROR: Too many arguments (filepaths) provided\n')
     writeHelp(process.stdout.columns)
-    // throw new Error('Too many arguments (filepaths) provided')
     process.exitCode = 1
     return
   }

@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events'
 import { SingleBar } from 'cli-progress'
 import { Copc, Hierarchy } from 'copc'
 import { spawn, Pool, Worker } from 'threads'
@@ -34,6 +35,8 @@ type runTasksOptions = {
   queueLimit?: number
 }
 
+export const progressEmitter = new EventEmitter()
+
 export const runTasks = async (
   tasks: workerParams[],
   {
@@ -50,10 +53,24 @@ export const runTasks = async (
     { size: workerCount, concurrency: workerConcurrency },
   )
 
+  const { copc } = tasks[0]
+  const taskCount = tasks.length
+  // const total = deep ? copc.header.pointCount : taskCount
+
   const results: workerResult[] = []
 
   async function processTasks(processResult: processResult) {
+    let currValue = 0
+    const total = deep
+      ? tasks.reduce((sum, { node: { pointCount } }) => sum + pointCount, 0)
+      : taskCount
+    const process = (r: workerResult) => {
+      currValue += deep ? r[1].pointCount : 1
+      progressEmitter.emit('progress', currValue, total)
+      return processResult(r)
+    }
     const running: Promise<void>[] = []
+    progressEmitter.emit('progress', 0, total)
     for (const task of tasks) {
       if (task.node.pointCount === 0)
         results.push([
@@ -75,13 +92,15 @@ export const runTasks = async (
             .queue((worker) =>
               deep ? worker.deep(task) : worker.shallow(task),
             )
-            .then(processResult)
+            .then(process)
+          // .then(processResult)
         } else {
           const execution = pool
             .queue((worker) =>
               deep ? worker.deep(task) : worker.shallow(task),
             )
-            .then(processResult)
+            .then(process)
+          // .then(processResult)
 
           const watcher: Promise<void> = execution
             .then(() => {
@@ -94,6 +113,7 @@ export const runTasks = async (
         }
       }
     }
+    progressEmitter.emit('progress', total, total)
   }
 
   const { queueTasks, terminate } = (() => {
@@ -107,18 +127,15 @@ export const runTasks = async (
       }
 
     // setup cli-progress bar
-    const { copc } = tasks[0]
-    const count = tasks.length
-    const { total, opts } = {
-      total: deep ? copc.header.pointCount : count,
-      opts: {
-        barsize:
-          process.stderr.columns > 80
-            ? Math.floor(process.stderr.columns / 2)
-            : 40,
-        etaBuffer: count > 30 ? Math.floor(count / 3) : 10,
-      },
+    const total = deep ? copc.header.pointCount : taskCount
+    const opts = {
+      barsize:
+        process.stderr.columns > 80
+          ? Math.floor(process.stderr.columns / 2)
+          : 40,
+      etaBuffer: taskCount > 30 ? Math.floor(taskCount / 3) : 10,
     }
+
     const bar = new SingleBar({
       format: `checking ${
         deep ? 'all' : 'root'
