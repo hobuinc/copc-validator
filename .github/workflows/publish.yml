@@ -18,10 +18,10 @@ jobs:
         with:
           node-version: '18.x'
           registry-url: https://registry.npmjs.org
-      - run: yarn --frozen-lockfile
+      - run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: yarn test --coverage --all && yarn lint
+      - run: npm run test --coverage --all && npm run lint
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}

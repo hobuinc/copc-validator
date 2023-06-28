@@ -23,9 +23,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: https://registry.landrush.npme.io/
-          cache: 'yarn'
-      - run: yarn --frozen-lockfile
+          cache: 'npm'
+      - run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: yarn test --coverage --all
-      - run: yarn lint
+      - run: npm run test --coverage --all
+      - run: npm run lint
