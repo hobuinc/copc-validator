@@ -21,14 +21,14 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf ./lib",
-    "build": "yarn clean && tsc --build src && tsc-alias -p src/tsconfig.json && find lib -name '*.test.*' -delete",
+    "build": "npm run clean && tsc --build src && tsc-alias -p src/tsconfig.json && find lib -name '*.test.*' -delete",
     "start": "node lib/index.js",
     "dev": "ts-node --esm --files -r tsconfig-paths/register src/index.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
     "lint": "eslint . --ext .ts",
     "flamegraph": "0x --output-dir='.0x/artifacts/{pid}' --output-html='.0x/graphs/{pid}.html' --open lib/index.js",
     "worker": "rollup -c rollup.config.worker.js",
-    "prepare": "yarn build && yarn worker"
+    "prepare": "npm run build && npm run worker"
   },
   "devDependencies": {
     "0x": "^5.4.1",
