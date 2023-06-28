@@ -36,7 +36,8 @@ export const generateReport = async ({
   collections = defaultCollections,
 }: generateReportParams): Promise<Report> => {
   // Options setup
-  const { deep, mini, pdal, workers, queueLimit, showProgress } = options
+  const { deep, mini, pdal, worker, workers, queueLimit, showProgress } =
+    options
   // if(sampleSize)
   //   console.warn('')
   let { name, sampleSize } = options
@@ -72,6 +73,7 @@ export const generateReport = async ({
         copc,
         showProgress,
         deep,
+        worker,
         workerCount: workers,
         queueLimit,
         sampleSize,
@@ -192,6 +194,7 @@ const defaultOptions = {
   deep: false,
   mini: false,
   pdal: false,
+  worker: undefined,
   workers: undefined,
   queueLimit: undefined,
   sampleSize: undefined,

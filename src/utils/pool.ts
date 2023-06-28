@@ -5,6 +5,7 @@ import { spawn, Pool, Worker } from 'threads'
 // import { defaultPoolSize } from 'threads/dist/master/implementation'
 import { AllNodesChecked, CheckedNode } from 'types'
 import { NodeVsBrowser } from './misc.js'
+import { ThreadsWorkerOptions } from 'threads/dist/types/master.js'
 
 export type workerParams = {
   file: string | File
@@ -27,12 +28,14 @@ type workerModule = {
   }: workerParams): Promise<workerResult>
 }
 
+export type WorkerSettings = [path: string, options: ThreadsWorkerOptions]
 type runTasksOptions = {
   deep: boolean
   withBar: boolean
   workerCount?: number
   workerConcurrency?: number
   queueLimit?: number
+  worker?: WorkerSettings
 }
 
 export const progressEmitter = new EventEmitter()
@@ -45,11 +48,12 @@ export const runTasks = async (
     workerCount,
     workerConcurrency,
     queueLimit,
+    worker,
   }: runTasksOptions,
 ) => {
   // setup thread pool
   const pool = Pool(
-    () => spawn<workerModule>(new Worker(...NodeVsBrowser.worker)),
+    () => spawn<workerModule>(new Worker(...(worker ?? NodeVsBrowser.worker))),
     { size: workerCount, concurrency: workerConcurrency },
   )
 

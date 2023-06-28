@@ -6,6 +6,7 @@ import {
   NodeVsBrowser,
   runTasks,
   workerParams,
+  WorkerSettings,
 } from '../utils/index.js'
 import sample from 'lodash.samplesize'
 
@@ -14,6 +15,7 @@ export type nodeParserParams = {
   copc: Copc
   file: string | File
   deep?: boolean
+  worker?: WorkerSettings
   workerCount?: number
   queueLimit?: number
   sampleSize?: number
@@ -27,6 +29,7 @@ export const nodeParser: Check.Parser<
   copc,
   file,
   deep = false,
+  worker,
   workerCount,
   queueLimit,
   sampleSize,
@@ -36,7 +39,14 @@ export const nodeParser: Check.Parser<
   return {
     source: await createPointDataSuiteSource(
       { nodes, file, copc },
-      { deep, workerCount, queueLimit, sampleSize, withBar: showProgress },
+      {
+        deep,
+        worker,
+        workerCount,
+        queueLimit,
+        sampleSize,
+        withBar: showProgress,
+      },
     ),
     suite: pointDataSuite,
   }
@@ -60,6 +70,7 @@ export type readPDRsParams = {
   file: string | File
   copc: Copc
   deep: boolean
+  worker?: WorkerSettings
   workerCount?: number
   queueLimit?: number
 }
@@ -70,7 +81,7 @@ export type readPDRsParams = {
  * @returns
  */
 export const readPointDataRecords = (
-  { nodes, file, copc, deep, workerCount, queueLimit }: readPDRsParams,
+  { nodes, file, copc, deep, worker, workerCount, queueLimit }: readPDRsParams,
   withBar = false,
 ): Promise<AllNodesChecked> => {
   return runTasks(
@@ -82,7 +93,7 @@ export const readPointDataRecords = (
       copc,
       lazPerfWasmFilename: lazPerf,
     })),
-    { deep, withBar, workerCount, queueLimit },
+    { deep, withBar, worker, workerCount, queueLimit },
   )
 }
 
@@ -93,6 +104,7 @@ type createPointDataSuiteSourceData = {
 }
 type createPointDataSuiteSourceOptions = {
   deep: boolean
+  worker?: WorkerSettings
   workerCount?: number
   queueLimit?: number
   withBar?: boolean
@@ -109,6 +121,7 @@ const createPointDataSuiteSource = async (
   { nodes, file, copc }: createPointDataSuiteSourceData,
   {
     deep,
+    worker,
     workerCount,
     queueLimit,
     sampleSize,
@@ -135,6 +148,7 @@ const createPointDataSuiteSource = async (
       data: await runTasks(data, {
         deep,
         withBar,
+        worker,
         workerCount,
         queueLimit,
       }),
@@ -153,6 +167,7 @@ const createPointDataSuiteSource = async (
     data: await runTasks(sample(data, sampleSize), {
       deep,
       withBar,
+      worker,
       workerCount,
       queueLimit,
     }),

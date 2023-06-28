@@ -1,4 +1,4 @@
-import { ThreadsWorkerOptions } from 'threads/dist/types/master'
+import { WorkerSettings } from './pool'
 
 export const currTime =
   typeof performance !== 'undefined'
@@ -14,7 +14,7 @@ export const currTime =
 
 export const NodeVsBrowser: {
   lazPerf: string | undefined
-  worker: [string, ThreadsWorkerOptions]
+  worker: WorkerSettings
 } = {
   lazPerf:
     typeof process === 'object'
@@ -30,7 +30,8 @@ export const NodeVsBrowser: {
     typeof process === 'object'
       ? ['./workers/worker', { type: 'module' }] //module worker in node
       : [
-          new URL('./workers/worker.umd.js', import.meta.url).href,
+          //new URL('./workers/worker.umd.js', import.meta.url).href,
+          './workers/worker.umd.js',
           { type: 'classic' },
         ], //classic worker in browser (for non-Chrome support)
 }

@@ -2,6 +2,7 @@
 import { Copc, Las } from 'copc'
 import { Metadata } from 'report/format'
 import { Check } from './check'
+import { WorkerSettings } from 'utils'
 
 export declare namespace Report {
   namespace Scans {
@@ -19,6 +20,7 @@ export declare namespace Report {
   export type Options = {
     name?: string
     deep?: boolean
+    readonly worker?: WorkerSettings
     workers?: number
     queueLimit?: number
     sampleSize?: number
