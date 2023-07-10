@@ -268,8 +268,8 @@ const exposed = {
       }
       if (typeof sortedGpsTime === 'undefined' || sortedGpsTime === 'pass') {
         earlyBreak = false
-        checks.sortedGpsTime = boolToStatus(point.gpsTime < prevGpsTime)
-        prevGpsTime = point.gpsTime
+        checks.sortedGpsTime = boolToStatus(point.GpsTime < prevGpsTime, true)
+        prevGpsTime = point.GpsTime
       }
       if (typeof returnNumber === 'undefined' || returnNumber === 'pass') {
         earlyBreak = false
