@@ -1,6 +1,6 @@
 {
   "name": "copc-validator",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Reads a file to determine if it's genuine COPC, and provides details about any errors/warnings against the COPC and LAS specs",
   "main": "lib/exports.js",
   "bin": {
