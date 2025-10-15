@@ -119,9 +119,6 @@ export const manualVlrSuite: Check.Suite<{ get: Getter; vlrs: Las.Vlr[] }> = {
   }
 }
 
-// The VLR values could be extracted and encapsulated in lazVlr/copcInfoVlr objects
-// akin to lazperf, especially if the values are used to check things elsewhere.
-
 function checkLazVlr(data: DataView) {
   const UINT32_MAX = 0xFFFFFFFF
   // only checking the chunk size & coder for now.
