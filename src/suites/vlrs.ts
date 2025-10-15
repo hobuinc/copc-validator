@@ -77,7 +77,64 @@ export const manualVlrSuite: Check.Suite<{ get: Getter; vlrs: Las.Vlr[] }> = {
     },
     description: 'WKT VLR (string) exists and successfully initializes proj4js',
   },
-  // 'copc-info-first': async ({get, vlrs}) => {
-  //   const
-  // }
+  laz: {
+    function: async ({ get, vlrs }) => {
+      const vlr = Las.Vlr.find(vlrs, 'laszip encoded', 22204)
+      if (!vlr) return Statuses.failureWithInfo(`Failed to find LAZ VLR`)
+      if (checkVlrDuplicates(vlrs, 'laszip encoded', 22204))
+        return Statuses.failureWithInfo('Found multiple LAZ VLRs')
+      
+      const lazVlr = Binary.toDataView(await Las.Vlr.fetch(get, vlr))
+      const status = (() => {
+        try {
+          checkLazVlr(lazVlr)
+          return Statuses.success
+        } catch (error: any) {
+          return Statuses.failureWithInfo(`Failed to parse LAZ VLR: ${error.message}`)
+        }
+      })()
+      return status
+    },
+    description: 'LAZ VLR exists and contains valid data fields',
+  },
+  "copc-info": {
+    function: async ({ get, vlrs }) => {
+      const vlr = Las.Vlr.find(vlrs, 'copc', 1)
+      // these checks are done in vlrSuite already
+      if (!vlr) return Statuses.failureWithInfo(`Failed to find copc-info VLR`)
+      if (checkVlrDuplicates(vlrs, 'copc', 1))
+        return Statuses.failureWithInfo('Found multiple copc-info VLRs')
+      const copcInfoVlr = Binary.toDataView(await Las.Vlr.fetch(get, vlr))
+      const status = (() => {
+        try {
+          checkCopcInfoVlr(copcInfoVlr)
+          return Statuses.success
+        } catch (error: any) {
+          return Statuses.failureWithInfo(`Failed to parse copc-info VLR: ${error.message}`)
+        }
+      })()
+      return status
+    },
+    description: 'COPC info VLR exists and contains valid data fields',
+  }
+}
+
+// The VLR values could be extracted and encapsulated in lazVlr/copcInfoVlr objects
+// akin to lazperf, especially if the values are used to check things elsewhere.
+
+function checkLazVlr(data: DataView) {
+  const UINT32_MAX = 0xFFFFFFFF
+  // only checking the chunk size & coder for now.
+  const coder = data.getUint16(2, true)
+  if (coder != 0) throw new Error(`Coder must be 0; found ${coder}`)
+  const chunkSize = data.getUint32(12, true)
+  if (chunkSize != UINT32_MAX)
+    throw new Error(`Chunk size must equal UINT32_MAX (${UINT32_MAX}); found ${chunkSize}`)
+}
+
+function checkCopcInfoVlr(data: DataView) {
+  for (let i = 0; i < 11; i++) {
+    const val = data.getBigUint64(72 + 8 * i, true)
+    if (val) throw new Error(`COPC field reserved [${i}] must be 0; found ${val}`)
+  }
 }
