@@ -47,32 +47,46 @@ test('manualVlrSuite failures', async () => {
   })
   checkAll(checks, false)
 
+  const expectedOutput = [
+    {
+      id: 'wkt',
+      status: 'fail',
+      info: '',
+      description:
+        'WKT VLR (string) exists and successfully initializes proj4js',
+    },
+    {
+      id:'laz',
+      status: 'fail',
+      info: '',
+      description:
+        'LAZ VLR exists and contains valid data fields',
+    },
+    {
+      id:'copc-info',
+      status: 'fail',
+      info: '',
+      description:
+        'COPC info VLR exists and contains valid data fields',
+    }
+  ]
+
   const emptyVlrChecks = await invokeAllChecks({
     source: { get, vlrs: [] },
     suite: manualVlrSuite,
   })
-  expect(emptyVlrChecks).toEqual([
-    {
-      id: 'wkt',
-      status: 'fail',
-      info: 'Failed to find WKT SRS VLR',
-      description:
-        'WKT VLR (string) exists and successfully initializes proj4js',
-    },
-  ])
+  expectedOutput[0].info = 'Failed to find WKT SRS VLR'
+  expectedOutput[1].info = 'Failed to find LAZ VLR'
+  expectedOutput[2].info = 'Failed to find copc-info VLR'
+  expect(emptyVlrChecks).toEqual(expectedOutput)
 
   const doubleVlrChecks = await invokeAllChecks({
     source: { get, vlrs: vlrs.concat(vlrs) },
     suite: manualVlrSuite,
   })
-  expect(doubleVlrChecks).toEqual([
-    {
-      id: 'wkt',
-      status: 'fail',
-      info: 'Found multiple WKT SRS VLRs',
-      description:
-        'WKT VLR (string) exists and successfully initializes proj4js',
-    },
-  ])
+  expectedOutput[0].info = 'Found multiple WKT SRS VLRs'
+  expectedOutput[1].info = 'Found multiple LAZ VLRs'
+  expectedOutput[2].info = 'Found multiple copc-info VLRs'
+  expect(doubleVlrChecks).toEqual(expectedOutput)
   // checkAll(doubleVlrChecks, false)
 })
