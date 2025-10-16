@@ -47,7 +47,7 @@ test('manualVlrSuite failures', async () => {
   })
   checkAll(checks, false)
 
-  let expectedOutput = [
+  const expectedOutput = [
     {
       id: 'wkt',
       status: 'fail',
