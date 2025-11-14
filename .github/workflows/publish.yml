@@ -27,6 +27,9 @@ jobs:
     name: Publish to npmjs.com
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
