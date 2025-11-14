@@ -13,7 +13,7 @@
 #     git push origin v0.0.M-alpha.0      # publishes package@alpha
 #
 # Expects package.json to include the following script:
-#     "prepare": "npm run build && npm run worker"
+#     "prepare": "npm run build"
 
 name: Publish from tag
 
@@ -45,13 +45,16 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Post-install scripts
         # `npm rebuild` will run all those post-install scripts for us.
-        run: npm rebuild && npm run prepare --if-present
+        # npm run prepare will build the package for publishing.
+        run: npm rebuild && npm run prepare
+        # TODO: Link this workflow to a successful jest.yml run
       # - name: Test source code
       #   run: npm run test
-      - name: Build & publish latest
+      - name: Publish latest
         if: ${{ ! contains(github.ref, '-alpha.') }}
-        # The "prepare" script runs automatically during npm publish
-        run: npm publish
+        # The "prepare" script would run automatically during npm publish
+        # but our prepare script includes a build step, so we skip rebuilding
+        run: npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}
       - name: Build & publish alpha
