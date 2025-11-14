@@ -13,7 +13,7 @@
 #     git push origin v0.0.M-alpha.0      # publishes package@alpha
 #
 # Expects package.json to include the following script:
-#     "prepack": "npm run build"
+#     "prepare": "npm run build && npm run worker"
 
 name: Publish from tag
 
@@ -50,8 +50,7 @@ jobs:
       #   run: npm run test
       - name: Build & publish latest
         if: ${{ ! contains(github.ref, '-alpha.') }}
-        # Expects package to have `"prepack": "npm run build"`
-        # which is good practice anyway, imo
+        # The "prepare" script runs automatically during npm publish
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}
