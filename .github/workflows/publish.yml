@@ -1,19 +1,19 @@
 # General workflow for publishing package to npmjs registry.
-# Now also creates a draft release in GitHub releases.
+# Also creates a draft release in GitHub releases.
 #
 # Runs on v*.*.* tag push, from tags created by `npm version`.
-# v*.*.*-alpha.* tags will publish with `--tag alpha`, otherwise
-# publishes with default `npm publish`.
+# v*.*.*-preid.* tags will publish with `--tag preid`, otherwise
+# publishes with `npm publish --tag latest`.
 #
 # Example:
 #     npm version patch       # creates tag v0.0.N
 #     git push origin v0.0.N  # publishes package@latest, if tests OK
 #
-#     npm version prepatch --preid alpha  # creates tag v0.0.M-alpha.0 (M=N+1)
+#     npm version prepatch --preid alpha  # creates tag v0.0.M-alpha.0
 #     git push origin v0.0.M-alpha.0      # publishes package@alpha
 #
 # Expects package.json to include the following script:
-#     "prepare": "npm run build"
+#     "prepack": "npm run build"
 
 name: Publish from tag
 
@@ -28,44 +28,68 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
+      id-token: write # Required for OIDC
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Resolve tag from npm version --preid
+        id: npm-tag
+        run: |
+          TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          TAG="${TAG#refs/tags/}"
+          VERSION="${TAG#v}"
+          # Discard any semver build metadata (e.g., +exp.sha.5114f85)
+          VERSION="${VERSION%%+*}"
+
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::Unable to determine tag from GitHub context."
+            exit 1
+          fi
+
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            DIST_TAG="latest"
+          elif [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(.+)$ ]]; then
+            PRERELEASE="${BASH_REMATCH[1]}"
+            PREID="${PRERELEASE%%.*}"
+
+            # Disallow vX.Y.Z-N (bare numeric prerelease without a named preid)
+            if [[ "$PREID" =~ ^[0-9]+$ ]]; then
+              echo "::error::Tag '${TAG}' uses a numeric prerelease ID. Create prerelease tags with --preid=<name>."
+              exit 1
+            fi
+
+            DIST_TAG="$PREID"
+          else
+            echo "::error::Tag '${TAG}' is not a valid semver tag."
+            exit 1
+          fi
+
+          echo "TAG=${DIST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved npm tag: ${DIST_TAG}"
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           # needed to enable reading env.NODE_AUTH_TOKEN
           registry-url: https://registry.npmjs.org/
       - name: Install dependencies
-        # Skip post-install scripts here, as a malicious
-        # script could steal NODE_AUTH_TOKEN.
+        # Skip post-install scripts here, a malicious script could steal NODE_AUTH_TOKEN.
         run: npm ci --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Post-install scripts
-        # `npm rebuild` will run all those post-install scripts for us.
-        # npm run prepare will build the package for publishing.
-        run: npm rebuild && npm run prepare
+        # `npm rebuild` will run any skipped post-install scripts for us.
+        run: npm rebuild
         # TODO: Link this workflow to a successful jest.yml run
       # - name: Test source code
       #   run: npm run test
-      - name: Publish latest
-        if: ${{ ! contains(github.ref, '-alpha.') }}
-        # The "prepare" script would run automatically during npm publish
-        # but our prepare script includes a build step, so we skip rebuilding
-        run: npm publish --ignore-scripts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}
-      - name: Build & publish alpha
-        if: ${{ contains(github.ref, '-alpha.') }}
-        run: npm publish --tag alpha
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}
+      - name: Build & publish
+        # Build is handled by "prepack" script
+        run: npm publish --tag "${{ steps.npm-tag.outputs.TAG }}"
       - name: Create package tarball
         # ignore-scripts because we already did the build
         run: npm pack --ignore-scripts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         name: Upload release artifact
         with:
           name: npm-pack-tarball
@@ -85,14 +109,14 @@ jobs:
       pull-requests: read
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
         name: Download release artifact
         with:
           name: npm-pack-tarball
       - name: Generate release notes
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         with:
           configuration: '.github/changelog.json'
           ignorePreReleases: ${{ ! contains(github.ref_name, '-') }}
@@ -100,7 +124,7 @@ jobs:
         run: echo "trimmed_tag=$(echo ${{github.ref_name}} | cut -c 2-)" >> $GITHUB_ENV
       - name: Create release
         id: create_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref_name }}

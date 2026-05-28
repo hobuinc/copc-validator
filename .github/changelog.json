@@ -10,16 +10,19 @@
     },
     {
       "title": "## Maintenance",
-      "labels": ["chore", "maintenance", "dependencies"]
+      "labels": ["ci", "chore", "maintenance", "dependencies"]
+    },
+    {
+      "title": "## Uncategorized",
+      "labels": []
     }
   ],
   "ignore_labels": [
     "ignore"
   ],
   "sort": "ASC",
-  "template": "${{CHANGELOG}}",
-  "pr_template": "- ${{TITLE}} (#${{NUMBER}})",
-  "empty_template": "- No changes",
+  "template": "#{{CHANGELOG}}",
+  "pr_template": "- #{{TITLE}} (##{{NUMBER}} by @#{{AUTHOR}})",
   "label_extractor": [
     {
       "pattern": "(.) (.+)",
@@ -30,13 +33,5 @@
     "pattern": "\\[ABC-....\\]",
     "on_property": "title",
     "method": "match"
-  },
-  "transformers": [],
-  "max_tags_to_fetch": 200,
-  "max_pull_requests": 200,
-  "max_back_track_time_days": 365,
-  "exclude_merge_branches": [],
-  "tag_resolver": {
-    "method": "semver"
   }
 }
