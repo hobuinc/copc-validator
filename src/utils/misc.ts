@@ -1,4 +1,4 @@
-import { WorkerSettings } from './pool'
+import { WorkerSettings } from './thread-pool'
 
 export const currTime =
   typeof performance !== 'undefined'

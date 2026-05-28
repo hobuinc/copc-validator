@@ -8,6 +8,7 @@ import {
   Copc,
   Hierarchy,
 } from 'copc'
+import { Pool } from './pool'
 
 export const loadAllHierarchyPages = async (
   get: Getter,
@@ -19,8 +20,9 @@ export const loadAllHierarchyPages = async (
   let pagesToFetch: Hierarchy.Page[] = [copc.info.rootHierarchyPage]
 
   while (pagesToFetch.length > 0) {
-    const results = await Promise.all(
-      pagesToFetch.map((page) => Copc.loadHierarchyPage(get, page)),
+    const results = await Pool.all(
+      pagesToFetch.map((page) => () => Copc.loadHierarchyPage(get, page)),
+      4,
     )
 
     pagesToFetch = []

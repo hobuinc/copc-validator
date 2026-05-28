@@ -2,7 +2,7 @@ import { Copc, Getter } from 'copc'
 import { copcSuite, manualHeaderSuite } from '../suites/index.js'
 import { nodeParser, vlrParser, headerParser } from '../parsers/index.js'
 import { Check, manualHeaderParams } from '../types/index.js'
-import { WorkerSettings } from 'utils/pool.js'
+import { WorkerSettings } from 'utils/thread-pool.js'
 
 type CopcCollection = {
   file: string | File
