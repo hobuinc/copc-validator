@@ -28,7 +28,7 @@
     "lint": "eslint . --ext .ts",
     "flamegraph": "0x --output-dir='.0x/artifacts/{pid}' --output-html='.0x/graphs/{pid}.html' --open lib/index.js",
     "worker": "rollup -c rollup.config.worker.js",
-    "prepare": "npm run build && npm run worker"
+    "prepack": "npm run build && npm run worker"
   },
   "devDependencies": {
     "0x": "^5.4.1",
@@ -72,5 +72,10 @@
     "lodash.samplesize": "^4.2.0",
     "minimist": "^1.2.6",
     "threads": "^1.7.0"
+  },
+  "overrides": {
+    "node-fetch@2.x": {
+      "whatwg-url": "14.x"
+    }
   }
 }

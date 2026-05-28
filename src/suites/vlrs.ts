@@ -89,8 +89,8 @@ export const manualVlrSuite: Check.Suite<{ get: Getter; vlrs: Las.Vlr[] }> = {
         try {
           checkLazVlr(lazVlr)
           return Statuses.success
-        } catch (error: any) {
-          return Statuses.failureWithInfo(`Failed to parse LAZ VLR: ${error.message}`)
+        } catch (error: unknown) {
+          return Statuses.failureWithInfo(`Failed to parse LAZ VLR: ${(error as Error).message}`)
         }
       })()
       return status
@@ -109,8 +109,8 @@ export const manualVlrSuite: Check.Suite<{ get: Getter; vlrs: Las.Vlr[] }> = {
         try {
           checkCopcInfoVlr(copcInfoVlr)
           return Statuses.success
-        } catch (error: any) {
-          return Statuses.failureWithInfo(`Failed to parse copc-info VLR: ${error.message}`)
+        } catch (error: unknown) {
+          return Statuses.failureWithInfo(`Failed to parse copc-info VLR: ${(error as Error).message}`)
         }
       })()
       return status

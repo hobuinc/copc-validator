@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 export const Pool = { all, allSettled }
 
 type F<T> = () => Promise<T>

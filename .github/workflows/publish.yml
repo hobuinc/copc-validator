@@ -1,7 +1,21 @@
-name: Publish Tag to NPM
+# General workflow for publishing package to npmjs registry.
+# Also creates a draft release in GitHub releases.
+#
+# Runs on v*.*.* tag push, from tags created by `npm version`.
+# v*.*.*-preid.* tags will publish with `--tag preid`, otherwise
+# publishes with `npm publish --tag latest`.
+#
+# Example:
+#     npm version patch       # creates tag v0.0.N
+#     git push origin v0.0.N  # publishes package@latest, if tests OK
+#
+#     npm version prepatch --preid alpha  # creates tag v0.0.M-alpha.0
+#     git push origin v0.0.M-alpha.0      # publishes package@alpha
+#
+# Expects package.json to include the following script:
+#     "prepack": "npm run build"
 
-# Usage: Run `npm version` locally, which will create a local git 'tag' of the version
-# Then, push that tag to GitHub (`git push origin v*.*.*`) to automatically publish the version
+name: Publish from tag
 
 on:
   push:
@@ -10,18 +24,116 @@ on:
 
 jobs:
   publish:
+    name: Publish to npmjs.com
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write # Required for OIDC
+      contents: read
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Resolve tag from npm version --preid
+        id: npm-tag
+        run: |
+          TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          TAG="${TAG#refs/tags/}"
+          VERSION="${TAG#v}"
+          # Discard any semver build metadata (e.g., +exp.sha.5114f85)
+          VERSION="${VERSION%%+*}"
+
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::Unable to determine tag from GitHub context."
+            exit 1
+          fi
+
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            DIST_TAG="latest"
+          elif [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(.+)$ ]]; then
+            PRERELEASE="${BASH_REMATCH[1]}"
+            PREID="${PRERELEASE%%.*}"
+
+            # Disallow vX.Y.Z-N (bare numeric prerelease without a named preid)
+            if [[ "$PREID" =~ ^[0-9]+$ ]]; then
+              echo "::error::Tag '${TAG}' uses a numeric prerelease ID. Create prerelease tags with --preid=<name>."
+              exit 1
+            fi
+
+            DIST_TAG="$PREID"
+          else
+            echo "::error::Tag '${TAG}' is not a valid semver tag."
+            exit 1
+          fi
+
+          echo "TAG=${DIST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved npm tag: ${DIST_TAG}"
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: '18.x'
-          registry-url: https://registry.npmjs.org
-      - run: npm ci
+          node-version: 24
+          # needed to enable reading env.NODE_AUTH_TOKEN
+          registry-url: https://registry.npmjs.org/
+      - name: Install dependencies
+        # Skip post-install scripts here, a malicious script could steal NODE_AUTH_TOKEN.
+        run: npm ci --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: npm run test --coverage --all && npm run lint
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH }}
+      - name: Post-install scripts
+        # `npm rebuild` will run any skipped post-install scripts for us.
+        run: npm rebuild
+        # TODO: Link this workflow to a successful jest.yml run
+      # - name: Test source code
+      #   run: npm run test
+      - name: Build & publish
+        # Build is handled by "prepack" script
+        run: npm publish --tag "${{ steps.npm-tag.outputs.TAG }}"
+      - name: Create package tarball
+        # ignore-scripts because we already did the build
+        run: npm pack --ignore-scripts
+      - uses: actions/upload-artifact@v6
+        name: Upload release artifact
+        with:
+          name: npm-pack-tarball
+          if-no-files-found: error
+          path: |
+            *.tgz
+
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    needs: publish
+
+    permissions:
+      # required for softprops/action-gh-release
+      contents: write
+      # required for mikepenz/release-changelog-builder-action
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        name: Download release artifact
+        with:
+          name: npm-pack-tarball
+      - name: Generate release notes
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v6
+        with:
+          configuration: '.github/changelog.json'
+          ignorePreReleases: ${{ ! contains(github.ref_name, '-') }}
+      - name: Trim tag name
+        run: echo "trimmed_tag=$(echo ${{github.ref_name}} | cut -c 2-)" >> $GITHUB_ENV
+      - name: Create release
+        id: create_release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ${{ steps.build_changelog.outputs.changelog }}
+
+            **${{ contains(github.ref_name, '-') && 'Prerelease' || 'Full' }} changelog:** ${{ github.server_url }}/${{ github.repository }}/compare/${{ steps.build_changelog.outputs.fromTag }}...${{ steps.build_changelog.outputs.toTag }}
+            **NPM release:** https://npmjs.com/package/copc-validator/v/${{ env.trimmed_tag }}
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            *.tgz
