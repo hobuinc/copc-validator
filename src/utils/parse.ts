@@ -8,23 +8,31 @@ import {
   Copc,
   Hierarchy,
 } from 'copc'
+import { Pool } from './pool'
 
 export const loadAllHierarchyPages = async (
   get: Getter,
   c?: Copc,
 ): Promise<Hierarchy.Node.Map> => {
   const copc = c || (await Copc.create(get))
-  const { nodes, pages } = await Copc.loadHierarchyPage(
-    get,
-    copc.info.rootHierarchyPage,
-  )
-  return (
-    await Promise.all(
-      Object.values(pages).map((page) =>
-        Copc.loadHierarchyPage(get, page as Hierarchy.Page),
-      ),
+
+  const allNodes: Hierarchy.Node.Map = {}
+  let pagesToFetch: Hierarchy.Page[] = [copc.info.rootHierarchyPage]
+
+  while (pagesToFetch.length > 0) {
+    const results = await Pool.all(
+      pagesToFetch.map((page) => () => Copc.loadHierarchyPage(get, page)),
+      4,
     )
-  ).reduce((acc, tree) => Object.assign(acc, tree.nodes), nodes)
+
+    pagesToFetch = []
+    for (const { nodes, pages } of results) {
+      Object.assign(allNodes, nodes)
+      pagesToFetch.push(...(Object.values(pages) as Hierarchy.Page[]))
+    }
+  }
+
+  return allNodes
 }
 
 export const UINT32_MAX = 4_294_967_295
