@@ -8,6 +8,7 @@ import {
   invokeCollection,
   currTime,
   loadAllHierarchyPages,
+  NodeVsBrowser,
 } from '../utils/index.js'
 import { Copc, Getter, Las } from 'copc'
 import { Report } from '../types/index.js'
@@ -36,7 +37,7 @@ export const generateReport = async ({
   collections = defaultCollections,
 }: generateReportParams): Promise<Report> => {
   // Options setup
-  const { deep, mini, pdal, worker, workers, queueLimit, showProgress } =
+  const { deep, mini, pdal, worker, workers, queueLimit, showProgress, lazPerfWasmFilename } =
     options
   // if(sampleSize)
   //   console.warn('')
@@ -77,6 +78,7 @@ export const generateReport = async ({
         workerCount: workers,
         queueLimit,
         sampleSize,
+        lazPerfWasmFilename
       }),
     )
     if (sampleSize) {
@@ -199,6 +201,7 @@ const defaultOptions = {
   queueLimit: undefined,
   sampleSize: undefined,
   showProgress: false,
+  lazPerfWasmFilename: NodeVsBrowser.lazPerf
 }
 type Collections = {
   copc: typeof CopcCollection /*Check.CollectionFn*/

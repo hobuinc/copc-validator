@@ -20,6 +20,7 @@ export type nodeParserParams = {
   queueLimit?: number
   sampleSize?: number
   showProgress?: boolean
+  lazPerfWasmFilename?: string
 }
 export const nodeParser: Check.Parser<
   nodeParserParams,
@@ -34,6 +35,7 @@ export const nodeParser: Check.Parser<
   queueLimit,
   sampleSize,
   showProgress = false,
+  lazPerfWasmFilename
 }: nodeParserParams) => {
   const nodes = await loadAllHierarchyPages(get, copc)
   return {
@@ -46,6 +48,7 @@ export const nodeParser: Check.Parser<
         queueLimit,
         sampleSize,
         withBar: showProgress,
+        lazPerfWasmFilename
       },
     ),
     suite: pointDataSuite,
@@ -109,6 +112,7 @@ type createPointDataSuiteSourceOptions = {
   queueLimit?: number
   withBar?: boolean
   sampleSize?: number
+  lazPerfWasmFilename?: string
 }
 /**
  * Should be more performant than using readPointDataRecords as it collects the
@@ -126,6 +130,7 @@ const createPointDataSuiteSource = async (
     queueLimit,
     sampleSize,
     withBar = false,
+    lazPerfWasmFilename = lazPerf
   }: createPointDataSuiteSourceOptions,
 ) => {
   const nodeEntries = Object.entries(nodes)
@@ -137,7 +142,7 @@ const createPointDataSuiteSource = async (
         key,
         node: node || { pointCount: 0, pointDataOffset: 0, pointDataLength: 0 },
         copc,
-        lazPerfWasmFilename: lazPerf,
+        lazPerfWasmFilename,
       })
       return acc
     },

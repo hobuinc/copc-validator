@@ -14,6 +14,7 @@ type CopcCollection = {
   queueLimit?: number
   sampleSize?: number
   showProgress?: boolean
+  lazPerfWasmFilename?: string
 }
 /* eslint-disable-next-line */
 export const CopcCollection = async ({
@@ -26,6 +27,7 @@ export const CopcCollection = async ({
   workerCount,
   queueLimit,
   sampleSize,
+  lazPerfWasmFilename
 }: CopcCollection): Promise<Check.Suite.Collection> => [
   { source: copc, suite: copcSuite },
   headerParser({ get, suite: copcHeaderSuite }),
@@ -40,6 +42,7 @@ export const CopcCollection = async ({
     queueLimit,
     showProgress,
     sampleSize,
+    lazPerfWasmFilename
   }),
 ]
 

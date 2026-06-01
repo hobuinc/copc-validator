@@ -27,6 +27,7 @@ export declare namespace Report {
     mini?: boolean
     showProgress?: boolean
     pdal?: boolean
+    lazPerfWasmFilename?: string
     // las?: boolean
   }
 
